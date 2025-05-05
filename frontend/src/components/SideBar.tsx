@@ -1,25 +1,26 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
-import { MenuItem } from "../types";
-import { menuItems } from "../config/menuConfig";
+import useMenuItems from "../hooks/useMenuItems";
 
 interface SidebarProps {
   isOpen: boolean;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
+  const { sidebarItems } = useMenuItems();
+
   return (
     <div
       className={`sidebar bg-gray-800 text-white shadow-lg fixed transition-all duration-300 ease-in-out ${
         isOpen ? "translate-x-0" : "-translate-x-full"
       }`}
     >
-      <div className="p-4 border-b border-gray-700">
+      {/* <div className="p-4 border-b border-gray-700">
         <h1 className="text-xl font-bold">Meu Projeto</h1>
-      </div>
+      </div> */}
       <nav className="mt-4">
         <ul>
-          {menuItems.map((item: MenuItem) => (
+          {sidebarItems.map((item) => (
             <li key={item.id} className="mb-1">
               <NavLink
                 to={item.path}

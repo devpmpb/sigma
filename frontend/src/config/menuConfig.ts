@@ -1,24 +1,24 @@
-import { Home, Users, ShoppingCart, Settings } from "lucide-react";
+import { Home, FileText, BarChart2, Settings } from "lucide-react";
 import { MenuItem } from "../types";
 
 export const menuItems: MenuItem[] = [
   {
-    id: "dashboard",
-    title: "Dashboard",
+    id: "inicio",
+    title: "Início",
     path: "/",
     icon: Home,
   },
   {
-    id: "usuarios",
-    title: "Usuários",
-    path: "/usuarios",
-    icon: Users,
+    id: "relatorios",
+    title: "Relatórios",
+    path: "/relatorios",
+    icon: FileText,
   },
   {
-    id: "produtos",
-    title: "Produtos",
-    path: "/produtos",
-    icon: ShoppingCart,
+    id: "dashboards",
+    title: "Dashboards",
+    path: "/dashboards",
+    icon: BarChart2,
   },
   {
     id: "configuracoes",
@@ -27,3 +27,5 @@ export const menuItems: MenuItem[] = [
     icon: Settings,
   },
 ];
+
+export default menuItems;

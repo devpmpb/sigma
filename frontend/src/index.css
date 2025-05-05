@@ -3,8 +3,8 @@
 @tailwind utilities;
 
 :root {
-  --sidebar-width: 16rem; /* 256px = 64*4 = 16rem */
-  --navbar-height: 4rem; /* 64px = 16*4 = 4rem */
+  --sidebar-width: 16rem; /* 256px = 16rem */
+  --navbar-height: 4rem; /* 64px = 4rem */
 }
 
 body {
@@ -17,22 +17,84 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Z-index para sobreposição de elementos */
+/* Valores mais altos aparecem na frente/em cima */
+.navbar {
+  z-index: 30;
+}
+
+.sidebar {
+  z-index: 20;
+}
+
+.dropdown {
+  z-index: 999 !important; /* Força o valor mais alto possível */
+}
+
+.mobile-menu {
+  z-index: 999 !important; /* Força o valor mais alto possível */
+}
+
+/* Ajustes para barra lateral */
 .sidebar {
   width: var(--sidebar-width);
   height: calc(100vh - var(--navbar-height));
   position: fixed;
   left: 0;
   top: var(--navbar-height);
-  z-index: 30;
 }
 
-/* Adicionar classe que será usada pelo layout quando o sidebar estiver aberto */
+/* Ajustes para conteúdo principal */
 .ml-64 {
   margin-left: var(--sidebar-width);
 }
 
-@media (max-width: 1024px) {
-  .sidebar {
-    width: var(--sidebar-width);
+/* Estilos para o breadcrumb */
+.breadcrumbs ul li:not(:first-child)::before {
+  content: ">";
+  margin: 0 0.5rem;
+  color: #9ca3af;
+}
+
+/* Responsividade para dispositivos móveis */
+@media (max-width: 768px) {
+  .ml-64 {
+    margin-left: 0;
   }
+}
+
+/* Estilo de card padrão */
+.card {
+  @apply bg-white rounded-lg shadow-sm p-6;
+}
+
+/* Estilo de botão primário */
+.btn-primary {
+  @apply px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50;
+}
+
+/* Estilo de botão secundário */
+.btn-secondary {
+  @apply px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-opacity-50;
+}
+
+/* Estilo para status badges */
+.status-badge {
+  @apply px-2 py-1 text-xs rounded-full font-semibold;
+}
+
+.status-badge-success {
+  @apply bg-green-100 text-green-800;
+}
+
+.status-badge-warning {
+  @apply bg-yellow-100 text-yellow-800;
+}
+
+.status-badge-error {
+  @apply bg-red-100 text-red-800;
+}
+
+.status-badge-info {
+  @apply bg-blue-100 text-blue-800;
 }

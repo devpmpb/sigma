@@ -1,18 +1,16 @@
-import React, { useState } from "react";
+import React from "react";
 import { Outlet } from "react-router-dom";
 import Navbar from "./NavBar";
 import Sidebar from "./SideBar";
+import { UIProvider, useUI } from "../context/UiContext";
 
-const Layout: React.FC = () => {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-
-  const toggleSidebar = () => {
-    setIsSidebarOpen(!isSidebarOpen);
-  };
+// Componente interno que usa o contexto
+const LayoutContent: React.FC = () => {
+  const { isSidebarOpen } = useUI();
 
   return (
     <div className="flex flex-col h-screen bg-gray-100">
-      <Navbar toggleSidebar={toggleSidebar} isSidebarOpen={isSidebarOpen} />
+      <Navbar />
 
       <div className="flex flex-1 pt-16">
         <Sidebar isOpen={isSidebarOpen} />
@@ -27,6 +25,15 @@ const Layout: React.FC = () => {
         </main>
       </div>
     </div>
+  );
+};
+
+// Componente de Layout que provê o contexto
+const Layout: React.FC = () => {
+  return (
+    <UIProvider>
+      <LayoutContent />
+    </UIProvider>
   );
 };
 
