@@ -42,11 +42,9 @@ export function createGenericController<T>(
           `Erro ao listar ${options.displayName.toLowerCase()}s:`,
           error
         );
-        return res
-          .status(500)
-          .json({
-            erro: `Erro ao listar ${options.displayName.toLowerCase()}s`,
-          });
+        return res.status(500).json({
+          erro: `Erro ao listar ${options.displayName.toLowerCase()}s`,
+        });
       }
     },
 
@@ -71,11 +69,9 @@ export function createGenericController<T>(
           `Erro ao buscar ${options.displayName.toLowerCase()}:`,
           error
         );
-        return res
-          .status(500)
-          .json({
-            erro: `Erro ao buscar ${options.displayName.toLowerCase()}`,
-          });
+        return res.status(500).json({
+          erro: `Erro ao buscar ${options.displayName.toLowerCase()}`,
+        });
       }
     },
 
@@ -193,11 +189,47 @@ export function createGenericController<T>(
           `Erro ao atualizar ${options.displayName.toLowerCase()}:`,
           error
         );
+        return res.status(500).json({
+          erro: `Erro ao atualizar ${options.displayName.toLowerCase()}`,
+        });
+      }
+    },
+
+    status: async (req: Request, res: Response) => {
+      try {
+        if (!options.softDelete) {
+          return res.status(405).json({ erro: "Método não permitido" });
+        }
+
+        const { id } = req.params;
+
+        // Verificar se registro existe
+        const registro = await (prisma as any)[options.modelName].findUnique({
+          where: { id: Number(id) },
+        });
+
+        if (!registro) {
+          return res
+            .status(404)
+            .json({ erro: `${options.displayName} não encontrado` });
+        }
+
+        await (prisma as any)[options.modelName].update({
+          where: { id: Number(id) },
+          data: { ativo: !registro.ativo },
+        });
+
         return res
-          .status(500)
-          .json({
-            erro: `Erro ao atualizar ${options.displayName.toLowerCase()}`,
-          });
+          .status(200)
+          .json({ mensagem: `${options.displayName} desativado com sucesso` });
+      } catch (error) {
+        console.error(
+          `Erro ao desativar ${options.displayName.toLowerCase()}:`,
+          error
+        );
+        return res.status(500).json({
+          erro: `Erro ao desativar ${options.displayName.toLowerCase()}`,
+        });
       }
     },
 
@@ -234,11 +266,9 @@ export function createGenericController<T>(
           `Erro ao desativar ${options.displayName.toLowerCase()}:`,
           error
         );
-        return res
-          .status(500)
-          .json({
-            erro: `Erro ao desativar ${options.displayName.toLowerCase()}`,
-          });
+        return res.status(500).json({
+          erro: `Erro ao desativar ${options.displayName.toLowerCase()}`,
+        });
       }
     },
 
@@ -278,11 +308,9 @@ export function createGenericController<T>(
           });
         }
 
-        return res
-          .status(500)
-          .json({
-            erro: `Erro ao excluir ${options.displayName.toLowerCase()}`,
-          });
+        return res.status(500).json({
+          erro: `Erro ao excluir ${options.displayName.toLowerCase()}`,
+        });
       }
     },
   };

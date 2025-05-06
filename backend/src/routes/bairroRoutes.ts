@@ -8,7 +8,7 @@ router.get("/bairros", bairroController.listar);
 router.get("/bairros/:id", bairroController.buscarPorId);
 router.post("/bairros", bairroController.criar);
 router.put("/bairros/:id", bairroController.atualizar);
-router.patch("/bairros/:id/desativar", bairroController.desativar);
+router.patch("/bairros/:id/status", bairroController.status);
 router.delete("/bairros/:id", bairroController.excluir);
 
 export default router;
