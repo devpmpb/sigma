@@ -13,8 +13,13 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Usuario {
-  id    Int     @id @default(autoincrement())
-  email String  @unique
-  nome  String?
+model Bairro {
+  id        Int      @id @default(autoincrement())
+  nome      String   @unique
+  ativo     Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relacionamentos serão adicionados posteriormente
+  //enderecos     Endereco[]
 }

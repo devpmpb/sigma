@@ -24,7 +24,7 @@ import CadastroAgricultura2 from "./pages/cadastros/agricultura/Agricultura2";
 import CadastroAgricultura3 from "./pages/cadastros/agricultura/Agricultura3";
 
 // Páginas de Cadastros - Comum
-import CadastroComum1 from "./pages/cadastros/comum/Comum";
+import CadastroComum1 from "./pages/cadastros/comum/Bairros";
 import CadastroComum2 from "./pages/cadastros/comum/Comum2";
 import CadastroComum3 from "./pages/cadastros/comum/Comum3";
 

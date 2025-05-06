@@ -1,0 +1,14 @@
+// src/routes/bairroRoutes.ts
+import { Router } from "express";
+import { bairroController } from "../controllers/bairroController";
+
+const router = Router();
+
+router.get("/bairros", bairroController.listar);
+router.get("/bairros/:id", bairroController.buscarPorId);
+router.post("/bairros", bairroController.criar);
+router.put("/bairros/:id", bairroController.atualizar);
+router.patch("/bairros/:id/desativar", bairroController.desativar);
+router.delete("/bairros/:id", bairroController.excluir);
+
+export default router;
