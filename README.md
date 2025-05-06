@@ -8,7 +8,6 @@ O SIGMA é uma plataforma moderna e integrada desenvolvida para otimizar a gest�
 
 ### Frontend
 
-- **Next.js 15.3.1** - Framework React para desenvolvimento web
 - **React 19** - Biblioteca JavaScript para construção de interfaces
 - **TypeScript** - Superset JavaScript com tipagem estática
 - **TailwindCSS 4** - Framework CSS utilitário
