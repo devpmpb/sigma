@@ -128,7 +128,7 @@ export function createGenericController<T>(
     },
 
     // Atualizar registro
-    atualizar: async (req: Request, res: Response) => {
+    update: async (req: Request, res: Response) => {
       try {
         const { id } = req.params;
         const data = req.body;

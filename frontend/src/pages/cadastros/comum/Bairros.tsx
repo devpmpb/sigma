@@ -64,22 +64,20 @@ const Bairros: React.FC = () => {
 
     let success = false;
 
+    console.log("bairro" + bairroAtual);
+
     if (editando && idAtual) {
       // Atualiza o bairro existente
       const result = await update(idAtual, bairroAtual);
       success = !!result;
 
-      if (success) {
-        alert("Bairro atualizado com sucesso!");
-      }
+      if (success) alert("Bairro atualizado com sucesso!");
     } else {
       // Cria um novo bairro
       const result = await create(bairroAtual);
       success = !!result;
 
-      if (success) {
-        alert("Bairro cadastrado com sucesso!");
-      }
+      if (success) alert("Bairro cadastrado com sucesso!");
     }
 
     if (success) {
@@ -100,9 +98,7 @@ const Bairros: React.FC = () => {
   };
 
   const handleExcluir = async (id: number) => {
-    if (!window.confirm("Tem certeza que deseja excluir este bairro?")) {
-      return;
-    }
+    if (!window.confirm("Tem certeza que deseja excluir este bairro?")) return;
 
     const success = await remove(id);
 
@@ -116,9 +112,7 @@ const Bairros: React.FC = () => {
   const handleToggleAtivo = async (bairro: Bairro) => {
     const result = await toggleStatus(bairro.id, !bairro.ativo);
 
-    if (result) {
-      fetchAll();
-    }
+    if (result) fetchAll();
   };
 
   // Função para cancelar edição
