@@ -15,13 +15,13 @@ export interface BairroDTO {
   nome: string;
   ativo?: boolean;
 }
-
 /**
- * Serviço para operações com a entidade Bairro
+ * Serviço para operações com a entidade Bairro (módulo comum)
  */
 class BairroService extends BaseApiService<Bairro, BairroDTO> {
   constructor() {
-    super("/bairros"); // Passa a URL base para o serviço
+    // O tipo de módulo é "comum" porque o cadastro de bairros é compartilhado
+    super("/bairros", "comum");
   }
 
   /**

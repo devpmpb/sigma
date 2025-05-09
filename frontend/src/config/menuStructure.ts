@@ -1,20 +1,6 @@
-import { ModuleType } from "../types";
+import { MenuGroup } from "./menus/types";
 
 // Interface para itens de submenu
-export interface SubMenuItem {
-  id: string;
-  title: string;
-  path: string;
-  module: ModuleType;
-}
-
-// Interface para grupos de menu
-export interface MenuGroup {
-  id: string;
-  title: string;
-  module: ModuleType;
-  items: SubMenuItem[];
-}
 
 // Estrutura de cadastros
 export const cadastrosMenu: MenuGroup[] = [
@@ -39,6 +25,12 @@ export const cadastrosMenu: MenuGroup[] = [
         id: "cadastro-obras-3",
         title: "Cadastro 3",
         path: "/cadastros/obras/cadastro3",
+        module: "obras",
+      },
+      {
+        id: "cadastro-tipo-veiculo", // Novo cadastro
+        title: "Tipo de Veículo",
+        path: "/cadastros/obras/tipo-veiculo",
         module: "obras",
       },
     ],
@@ -66,6 +58,12 @@ export const cadastrosMenu: MenuGroup[] = [
         path: "/cadastros/agricultura/cadastro3",
         module: "agricultura",
       },
+      {
+        id: "cadastro-grupo-produto", // Novo cadastro
+        title: "Grupo de Produto",
+        path: "/cadastros/agricultura/grupo-produto",
+        module: "agricultura",
+      },
     ],
   },
   {
@@ -74,9 +72,15 @@ export const cadastrosMenu: MenuGroup[] = [
     module: "comum",
     items: [
       {
-        id: "cadastro-comum-1",
-        title: "Cadastro 1",
-        path: "/cadastros/comum/cadastro1",
+        id: "cadastro-bairros",
+        title: "Bairros",
+        path: "/cadastros/comum/bairros",
+        module: "comum",
+      },
+      {
+        id: "cadastro-logradouros",
+        title: "Logradouros",
+        path: "/cadastros/comum/logradouros",
         module: "comum",
       },
       {

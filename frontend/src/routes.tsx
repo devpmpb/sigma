@@ -1,10 +1,9 @@
-import React from "react";
 import { createBrowserRouter, Navigate } from "react-router-dom";
 
-import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Login from "./pages/Login";
 import AcessoNegado from "./pages/AcessoNegado";
+import Layout from "./components/layout/Layout";
 
 // Página Dashboard/Início
 import Inicio from "./pages/Inicio";
@@ -17,14 +16,18 @@ import NotFound from "./pages/NotFound";
 import CadastroObras1 from "./pages/cadastros/obras/Cadastro1";
 import CadastroObras2 from "./pages/cadastros/obras/Cadastro2";
 import CadastroObras3 from "./pages/cadastros/obras/Cadastro3";
+import TipoVeiculo from "./pages/cadastros/obras/TipoVeiculo"; // Novo cadastro
 
 // Páginas de Cadastros - Agricultura
 import CadastroAgricultura1 from "./pages/cadastros/agricultura/Agricultura";
 import CadastroAgricultura2 from "./pages/cadastros/agricultura/Agricultura2";
 import CadastroAgricultura3 from "./pages/cadastros/agricultura/Agricultura3";
+import GrupoProduto from "./pages/cadastros/agricultura/GrupoProduto"; // Novo cadastro
 
 // Páginas de Cadastros - Comum
-import CadastroComum1 from "./pages/cadastros/comum/Bairros";
+import Bairros from "./pages/cadastros/comum/Bairro";
+import LogradourosListagem from "./pages/cadastros/comum/Logradouro/Logradouros";
+import LogradouroForm from "./pages/cadastros/comum/Logradouro/LogradouroForm";
 import CadastroComum2 from "./pages/cadastros/comum/Comum2";
 import CadastroComum3 from "./pages/cadastros/comum/Comum3";
 
@@ -103,6 +106,15 @@ const router = createBrowserRouter([
           </ProtectedRoute>
         ),
       },
+      // Novo cadastro de Tipo de Veículo (Obras)
+      {
+        path: "cadastros/obras/tipo-veiculo",
+        element: (
+          <ProtectedRoute requiredModule="obras" requiredAction="view">
+            <TipoVeiculo />
+          </ProtectedRoute>
+        ),
+      },
 
       // Rotas de Cadastros - Agricultura
       {
@@ -129,13 +141,41 @@ const router = createBrowserRouter([
           </ProtectedRoute>
         ),
       },
+      // Novo cadastro de Grupo de Produto (Agricultura)
+      {
+        path: "cadastros/agricultura/grupo-produto",
+        element: (
+          <ProtectedRoute requiredModule="agricultura" requiredAction="view">
+            <GrupoProduto />
+          </ProtectedRoute>
+        ),
+      },
 
       // Rotas de Cadastros - Comum
       {
-        path: "cadastros/comum/cadastro1",
+        path: "cadastros/comum/bairros",
         element: (
           <ProtectedRoute requiredModule="comum" requiredAction="view">
-            <CadastroComum1 />
+            <Bairros />
+          </ProtectedRoute>
+        ),
+      },
+      // Novo cadastro de Logradouros (Comum)
+      {
+        // Rota para listagem de logradouros
+        path: "cadastros/comum/logradouros",
+        element: (
+          <ProtectedRoute requiredModule="comum" requiredAction="view">
+            <LogradourosListagem />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        // Rota para o formulário de logradouros (novo ou edição)
+        path: "cadastros/comum/logradouros/:id",
+        element: (
+          <ProtectedRoute requiredModule="comum" requiredAction="view">
+            <LogradouroForm onSave={() => null} />
           </ProtectedRoute>
         ),
       },

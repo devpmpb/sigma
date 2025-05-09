@@ -1,16 +1,26 @@
 import { AxiosResponse } from "axios";
 import apiClient from "./apiConfig";
+import { ModuleType } from "../types/types";
 
 /**
- * Classe base para serviços de API genéricos
+ * Classe base para serviços de API genéricos com suporte a módulos
+ * Cada serviço deve declarar a qual módulo pertence (obras, agricultura, comum)
  * @template T - Tipo da entidade
  * @template R - Tipo dos dados para criação/atualização (opcional, padrão é T)
  */
 export default class BaseApiService<T, R = Partial<T>> {
   /**
    * @param baseUrl - URL base para as requisições deste serviço
+   * @param moduleType - Tipo do módulo (obras, agricultura, comum)
    */
-  constructor(protected baseUrl: string) {}
+  constructor(protected baseUrl: string, protected moduleType: ModuleType) {}
+
+  /**
+   * Retorna o tipo do módulo do serviço
+   */
+  getModuleType(): ModuleType {
+    return this.moduleType;
+  }
 
   /**
    * Busca todos os registros

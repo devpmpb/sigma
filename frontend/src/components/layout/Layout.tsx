@@ -1,8 +1,8 @@
 import React from "react";
 import { Outlet } from "react-router-dom";
-import Navbar from "./NavBar";
-import Sidebar from "./SideBar";
-import { UIProvider, useUI } from "../context/UiContext";
+import Navbar from "../layout/NavBar";
+import Sidebar from "../layout/SideBar";
+import { UIProvider, useUI } from "../../context/UiContext";
 
 // Componente interno que usa o contexto
 const LayoutContent: React.FC = () => {

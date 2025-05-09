@@ -1,6 +1,6 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
-import useMenuItems from "../hooks/useMenuItems";
+import useMenuItems from "../../hooks/useMenuItems";
 
 interface SidebarProps {
   isOpen: boolean;

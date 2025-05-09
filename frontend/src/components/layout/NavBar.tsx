@@ -8,11 +8,11 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
-import useMenuItems from "../hooks/useMenuItems";
-import useClickOutside from "../hooks/useClickOutside";
-import { useAuth } from "../context/AuthContext";
-import { useUI } from "../context/UiContext";
-import { MenuGroup, SubMenuItem } from "../config/menuStructure";
+import useClickOutside from "../../hooks/useClickOutside";
+import { useAuth } from "../../context/AuthContext";
+import { useUI } from "../../context/UiContext";
+import { MenuGroup } from "../../config/menuStructure";
+import useMenuItems from "../../hooks/useMenuItems";
 
 const Navbar: React.FC = () => {
   const { user } = useAuth();
