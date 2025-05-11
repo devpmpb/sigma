@@ -1,5 +1,5 @@
 import express, { Request, Response } from "express";
-import bairroRoutes from "./routes/bairroRoutes";
+import routes from "./routes";
 import cors from "cors";
 
 const app = express();
@@ -9,7 +9,7 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 app.use(express.json());
 app.use(cors());
-app.use("/api", bairroRoutes);
+app.use("/api", routes);
 
 app.listen(port, () => {
   console.log(`Server is running at http://localhost:${port}`);

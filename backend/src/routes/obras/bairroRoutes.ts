@@ -1,10 +1,10 @@
 // src/routes/bairroRoutes.ts
 import { Router } from "express";
-import { bairroController } from "../controllers/bairroController";
+import { bairroController } from "../../controllers/comum/bairroController";
 
 const router = Router();
 
-router.get("/bairros", bairroController.listar);
+router.get("/", bairroController.listar);
 router.get("/bairros/:id", bairroController.buscarPorId);
 router.post("/bairros", bairroController.criar);
 router.put("/bairros/:id", bairroController.update);

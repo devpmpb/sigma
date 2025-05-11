@@ -1,4 +1,4 @@
-import { createGenericController } from "./GenericController";
+import { createGenericController } from "../GenericController";
 
 export const bairroController = createGenericController({
   modelName: "bairro",

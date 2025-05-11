@@ -25,7 +25,7 @@ class GrupoProdutoService extends BaseApiService<
   GrupoProdutoDTO
 > {
   constructor() {
-    super("/grupos-produtos", "agricultura"); // URL base para o serviço
+    super("/grupoProdutos", "agricultura"); // URL base para o serviço
   }
 
   /**
