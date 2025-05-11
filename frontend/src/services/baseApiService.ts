@@ -1,6 +1,6 @@
 import { AxiosResponse } from "axios";
 import apiClient from "./apiConfig";
-import { ModuleType } from "../types/types";
+import { ModuleType } from "../types";
 
 /**
  * Classe base para serviços de API genéricos com suporte a módulos

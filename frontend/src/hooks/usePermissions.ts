@@ -1,5 +1,5 @@
 import { useAuth } from "../context/AuthContext";
-import { ModuleType, ActionType } from "../types/types";
+import { ModuleType, ActionType } from "../types";
 
 const usePermissions = () => {
   const { user } = useAuth();

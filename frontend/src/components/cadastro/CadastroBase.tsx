@@ -5,7 +5,7 @@ import DataTable, { Column } from "../common/DataTable";
 import BaseApiService from "../../services/baseApiService";
 import useApiService from "../../hooks/useApiService";
 import usePermissions from "../../hooks/usePermissions";
-import { ModuleType } from "../../types/types";
+import { ModuleType } from "../../types";
 
 interface CadastroBaseProps<T, R> {
   /**

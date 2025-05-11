@@ -1,4 +1,4 @@
-import { MenuGroup } from "../../../types/types";
+import { MenuGroup } from "../../../types";
 
 // Menus de cadastro comum
 export const cadastrosComunMenu: MenuGroup = {
@@ -16,12 +16,6 @@ export const cadastrosComunMenu: MenuGroup = {
       id: "cadastro-logradouros",
       title: "Logradouros",
       path: "/cadastros/comum/logradouros",
-      module: "comum",
-    },
-    {
-      id: "cadastro-comum-3",
-      title: "Cadastro 3",
-      path: "/cadastros/comum/cadastro3",
       module: "comum",
     },
   ],

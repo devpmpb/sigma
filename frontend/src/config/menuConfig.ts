@@ -1,5 +1,5 @@
 import { Home, FileText, BarChart2, Settings } from "lucide-react";
-import { MenuItem } from "../types/types";
+import { MenuItem } from "../types";
 
 export const menuItems: MenuItem[] = [
   {

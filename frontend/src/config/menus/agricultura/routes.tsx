@@ -1,49 +1,55 @@
 import { RouteObject } from "react-router-dom";
+import ProtectedRoute from "../../../components/ProtectedRoute";
 import { lazyLoad } from "../../../utils/lazyLoad";
 
 // Usando lazy loading para componentes
-const Cadastro1 = lazyLoad(
-  () => import("../../../views/agricultura/Cadastro1")
+const GrupoProduto = lazyLoad(
+  () => import("../../../pages/cadastros/agricultura/produto/GrupoProduto")
 );
-const Cadastro2 = lazyLoad(
-  () => import("../../../views/agricultura/Cadastro2")
+const MovimentoAgricultura1 = lazyLoad(
+  () => import("../../../pages/movimentos/agricultura/Agricultura")
 );
-const Cadastro3 = lazyLoad(
-  () => import("../../../views/agricultura/Cadastro3")
+const MovimentoAgricultura2 = lazyLoad(
+  () => import("../../../pages/movimentos/agricultura/Agricultura2")
 );
-const Movimento1 = lazyLoad(
-  () => import("../../../views/agricultura/Movimento1")
-);
-const Movimento2 = lazyLoad(
-  () => import("../../../views/agricultura/Movimento2")
-);
-const Movimento3 = lazyLoad(
-  () => import("../../../views/agricultura/Movimento3")
+const MovimentoAgricultura3 = lazyLoad(
+  () => import("../../../pages/movimentos/agricultura/Agricultura3")
 );
 
+// Rotas para agricultura
 export const agriculturaRoutes: RouteObject[] = [
+  // Cadastros
   {
-    path: "/cadastros/agricultura/cadastro1",
-    element: <Cadastro1 />,
+    path: "cadastros/agricultura/produto/grupoProduto",
+    element: (
+      <ProtectedRoute requiredModule="agricultura" requiredAction="view">
+        <GrupoProduto />
+      </ProtectedRoute>
+    ),
+  },
+  // Movimentos
+  {
+    path: "movimentos/agricultura/movimento1",
+    element: (
+      <ProtectedRoute requiredModule="agricultura" requiredAction="view">
+        <MovimentoAgricultura1 />
+      </ProtectedRoute>
+    ),
   },
   {
-    path: "/cadastros/agricultura/cadastro2",
-    element: <Cadastro2 />,
+    path: "movimentos/agricultura/movimento2",
+    element: (
+      <ProtectedRoute requiredModule="agricultura" requiredAction="view">
+        <MovimentoAgricultura2 />
+      </ProtectedRoute>
+    ),
   },
   {
-    path: "/cadastros/agricultura/cadastro3",
-    element: <Cadastro3 />,
-  },
-  {
-    path: "/movimentos/agricultura/movimento1",
-    element: <Movimento1 />,
-  },
-  {
-    path: "/movimentos/agricultura/movimento2",
-    element: <Movimento2 />,
-  },
-  {
-    path: "/movimentos/agricultura/movimento3",
-    element: <Movimento3 />,
+    path: "movimentos/agricultura/movimento3",
+    element: (
+      <ProtectedRoute requiredModule="agricultura" requiredAction="view">
+        <MovimentoAgricultura3 />
+      </ProtectedRoute>
+    ),
   },
 ];

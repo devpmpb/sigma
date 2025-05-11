@@ -1,10 +1,10 @@
 import React from "react";
 
-import CadastroSimples from "../../../components/cadastro/CadastroSimples";
+import CadastroSimples from "../../../../components/cadastro/CadastroSimples";
 import grupoProdutoService, {
   GrupoProduto,
   GrupoProdutoDTO,
-} from "../../../services/agricultura/grupoProdutoService";
+} from "../../../../services/agricultura/grupoProdutoService";
 
 /**
  * Componente de Cadastro de Grupos de Produtos
@@ -20,7 +20,7 @@ const GrupoProdutoPage: React.FC = () => {
   return (
     <CadastroSimples<GrupoProduto, GrupoProdutoDTO>
       titulo="Cadastro de Grupos de Produtos"
-      setor="Agricultura"
+      setor="agricultura"
       tipo="Grupo de Produto"
       service={grupoProdutoService}
       valorInicial={valorInicial}

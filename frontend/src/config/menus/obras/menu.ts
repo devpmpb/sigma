@@ -1,4 +1,4 @@
-import { MenuGroup } from "../../../types/types";
+import { MenuGroup } from "../../../types";
 
 // Menus de cadastro de obras
 export const cadastrosObrasMenu: MenuGroup = {
@@ -7,21 +7,9 @@ export const cadastrosObrasMenu: MenuGroup = {
   module: "obras",
   items: [
     {
-      id: "cadastro-obras-1",
-      title: "Cadastro 1",
-      path: "/cadastros/obras/cadastro1",
-      module: "obras",
-    },
-    {
-      id: "cadastro-obras-2",
-      title: "Cadastro 2",
-      path: "/cadastros/obras/cadastro2",
-      module: "obras",
-    },
-    {
-      id: "cadastro-obras-3",
-      title: "Cadastro 3",
-      path: "/cadastros/obras/cadastro3",
+      id: "cadastro-tipo-veiculo",
+      title: "Cadastro de Tipo de Veículo",
+      path: "/cadastros/obras/tipoVeiculo",
       module: "obras",
     },
   ],
