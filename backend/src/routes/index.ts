@@ -1,19 +1,19 @@
 import { Router } from "express";
-import bairroRoutes from "./obras/bairroRoutes";
-import grupoProdutoRoutes from "./agricultura/grupoProdutoRoutes"
-
-// Importe outras rotas de entidades aqui
-// import usuarioRoutes from "./usuarioRoutes";
-// import empresaRoutes from "./empresaRoutes";
-// etc.
+import bairroRoutes from "./comum/bairroRoutes";
+import grupoProdutoRoutes from "./agricultura/grupoProdutoRoutes";
+import tipoVeiculoRoutes from "./obras/tipoVeiculoRoutes";
+import logradouroRoutes from "./comum/logradouroRoutes";
 
 const router = Router();
 
-// Aplica os roteadores específicos, cada um com seu prefixo
+// COMUM
 router.use("/bairros", bairroRoutes);
-router.use("/grupoProdutos", grupoProdutoRoutes)
-// router.use("/usuarios", usuarioRoutes);
-// router.use("/empresas", empresaRoutes);
-// etc.
+router.use("/logradouros", logradouroRoutes);
+
+// AGRICULTURA
+router.use("/grupoProdutos", grupoProdutoRoutes);
+
+// OBRAS
+router.use("/tipoVeiculos", tipoVeiculoRoutes);
 
 export default router;

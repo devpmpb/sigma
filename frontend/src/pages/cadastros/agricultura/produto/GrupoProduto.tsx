@@ -1,5 +1,4 @@
 import React from "react";
-
 import CadastroSimples from "../../../../components/cadastro/CadastroSimples";
 import grupoProdutoService, {
   GrupoProduto,

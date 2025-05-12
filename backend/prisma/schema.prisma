@@ -26,7 +26,25 @@ model Bairro {
 
 model GrupoProduto {
   id        Int      @id @default(autoincrement())
-  descricao      String   @unique
+  descricao String   @unique
+  ativo     Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model TipoVeiculo {
+  id        Int      @id @default(autoincrement())
+  descricao String   @unique
+  ativo     Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Logradouro {
+  id        Int      @id @default(autoincrement())
+  cep       String   @unique
+  descricao String   
+  tipo      String   
   ativo     Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

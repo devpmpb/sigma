@@ -33,7 +33,7 @@ export interface LogradouroDTO {
  */
 class LogradouroService extends BaseApiService<Logradouro, LogradouroDTO> {
   constructor() {
-    super("/logradouros"); // URL base para o serviço
+    super("/logradouros", "comum"); // URL base para o serviço
   }
 
   /**

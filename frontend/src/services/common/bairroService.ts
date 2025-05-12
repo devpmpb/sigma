@@ -1,7 +1,6 @@
 import apiClient from "../apiConfig";
 import BaseApiService from "../baseApiService";
 
-// Interface para a entidade Bairro
 export interface Bairro {
   id: number;
   nome: string;
@@ -10,37 +9,18 @@ export interface Bairro {
   updatedAt: string;
 }
 
-// Interface para os dados de criação/atualização de Bairro
 export interface BairroDTO {
   nome: string;
   ativo?: boolean;
 }
-/**
- * Serviço para operações com a entidade Bairro (módulo comum)
- */
+
 class BairroService extends BaseApiService<Bairro, BairroDTO> {
   constructor() {
-    // O tipo de módulo é "comum" porque o cadastro de bairros é compartilhado
     super("/bairros", "comum");
   }
 
-  /**
-   * Busca os bairros ativos
-   * @returns Uma promessa com um array de bairros ativos
-   */
   getBairrosAtivos = async (): Promise<Bairro[]> => {
     const response = await apiClient.get(`${this.baseUrl}/ativos`);
-    return response.data;
-  };
-
-  /**
-   * Exemplo de método específico para bairros (se necessário)
-   * Busca bairros por região
-   * @param regiaoId - ID da região
-   * @returns Uma promessa com um array de bairros da região
-   */
-  getBairrosPorRegiao = async (regiaoId: number): Promise<Bairro[]> => {
-    const response = await apiClient.get(`${this.baseUrl}/regiao/${regiaoId}`);
     return response.data;
   };
 }

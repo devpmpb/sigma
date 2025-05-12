@@ -21,7 +21,7 @@ export function createGenericController<T>(
 ) {
   return {
     // Listar todos os registros
-    listar: async (req: Request, res: Response) => {
+    findAll: async (req: Request, res: Response) => {
       try {
         const { ativo } = req.query;
         const whereClause: any = {};
@@ -31,6 +31,7 @@ export function createGenericController<T>(
           whereClause.ativo = ativo === "true";
         }
 
+        console.log("req" + req);
         const registros = await (prisma as any)[options.modelName].findMany({
           where: whereClause,
           orderBy: options.orderBy || { id: "asc" },
@@ -49,7 +50,7 @@ export function createGenericController<T>(
     },
 
     // Buscar registro por ID
-    buscarPorId: async (req: Request, res: Response) => {
+    findById: async (req: Request, res: Response) => {
       try {
         const { id } = req.params;
 
@@ -76,7 +77,7 @@ export function createGenericController<T>(
     },
 
     // Criar novo registro
-    criar: async (req: Request, res: Response) => {
+    create: async (req: Request, res: Response) => {
       try {
         const data = req.body;
 
@@ -273,7 +274,7 @@ export function createGenericController<T>(
     },
 
     // Excluir registro (hard delete)
-    excluir: async (req: Request, res: Response) => {
+    delete: async (req: Request, res: Response) => {
       try {
         const { id } = req.params;
 

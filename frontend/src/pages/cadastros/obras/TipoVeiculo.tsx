@@ -19,7 +19,7 @@ const TipoVeiculoPage: React.FC = () => {
   return (
     <CadastroSimples<TipoVeiculo, TipoVeiculoDTO>
       titulo="Cadastro de Tipos de Veículos"
-      setor="Obras"
+      setor="obras"
       tipo="Tipo de Veículo"
       service={tipoVeiculoService}
       valorInicial={valorInicial}

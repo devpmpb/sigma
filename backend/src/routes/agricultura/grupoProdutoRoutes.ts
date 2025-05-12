@@ -1,14 +1,13 @@
-// src/routes/bairroRoutes.ts
 import { Router } from "express";
 import { grupoProdutoController } from "../../controllers/agricultura/grupoProdutoController";
 
 const router = Router();
 
-router.get("/", grupoProdutoController.listar);
-router.get("/grupoProdutos/:id", grupoProdutoController.buscarPorId);
-router.post("/grupoProdutos", grupoProdutoController.criar);
-router.put("/grupoProdutos/:id", grupoProdutoController.update);
-router.patch("/grupoProdutos/:id/status", grupoProdutoController.status);
-router.delete("/grupoProdutos/:id", grupoProdutoController.excluir);
+router.get("/", grupoProdutoController.findAll);
+router.get("/:id", grupoProdutoController.findById);
+router.post("/", grupoProdutoController.create);
+router.put("/:id", grupoProdutoController.update);
+router.patch("/:id/status", grupoProdutoController.status);
+router.delete("/:id", grupoProdutoController.delete);
 
 export default router;

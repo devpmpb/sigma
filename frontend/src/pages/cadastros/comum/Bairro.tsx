@@ -17,7 +17,7 @@ const BairrosPage: React.FC = () => {
   return (
     <CadastroSimples<Bairro, BairroDTO>
       titulo="Cadastro de Bairros"
-      setor="Comum"
+      setor="comum"
       tipo="Bairro"
       service={bairroService}
       valorInicial={valorInicial}
