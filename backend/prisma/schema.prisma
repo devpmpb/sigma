@@ -12,16 +12,53 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+enum TipoEndereco {
+  RESIDENCIAL
+  COMERCIAL
+  RURAL
+  CORRESPONDENCIA
+}
+
+enum TipoLogradouro {
+  RUA
+  AVENIDA
+  TRAVESSA
+  ALAMEDA
+  RODOVIA
+  LINHA
+  ESTRADA
+}
 
 model Bairro {
-  id        Int      @id @default(autoincrement())
-  nome      String   @unique
-  ativo     Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          Int          @id @default(autoincrement())
+  nome        String       @unique
+  ativo       Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  logradouros Logradouro[]
+  enderecos   Endereco[]
+}
 
-  // Relacionamentos serão adicionados posteriormente
-  //enderecos     Endereco[]
+model AreaRural {
+  id         Int        @id @default(autoincrement())
+  nome       String     @unique  // Ex: "Linha São Francisco", "Estrada do Açude"
+  ativo      Boolean    @default(true)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  enderecos  Endereco[]
+}
+
+model Logradouro {
+  id              Int           @id @default(autoincrement())
+  tipo            TipoLogradouro
+  descricao       String        
+  cep             String?       @unique
+  bairroId        Int?
+  bairro          Bairro?       @relation(fields: [bairroId], references: [id])
+  ativo           Boolean       @default(true)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  enderecos       Endereco[]
 }
 
 model GrupoProduto {
@@ -40,12 +77,147 @@ model TipoVeiculo {
   updatedAt DateTime @updatedAt
 }
 
-model Logradouro {
-  id        Int      @id @default(autoincrement())
-  cep       String   @unique
-  descricao String   
-  tipo      String   
-  ativo     Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model Pessoa {
+  id             Int           @id @default(autoincrement())
+  nome           String
+  cpfCnpj        String        @unique
+  rg             String?
+  dataNascimento DateTime?
+  telefone       String?
+  email          String?
+  status         String        @default("ativo")
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  
+  // Relacionamentos
+  enderecos      Endereco[]
+  produtor       Produtor?
+  propriedades   Propriedade[]
+  arrendamentos  Arrendamento[] @relation("arrendatario")
+  arrendou       Arrendamento[] @relation("proprietario")
+}
+
+model Endereco {
+  id              Int           @id @default(autoincrement())
+  pessoaId        Int
+  pessoa          Pessoa        @relation(fields: [pessoaId], references: [id])
+  
+  // Para endereços urbanos
+  logradouroId    Int?
+  logradouro      Logradouro?   @relation(fields: [logradouroId], references: [id])
+  numero          String?
+  complemento     String?
+  bairroId        Int?
+  bairro          Bairro?       @relation(fields: [bairroId], references: [id])
+  
+  // Para endereços rurais
+  areaRuralId     Int?
+  areaRural       AreaRural?    @relation(fields: [areaRuralId], references: [id])
+  referenciaRural String?
+  
+  // Campos comuns
+  coordenadas     String?       // Latitude,Longitude
+  tipoEndereco    TipoEndereco
+  principal       Boolean       @default(false)
+  
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+model Produtor {
+  id                  Int                   @id
+  pessoa              Pessoa                @relation(fields: [id], references: [id])
+  inscricaoEstadual   String?
+  dap                 String?
+  tipoProdutor        String?
+  atividadePrincipal  String?
+  contratoAssistencia Boolean               @default(false)
+  observacoes         String?
+  
+  // Campos específicos do produtor rural
+  areaEfetiva         AreaEfetiva?
+  solicitacoes        SolicitacaoBeneficio[]
+}
+
+model AreaEfetiva {
+  id                    Int       @id
+  produtor              Produtor  @relation(fields: [id], references: [id])
+  anoReferencia         Int
+  areaPropria           Decimal   @db.Decimal(10, 2)
+  areaArrendadaRecebida Decimal   @db.Decimal(10, 2)
+  areaArrendadaCedida   Decimal   @db.Decimal(10, 2)
+  areaEfetiva           Decimal   @db.Decimal(10, 2)
+  updatedAt             DateTime  @updatedAt
+}
+
+model Propriedade {
+  id             Int           @id @default(autoincrement())
+  nome           String
+  areaTotal      Decimal       @db.Decimal(10, 2)
+  localizacao    String?
+  matricula      String?
+  proprietarioId Int
+  proprietario   Pessoa        @relation(fields: [proprietarioId], references: [id])
+  
+  // Relacionamentos
+  arrendamentos  Arrendamento[]
+}
+
+model Arrendamento {
+  id             Int         @id @default(autoincrement())
+  propriedadeId  Int
+  propriedade    Propriedade @relation(fields: [propriedadeId], references: [id])
+  proprietarioId Int
+  proprietario   Pessoa      @relation("proprietario", fields: [proprietarioId], references: [id])
+  arrendatarioId Int
+  arrendatario   Pessoa      @relation("arrendatario", fields: [arrendatarioId], references: [id])
+  areaArrendada  Decimal     @db.Decimal(10, 2)
+  dataInicio     DateTime
+  dataFim        DateTime?
+  status         String      @default("ativo")
+  documentoUrl   String?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+}
+
+// Modelo para solicitações de benefícios
+model SolicitacaoBeneficio {
+  id              Int       @id @default(autoincrement())
+  produtorId      Int
+  produtor        Produtor  @relation(fields: [produtorId], references: [id])
+  programaId      Int
+  programa        Programa  @relation(fields: [programaId], references: [id])
+  datasolicitacao DateTime  @default(now())
+  status          String    @default("pendente")
+  observacoes     String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+// Modelo para programas de incentivo
+model Programa {
+  id              Int                   @id @default(autoincrement())
+  nome            String
+  descricao       String?
+  leiNumero       String?
+  tipoPrograma    String                // subsídio, material, serviço
+  ativo           Boolean               @default(true)
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+  
+  solicitacoes    SolicitacaoBeneficio[]
+  regras          RegrasNegocio[]
+}
+
+// Modelo para regras de negócio dos programas
+model RegrasNegocio {
+  id              Int       @id @default(autoincrement())
+  programaId      Int
+  programa        Programa  @relation(fields: [programaId], references: [id])
+  tipoRegra       String    // 'area_efetiva', 'area_construcao', etc.
+  parametro       Json      // Estrutura JSON com condições 
+  valorBeneficio  Decimal   @db.Decimal(10, 2)
+  limiteBeneficio Json?     // Estrutura JSON com limites
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 }

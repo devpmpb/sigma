@@ -31,7 +31,6 @@ export function createGenericController<T>(
           whereClause.ativo = ativo === "true";
         }
 
-        console.log("req" + req);
         const registros = await (prisma as any)[options.modelName].findMany({
           where: whereClause,
           orderBy: options.orderBy || { id: "asc" },
