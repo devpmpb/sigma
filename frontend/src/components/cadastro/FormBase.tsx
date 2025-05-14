@@ -81,14 +81,16 @@ function FormBase<T extends Record<string, any>, R>({
       setError(null);
 
       try {
-        if (id) {
+        if (id && id !== "novo") {
           // Atualiza o registro existente
           await service.update(id, values);
           alert("Registro atualizado com sucesso!");
+          navigate(returnUrl);
         } else {
           // Cria um novo registro
           await service.create(values);
           alert("Registro criado com sucesso!");
+          navigate(returnUrl);
         }
 
         if (onSave) {
