@@ -1,5 +1,5 @@
 import React from "react";
-import { NavLink } from "react-router-dom";
+import { Link } from "@tanstack/react-router";
 import useMenuItems from "../../hooks/useMenuItems";
 
 interface SidebarProps {
@@ -15,14 +15,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
         isOpen ? "translate-x-0" : "-translate-x-full"
       }`}
     >
-      {/* <div className="p-4 border-b border-gray-700">
-        <h1 className="text-xl font-bold">Meu Projeto</h1>
-      </div> */}
       <nav className="mt-4">
         <ul>
           {sidebarItems.map((item) => (
             <li key={item.id} className="mb-1">
-              <NavLink
+              <Link
                 to={item.path}
                 className={({ isActive }) =>
                   `flex items-center px-4 py-3 hover:bg-gray-700 transition-colors ${
@@ -32,7 +29,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
               >
                 <item.icon className="mr-3 h-5 w-5" />
                 <span>{item.title}</span>
-              </NavLink>
+              </Link>
             </li>
           ))}
         </ul>

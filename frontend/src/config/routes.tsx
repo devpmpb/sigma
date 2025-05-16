@@ -1,66 +1,19 @@
-import { createBrowserRouter, Navigate } from "react-router-dom";
-import ProtectedRoute from "../components/ProtectedRoute";
-import Login from "../pages/Login";
-import AcessoNegado from "../pages/AcessoNegado";
-import Layout from "../components/layout/Layout";
-import NotFound from "../pages/NotFound";
+import { router } from "../router";
+import { obrasRouteConfig } from "./menus/obras/routes";
+import { agriculturaRouteConfig } from "./menus/agricultura/routes";
+import { comunRouteConfig } from "./menus/comum/routes";
 
-// Páginas gerais
-import Inicio from "../pages/Inicio";
-import Relatorios from "../pages/Relatorios";
-import Dashboards from "../pages/Dashboards";
-import Configuracoes from "../pages/Configuracoes";
-import { agriculturaRoutes, comunRoutes, obrasRoutes } from "./menus";
+// Este objeto simula o export original do createBrowserRouter do React Router
+// para manter compatibilidade com código existente
+const routerCompatibility = {
+  ...router,
+  // Propriedades adicionais que o código existente possa usar
+  navigate: router.navigate
+};
 
-// Importando rotas modulares
+// Exportamos as configurações das rotas modulares para compatibilidade
+export const obrasRoutes = obrasRouteConfig;
+export const agriculturaRoutes = agriculturaRouteConfig;
+export const comunRoutes = comunRouteConfig;
 
-
-// Criando o router com todas as rotas
-const router = createBrowserRouter([
-  {
-    path: "/login",
-    element: <Login />,
-  },
-  {
-    path: "/acesso-negado",
-    element: <AcessoNegado />,
-  },
-  {
-    path: "/",
-    element: (
-      <ProtectedRoute>
-        <Layout />
-      </ProtectedRoute>
-    ),
-    errorElement: <NotFound />,
-    children: [
-      {
-        index: true,
-        element: <Inicio />,
-      },
-      {
-        path: "relatorios",
-        element: <Relatorios />,
-      },
-      {
-        path: "dashboards",
-        element: <Dashboards />,
-      },
-      {
-        path: "configuracoes",
-        element: <Configuracoes />,
-      },
-      
-      // Adicionando rotas modulares como filhos do Layout
-      ...obrasRoutes,
-      ...agriculturaRoutes,
-      ...comunRoutes,
-    ],
-  },
-  {
-    path: "*",
-    element: <Navigate to="/not-found" replace />,
-  },
-]);
-
-export default router;
+export default routerCompatibility;

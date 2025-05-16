@@ -1,12 +1,6 @@
 import React, { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useAuth } from "../context/AuthContext";
-
-interface LocationState {
-  from?: {
-    pathname?: string;
-  };
-}
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -15,11 +9,7 @@ const Login: React.FC = () => {
 
   const { login, isLoading } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
-
-  // Obter a página de retorno após login
-  const state = location.state as LocationState;
-  const from = state?.from?.pathname || "/";
+  const { from } = useSearch({ from: "/" });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,7 +24,7 @@ const Login: React.FC = () => {
       const success = await login(email, password);
 
       if (success) {
-        navigate(from, { replace: true });
+        navigate({ to: from });
       } else {
         setError("Email ou senha inválidos");
       }

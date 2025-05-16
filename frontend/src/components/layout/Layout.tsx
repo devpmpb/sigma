@@ -1,10 +1,10 @@
 import React from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet } from "@tanstack/react-router";
 import Navbar from "../layout/NavBar";
 import Sidebar from "../layout/SideBar";
 import { UIProvider, useUI } from "../../context/UiContext";
 
-// Componente interno que usa o contexto
+// Internal component that uses the context
 const LayoutContent: React.FC = () => {
   const { isSidebarOpen } = useUI();
 
@@ -28,7 +28,7 @@ const LayoutContent: React.FC = () => {
   );
 };
 
-// Componente de Layout que provê o contexto
+// Layout component that provides the context
 const Layout: React.FC = () => {
   return (
     <UIProvider>

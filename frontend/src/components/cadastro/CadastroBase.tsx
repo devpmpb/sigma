@@ -1,5 +1,5 @@
 import React, { useEffect, useState, ReactNode } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "@tanstack/react-router";
 import SearchBar from "../common/SearchBar";
 import DataTable, { Column } from "../common/DataTable";
 import BaseApiService from "../../services/baseApiService";
@@ -9,37 +9,37 @@ import { ModuleType } from "../../types";
 
 interface CadastroBaseProps<T, R> {
   /**
-   * Título da página
+   * Page title
    */
   title: string;
 
   /**
-   * Serviço para API do cadastro
+   * API service for the registration
    */
   service: BaseApiService<T, R>;
 
   /**
-   * Colunas da tabela
+   * Table columns
    */
   columns: Column<T>[];
 
   /**
-   * Chave única para cada linha
+   * Unique key for each row
    */
   rowKey: string | ((item: T, index: number) => string | number);
 
   /**
-   * URL base para navegação (ex: "/cadastros/produtos")
+   * Base URL for navigation (ex: "/cadastros/produtos")
    */
   baseUrl: string;
 
   /**
-   * Módulo do cadastro (obras, agricultura ou comum)
+   * Module (obras, agricultura or comum)
    */
   module: ModuleType;
 
   /**
-   * Componente de formulário
+   * Form component
    */
   FormComponent?: React.ComponentType<{
     id?: string | number;
@@ -48,24 +48,24 @@ interface CadastroBaseProps<T, R> {
   }>;
 
   /**
-   * Se deve mostrar a barra de busca
+   * Whether to show the search bar
    */
   showSearch?: boolean;
 
   /**
-   * Placeholder para a barra de busca
+   * Placeholder for the search bar
    */
   searchPlaceholder?: string;
 
   /**
-   * Botões adicionais para a barra de ações
+   * Additional buttons for the action bar
    */
   actionButtons?: ReactNode;
 }
 
 /**
- * Componente base para telas de cadastro
- * Gerencia a listagem e navegação para o formulário
+ * Base component for registration screens
+ * Manages listing and navigation to the form
  */
 function CadastroBase<T extends Record<string, any>, R>({
   title,
@@ -81,45 +81,45 @@ function CadastroBase<T extends Record<string, any>, R>({
 }: CadastroBaseProps<T, R>) {
   const [termoBusca, setTermoBusca] = useState("");
   const navigate = useNavigate();
-  const params = useParams<{ id: string }>();
+  const params = useParams();
 
-  // Verificação de permissões
+  // Permission check
   const { hasPermission } = usePermissions();
   const canCreate = hasPermission(module, "create");
   const canEdit = hasPermission(module, "edit");
   const canDelete = hasPermission(module, "delete");
 
-  // Hook para API
+  // API hook
   const { data, loading, error, fetchAll, searchByTerm } = useApiService<T, R>(
     service
   );
 
-  // Carrega os dados iniciais
+  // Load initial data
   useEffect(() => {
     fetchAll();
   }, [fetchAll]);
 
-  // Verifica se está no modo de visualização de formulário
-  const isFormView = params.id !== undefined;
+  // Check if in form view mode
+  const isFormView = params && params.id !== undefined;
 
-  // Função para tratar a busca
+  // Function to handle search
   const handleSearch = (termo: string) => {
     setTermoBusca(termo);
     searchByTerm(termo);
   };
 
-  // Função para criar novo registro
+  // Function to create new record
   const handleCreate = () => {
-    navigate(`${baseUrl}/novo`);
+    navigate({ to: `${baseUrl}/novo` });
   };
 
-  // Função para editar um registro
+  // Function to edit a record
   const handleEdit = (item: T) => {
     const id = typeof rowKey === "function" ? rowKey(item, 0) : item[rowKey];
-    navigate(`${baseUrl}/${id}`);
+    navigate({ to: `${baseUrl}/${id}` });
   };
 
-  // Função para excluir um registro
+  // Function to delete a record
   const handleDelete = async (item: T) => {
     if (!window.confirm(`Tem certeza que deseja excluir este registro?`)) {
       return;
@@ -137,7 +137,7 @@ function CadastroBase<T extends Record<string, any>, R>({
     }
   };
 
-  // Adiciona a coluna de ações se o usuário tiver permissão
+  // Add action column if user has permission
   const finalColumns = [...columns];
 
   if (canEdit || canDelete) {
@@ -149,7 +149,7 @@ function CadastroBase<T extends Record<string, any>, R>({
           {canEdit && (
             <button
               onClick={(e) => {
-                e.stopPropagation(); // Evita propagar o clique para a linha
+                e.stopPropagation(); // Prevent click from propagating to row
                 handleEdit(item);
               }}
               className="text-blue-600 hover:text-blue-900"
@@ -174,7 +174,7 @@ function CadastroBase<T extends Record<string, any>, R>({
           {canDelete && (
             <button
               onClick={(e) => {
-                e.stopPropagation(); // Evita propagar o clique para a linha
+                e.stopPropagation(); // Prevent click from propagating to row
                 handleDelete(item);
               }}
               className="text-red-600 hover:text-red-900"
@@ -202,13 +202,13 @@ function CadastroBase<T extends Record<string, any>, R>({
     finalColumns.push(actionsColumn);
   }
 
-  // Retorna o componente FormComponent se estiver no modo de visualização de formulário
+  // Return FormComponent if in form view mode
   if (isFormView && FormComponent) {
     return (
       <FormComponent
         id={params.id !== "novo" ? params.id : undefined}
         onSave={() => {
-          navigate(baseUrl);
+          navigate({ to: baseUrl });
           fetchAll();
         }}
         module={module}
@@ -216,7 +216,7 @@ function CadastroBase<T extends Record<string, any>, R>({
     );
   }
 
-  // Caso contrário, mostra a listagem
+  // Otherwise, show the listing
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="bg-white shadow-md rounded-lg p-6">
@@ -244,14 +244,14 @@ function CadastroBase<T extends Record<string, any>, R>({
           </div>
         </div>
 
-        {/* Mensagem de erro */}
+        {/* Error message */}
         {error && (
           <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6">
             <p>{error}</p>
           </div>
         )}
 
-        {/* Barra de ações */}
+        {/* Action bar */}
         <div className="flex justify-between items-center mb-6">
           <div className="flex-1">
             {showSearch && (
@@ -292,7 +292,7 @@ function CadastroBase<T extends Record<string, any>, R>({
           </div>
         </div>
 
-        {/* Tabela de dados */}
+        {/* Data table */}
         <DataTable
           columns={finalColumns}
           data={data}

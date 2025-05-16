@@ -1,46 +1,46 @@
 import React, { useEffect, useState, ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "@tanstack/react-router";
 import useForm from "../../hooks/useForm";
 import BaseApiService from "../../services/baseApiService";
 
 interface FormBaseProps<T, R> {
   /**
-   * Título do formulário
+   * Form title
    */
   title: string;
 
   /**
-   * Serviço para API do cadastro
+   * API service for registration
    */
   service: BaseApiService<T, R>;
 
   /**
-   * ID do registro (undefined para novo registro)
+   * Record ID (undefined for new record)
    */
   id?: string | number;
 
   /**
-   * Valores iniciais para o formulário
+   * Initial values for the form
    */
   initialValues: R;
 
   /**
-   * Função de validação
+   * Validation function
    */
   validate?: (values: R) => Record<string, string> | null;
 
   /**
-   * Função chamada após salvar com sucesso
+   * Function called after successful save
    */
   onSave?: () => void;
 
   /**
-   * URL para retornar após cancelar
+   * URL to return after cancel
    */
   returnUrl: string;
 
   /**
-   * Conteúdo do formulário (campos)
+   * Form content (fields)
    */
   children:
     | ReactNode
@@ -55,7 +55,7 @@ interface FormBaseProps<T, R> {
 }
 
 /**
- * Componente base para formulários
+ * Base component for forms
  */
 function FormBase<T extends Record<string, any>, R>({
   title,
@@ -72,7 +72,7 @@ function FormBase<T extends Record<string, any>, R>({
   const [error, setError] = useState<string | null>(null);
   const [originalData, setOriginalData] = useState<T | null>(null);
 
-  // Configuração do formulário
+  // Form configuration
   const form = useForm<R>({
     initialValues,
     validate,
@@ -82,21 +82,21 @@ function FormBase<T extends Record<string, any>, R>({
 
       try {
         if (id && id !== "novo") {
-          // Atualiza o registro existente
+          // Update existing record
           await service.update(id, values);
           alert("Registro atualizado com sucesso!");
-          navigate(returnUrl);
+          navigate({ to: returnUrl });
         } else {
-          // Cria um novo registro
+          // Create new record
           await service.create(values);
           alert("Registro criado com sucesso!");
-          navigate(returnUrl);
+          navigate({ to: returnUrl });
         }
 
         if (onSave) {
           onSave();
         } else {
-          navigate(returnUrl);
+          navigate({ to: returnUrl });
         }
 
         return true;
@@ -118,7 +118,7 @@ function FormBase<T extends Record<string, any>, R>({
     },
   });
 
-  // Carrega os dados do registro para edição
+  // Load record data for editing
   useEffect(() => {
     const fetchData = async () => {
       if (id && id !== "novo") {
@@ -128,10 +128,10 @@ function FormBase<T extends Record<string, any>, R>({
           const data = await service.getById(id);
           setOriginalData(data);
 
-          // Atualiza o formulário com os dados do registro
+          // Update form with record data
           const formValues = {} as R;
 
-          // Copia apenas as propriedades que existem em initialValues
+          // Copy only properties that exist in initialValues
           Object.keys(initialValues).forEach((key) => {
             if (data.hasOwnProperty(key)) {
               (formValues as any)[key] = data[key];
@@ -151,12 +151,12 @@ function FormBase<T extends Record<string, any>, R>({
     fetchData();
   }, [id, service, initialValues, form.setMultipleValues]);
 
-  // Função para cancelar
+  // Function to cancel
   const handleCancel = () => {
-    navigate(returnUrl);
+    navigate({ to: returnUrl });
   };
 
-  // Conteúdo do formulário (função ou elemento)
+  // Form content (function or element)
   const formContent =
     typeof children === "function"
       ? children({
@@ -169,7 +169,7 @@ function FormBase<T extends Record<string, any>, R>({
         })
       : children;
 
-  // Renderização do componente
+  // Component rendering
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="bg-white shadow-md rounded-lg p-6">
@@ -186,24 +186,24 @@ function FormBase<T extends Record<string, any>, R>({
           </button>
         </div>
 
-        {/* Mensagem de erro */}
+        {/* Error message */}
         {error && (
           <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6">
             <p>{error}</p>
           </div>
         )}
 
-        {/* Formulário */}
+        {/* Form */}
         {loading && !form.values ? (
           <div className="text-center py-8">
             <p className="text-gray-500">Carregando...</p>
           </div>
         ) : (
           <form onSubmit={form.handleSubmit} className="space-y-4">
-            {/* Conteúdo do formulário */}
+            {/* Form content */}
             {formContent}
 
-            {/* Botões do formulário */}
+            {/* Form buttons */}
             <div className="flex justify-end space-x-2 pt-4 border-t border-gray-200">
               <button
                 type="button"
