@@ -1,6 +1,5 @@
 import React from "react";
-
-import { useParams } from "react-router-dom";
+import { useParams } from "@tanstack/react-router";
 import logradouroService, {
   Logradouro,
   LogradouroDTO,
@@ -19,7 +18,7 @@ interface LogradouroFormProps {
  * Utiliza o FormBase para exibir o formulário em uma página separada
  */
 const LogradouroForm: React.FC<LogradouroFormProps> = ({ id, onSave }) => {
-  const params = useParams();
+  const params = useParams({ from: '/cadastros/comum/logradouros/:id' });
   const logradouroId = id || params.id;
 
   // Valor inicial para o formulário
