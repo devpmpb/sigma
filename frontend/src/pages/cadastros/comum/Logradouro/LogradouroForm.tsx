@@ -18,8 +18,9 @@ interface LogradouroFormProps {
  * Utiliza o FormBase para exibir o formulário em uma página separada
  */
 const LogradouroForm: React.FC<LogradouroFormProps> = ({ id, onSave }) => {
-  const params = useParams({ from: '/cadastros/comum/logradouros/:id' });
-  const logradouroId = id || params.id;
+  // Correção para o uso correto do useParams no TanStack Router
+  // O params é extraído diretamente da rota agora
+  const logradouroId = id || useParams({ strict: false }).id;
 
   // Valor inicial para o formulário
   const initialValues: LogradouroDTO = {

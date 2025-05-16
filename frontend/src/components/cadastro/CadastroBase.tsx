@@ -81,7 +81,7 @@ function CadastroBase<T extends Record<string, any>, R>({
 }: CadastroBaseProps<T, R>) {
   const [termoBusca, setTermoBusca] = useState("");
   const navigate = useNavigate();
-  const params = useParams();
+  const params = useParams({ strict: false });
 
   // Permission check
   const { hasPermission } = usePermissions();

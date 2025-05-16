@@ -6,7 +6,6 @@ import React, {
   ReactNode,
 } from "react";
 import { User } from "../types";
-import { router } from "../router";
 
 interface AuthContextType {
   user: User | null;
@@ -125,7 +124,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const logout = () => {
     setUser(null);
     localStorage.removeItem("user");
-    router.navigate({ to: '/login' });
+    // Navegação sem depender do router diretamente
+    window.location.href = '/login';
   };
 
   return (

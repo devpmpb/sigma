@@ -1,5 +1,5 @@
 import React from "react";
-import { useLocation } from "react-router-dom";
+import { useRouter } from "@tanstack/react-router";
 import { ArrowUp, ArrowDown, BarChart } from "lucide-react";
 
 interface MovimentoTemplateProps {
@@ -13,7 +13,8 @@ const MovimentoTemplate: React.FC<MovimentoTemplateProps> = ({
   sector,
   movimentoType,
 }) => {
-  const location = useLocation();
+  const router = useRouter();
+  const pathname = router.state.location.pathname;
 
   return (
     <div className="p-4">
@@ -87,7 +88,7 @@ const MovimentoTemplate: React.FC<MovimentoTemplateProps> = ({
 
         <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
           <p className="text-gray-600">
-            Caminho atual: <code>{location.pathname}</code>
+            Caminho atual: <code>{pathname}</code>
           </p>
         </div>
       </div>

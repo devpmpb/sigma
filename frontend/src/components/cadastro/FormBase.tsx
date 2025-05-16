@@ -85,12 +85,10 @@ function FormBase<T extends Record<string, any>, R>({
           // Update existing record
           await service.update(id, values);
           alert("Registro atualizado com sucesso!");
-          navigate({ to: returnUrl });
         } else {
           // Create new record
           await service.create(values);
           alert("Registro criado com sucesso!");
-          navigate({ to: returnUrl });
         }
 
         if (onSave) {

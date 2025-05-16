@@ -347,7 +347,7 @@ export const router = createRouter({
     permissions: undefined!,
   },
   defaultPreload: 'intent',
-  // This is optional, but recommended for single-page applications
+  // Este é opcional, mas recomendado para aplicações de página única
   defaultErrorComponent: ({ error }) => {
     console.error(error);
     return <div>Erro: {error.message || 'Ocorreu um erro desconhecido'}</div>;
@@ -366,7 +366,6 @@ export function RouterProvider() {
   const auth = useAuth();
   const permissions = usePermissions();
   
-  // Use a versão correta do RouterProvider
   return (
     <TanStackRouterProvider 
       router={router} 
