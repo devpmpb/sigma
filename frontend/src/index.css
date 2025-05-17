@@ -98,3 +98,11 @@ body {
 .status-badge-info {
   @apply bg-blue-100 text-blue-800;
 }
+
+.link-active {
+  @apply bg-gray-700 border-l-4 border-blue-500;
+}
+
+.dropdown-link-active {
+  @apply bg-blue-50 text-blue-600;
+}

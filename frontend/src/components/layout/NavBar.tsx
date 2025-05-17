@@ -71,6 +71,20 @@ const Navbar: React.FC = () => {
     }));
   };
 
+  // Função auxiliar para verificar se um link está ativo
+  const isLinkActive = (path: string) => {
+    const currentPath = router.state.location.pathname;
+  
+    // Tratamento especial para a rota raiz
+    if (path === '/') {
+      return currentPath === '/';
+    }
+    
+    // Para outras rotas
+    return currentPath === path || 
+          (path !== '/' && currentPath.startsWith(`${path}/`));;
+  };
+
   // Renders a menu group
   const renderMenuGroup = (group: MenuGroup, closeMenu: () => void) => (
     <div
@@ -86,9 +100,10 @@ const Navbar: React.FC = () => {
         <Link
           key={item.id}
           to={item.path}
-          className={({ isActive }) =>
+          // Usando a função auxiliar em vez de depender do prop isActive
+          className={
             `block px-4 py-2 text-sm hover:bg-gray-100 ${
-              isActive ? "bg-blue-50 text-blue-600" : "text-gray-700"
+              isLinkActive(item.path) ? "bg-blue-50 text-blue-600" : "text-gray-700"
             }`
           }
           onClick={closeMenu}
@@ -139,9 +154,9 @@ const Navbar: React.FC = () => {
                         <Link
                           key={item.id}
                           to={item.path}
-                          className={({ isActive }) =>
+                          className={
                             `block px-4 py-2 text-sm ${
-                              isActive ? "text-blue-600" : "text-gray-700"
+                              isLinkActive(item.path) ? "text-blue-600" : "text-gray-700"
                             }`
                           }
                           onClick={() => setIsMobileMenuOpen(false)}
@@ -192,9 +207,9 @@ const Navbar: React.FC = () => {
                         <Link
                           key={item.id}
                           to={item.path}
-                          className={({ isActive }) =>
+                          className={
                             `block px-4 py-2 text-sm ${
-                              isActive ? "text-blue-600" : "text-gray-700"
+                              isLinkActive(item.path) ? "text-blue-600" : "text-gray-700"
                             }`
                           }
                           onClick={() => setIsMobileMenuOpen(false)}
