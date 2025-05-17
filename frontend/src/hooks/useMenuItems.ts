@@ -3,8 +3,6 @@ import { menuItems as sidebarMenuItems } from "../config/menuConfig";
 import {
   cadastrosMenu,
   movimentosMenu,
-  MenuGroup,
-  SubMenuItem,
 } from "../config/menuStructure";
 import usePermissions from "./usePermissions";
 

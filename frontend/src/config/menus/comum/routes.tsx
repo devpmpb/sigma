@@ -1,77 +1,59 @@
-import { RouteObject } from "react-router-dom";
-import ProtectedRoute from "../../../components/ProtectedRoute";
-import { lazyLoad } from "../../../utils/lazyLoad";
+import { lazy } from "react";
 
 // Usando lazy loading para componentes
-const Bairro = lazyLoad(
-  () => import("../../../pages/cadastros/comum/Bairro")
-);
-const Logradouros = lazyLoad(
-  () => import("../../../pages/cadastros/comum/logradouro/Logradouros")
-);
-const LogradouroForm = lazyLoad(
-  () => import("../../../pages/cadastros/comum/Logradouro/LogradouroForm")
-);
-const MovimentoComum1 = lazyLoad(
-  () => import("../../../pages/movimentos/comum/Comum")
-);
-const MovimentoComum2 = lazyLoad(
-  () => import("../../../pages/movimentos/comum/Comum2")
-);
-const MovimentoComum3 = lazyLoad(
-  () => import("../../../pages/movimentos/comum/Comum3")
-);
+const Bairro = lazy(() => import("../../../pages/cadastros/comum/Bairro"));
+const Logradouros = lazy(() => import("../../../pages/cadastros/comum/logradouro/Logradouros"));
+const LogradouroForm = lazy(() => import("../../../pages/cadastros/comum/Logradouro/LogradouroForm"));
+const MovimentoComum1 = lazy(() => import("../../../pages/movimentos/comum/Comum"));
+const MovimentoComum2 = lazy(() => import("../../../pages/movimentos/comum/Comum2"));
+const MovimentoComum3 = lazy(() => import("../../../pages/movimentos/comum/Comum3"));
 
-// Rotas para módulo comum
-export const comunRoutes: RouteObject[] = [
-  // Cadastros
+// Exportamos os componentes para compatibilidade com código existente
+export const comunComponents = {
+  Bairro,
+  Logradouros,
+  LogradouroForm,
+  MovimentoComum1,
+  MovimentoComum2,
+  MovimentoComum3,
+};
+
+// Exportamos as configurações das rotas para compatibilidade
+export const comunRouteConfig = [
   {
-    path: "cadastros/comum/bairros",
-    element: (
-      <ProtectedRoute requiredModule="comum" requiredAction="view">
-        <Bairro />
-      </ProtectedRoute>
-    ),
+    path: "/cadastros/comum/bairros",
+    component: Bairro,
+    module: "comum",
+    action: "view"
   },
   {
-    path: "cadastros/comum/logradouros",
-    element: (
-      <ProtectedRoute requiredModule="comum" requiredAction="view">
-        <Logradouros />
-      </ProtectedRoute>
-    ),
+    path: "/cadastros/comum/logradouros",
+    component: Logradouros,
+    module: "comum",
+    action: "view"
   },
   {
-    path: "cadastros/comum/logradouros/:id",
-    element: (
-      <ProtectedRoute requiredModule="comum" requiredAction="view">
-        <LogradouroForm onSave={() => null} />
-      </ProtectedRoute>
-    ),
-  },
-  // Movimentos
-  {
-    path: "movimentos/comum/movimento1",
-    element: (
-      <ProtectedRoute requiredModule="comum" requiredAction="view">
-        <MovimentoComum1 />
-      </ProtectedRoute>
-    ),
+    path: "/cadastros/comum/logradouros/:id",
+    component: LogradouroForm,
+    module: "comum",
+    action: "view"
   },
   {
-    path: "movimentos/comum/movimento2",
-    element: (
-      <ProtectedRoute requiredModule="comum" requiredAction="view">
-        <MovimentoComum2 />
-      </ProtectedRoute>
-    ),
+    path: "/movimentos/comum/movimento1",
+    component: MovimentoComum1,
+    module: "comum",
+    action: "view"
   },
   {
-    path: "movimentos/comum/movimento3",
-    element: (
-      <ProtectedRoute requiredModule="comum" requiredAction="view">
-        <MovimentoComum3 />
-      </ProtectedRoute>
-    ),
+    path: "/movimentos/comum/movimento2",
+    component: MovimentoComum2,
+    module: "comum",
+    action: "view"
   },
+  {
+    path: "/movimentos/comum/movimento3",
+    component: MovimentoComum3,
+    module: "comum",
+    action: "view"
+  }
 ];

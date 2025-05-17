@@ -1,55 +1,43 @@
-import { RouteObject } from "react-router-dom";
-import ProtectedRoute from "../../../components/ProtectedRoute";
-import { lazyLoad } from "../../../utils/lazyLoad";
+import { lazy } from "react";
 
 // Usando lazy loading para componentes
-const TipoVeiculo = lazyLoad(
-  () => import("../../../pages/cadastros/obras/TipoVeiculo")
-);
-const MovimentoObras1 = lazyLoad(
-  () => import("../../../pages/movimentos/obras/Obras")
-);
-const MovimentoObras2 = lazyLoad(
-  () => import("../../../pages/movimentos/obras/Obras2")
-);
-const MovimentoObras3 = lazyLoad(
-  () => import("../../../pages/movimentos/obras/Obras3")
-);
+const TipoVeiculo = lazy(() => import("../../../pages/cadastros/obras/TipoVeiculo"));
+const MovimentoObras1 = lazy(() => import("../../../pages/movimentos/obras/Obras"));
+const MovimentoObras2 = lazy(() => import("../../../pages/movimentos/obras/Obras2"));
+const MovimentoObras3 = lazy(() => import("../../../pages/movimentos/obras/Obras3"));
 
-// Rotas para obras
-export const obrasRoutes: RouteObject[] = [
-  // Rotas de Cadastros - Obras
+// Exportamos os componentes para compatibilidade com código existente
+export const obrasComponents = {
+  TipoVeiculo,
+  MovimentoObras1,
+  MovimentoObras2,
+  MovimentoObras3,
+};
+
+// Exportamos as configurações das rotas para compatibilidade
+export const obrasRouteConfig = [
   {
-    path: "cadastros/obras/tipoVeiculo",
-    element: (
-      <ProtectedRoute requiredModule="obras" requiredAction="view">
-        <TipoVeiculo />
-      </ProtectedRoute>
-    ),
-  },
-  // Rotas de Movimentos - Obras
-  {
-    path: "movimentos/obras/movimento1",
-    element: (
-      <ProtectedRoute requiredModule="obras" requiredAction="view">
-        <MovimentoObras1 />
-      </ProtectedRoute>
-    ),
+    path: "/cadastros/obras/tipoVeiculo",
+    component: TipoVeiculo,
+    module: "obras",
+    action: "view"
   },
   {
-    path: "movimentos/obras/movimento2",
-    element: (
-      <ProtectedRoute requiredModule="obras" requiredAction="view">
-        <MovimentoObras2 />
-      </ProtectedRoute>
-    ),
+    path: "/movimentos/obras/movimento1",
+    component: MovimentoObras1,
+    module: "obras",
+    action: "view"
   },
   {
-    path: "movimentos/obras/movimento3",
-    element: (
-      <ProtectedRoute requiredModule="obras" requiredAction="view">
-        <MovimentoObras3 />
-      </ProtectedRoute>
-    ),
+    path: "/movimentos/obras/movimento2",
+    component: MovimentoObras2,
+    module: "obras",
+    action: "view"
   },
+  {
+    path: "/movimentos/obras/movimento3",
+    component: MovimentoObras3,
+    module: "obras",
+    action: "view"
+  }
 ];

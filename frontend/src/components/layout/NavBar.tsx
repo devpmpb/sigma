@@ -7,14 +7,17 @@ import {
   ChevronDown,
   ChevronRight,
 } from "lucide-react";
-import { NavLink } from "react-router-dom";
+import { Link, useRouter } from "@tanstack/react-router";
 import useClickOutside from "../../hooks/useClickOutside";
 import { useAuth } from "../../context/AuthContext";
 import { useUI } from "../../context/UiContext";
-import { MenuGroup } from "../../config/menuStructure";
+
 import useMenuItems from "../../hooks/useMenuItems";
 
+import { MenuGroup } from "../../types";
+
 const Navbar: React.FC = () => {
+  const router = useRouter();
   const { user } = useAuth();
   const {
     isSidebarOpen,
@@ -33,21 +36,21 @@ const Navbar: React.FC = () => {
     showMovimentosMenu,
   } = useMenuItems();
 
-  // Estados para os submenus
+  // States for submenus
   const [hoveredGroup, setHoveredGroup] = useState<string | null>(null);
 
-  // Estado para menu mobile
+  // State for mobile menu
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [expandedMobileGroups, setExpandedMobileGroups] = useState<{
     [key: string]: boolean;
   }>({});
 
-  // Refs para detectar cliques fora dos dropdowns
+  // Refs to detect clicks outside dropdowns
   const cadastrosRef = useRef<HTMLDivElement>(null);
   const movimentosRef = useRef<HTMLDivElement>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
 
-  // Hooks para fechar dropdowns quando clicar fora
+  // Hooks to close dropdowns when clicking outside
   useClickOutside(cadastrosRef, () => {
     if (isCadastrosDropdownOpen) closeAllDropdowns();
   });
@@ -60,7 +63,7 @@ const Navbar: React.FC = () => {
     if (isMobileMenuOpen) setIsMobileMenuOpen(false);
   });
 
-  // Funções para menu mobile
+  // Functions for mobile menu
   const toggleMobileGroup = (groupId: string) => {
     setExpandedMobileGroups((prev) => ({
       ...prev,
@@ -68,7 +71,21 @@ const Navbar: React.FC = () => {
     }));
   };
 
-  // Renderiza um grupo de menu
+  // Função auxiliar para verificar se um link está ativo
+  const isLinkActive = (path: string) => {
+    const currentPath = router.state.location.pathname;
+  
+    // Tratamento especial para a rota raiz
+    if (path === '/') {
+      return currentPath === '/';
+    }
+    
+    // Para outras rotas
+    return currentPath === path || 
+          (path !== '/' && currentPath.startsWith(`${path}/`));;
+  };
+
+  // Renders a menu group
   const renderMenuGroup = (group: MenuGroup, closeMenu: () => void) => (
     <div
       key={group.id}
@@ -80,23 +97,24 @@ const Navbar: React.FC = () => {
         {group.title}
       </div>
       {group.items.map((item) => (
-        <NavLink
+        <Link
           key={item.id}
           to={item.path}
-          className={({ isActive }) =>
+          // Usando a função auxiliar em vez de depender do prop isActive
+          className={
             `block px-4 py-2 text-sm hover:bg-gray-100 ${
-              isActive ? "bg-blue-50 text-blue-600" : "text-gray-700"
+              isLinkActive(item.path) ? "bg-blue-50 text-blue-600" : "text-gray-700"
             }`
           }
           onClick={closeMenu}
         >
           {item.title}
-        </NavLink>
+        </Link>
       ))}
     </div>
   );
 
-  // Componente de menu mobile
+  // Mobile menu component
   const MobileMenu = () => (
     <div
       ref={mobileMenuRef}
@@ -133,18 +151,18 @@ const Navbar: React.FC = () => {
                   {expandedMobileGroups[`cadastros-${group.id}`] && (
                     <div className="pl-4">
                       {group.items.map((item) => (
-                        <NavLink
+                        <Link
                           key={item.id}
                           to={item.path}
-                          className={({ isActive }) =>
+                          className={
                             `block px-4 py-2 text-sm ${
-                              isActive ? "text-blue-600" : "text-gray-700"
+                              isLinkActive(item.path) ? "text-blue-600" : "text-gray-700"
                             }`
                           }
                           onClick={() => setIsMobileMenuOpen(false)}
                         >
                           {item.title}
-                        </NavLink>
+                        </Link>
                       ))}
                     </div>
                   )}
@@ -186,18 +204,18 @@ const Navbar: React.FC = () => {
                   {expandedMobileGroups[`movimentos-${group.id}`] && (
                     <div className="pl-4">
                       {group.items.map((item) => (
-                        <NavLink
+                        <Link
                           key={item.id}
                           to={item.path}
-                          className={({ isActive }) =>
+                          className={
                             `block px-4 py-2 text-sm ${
-                              isActive ? "text-blue-600" : "text-gray-700"
+                              isLinkActive(item.path) ? "text-blue-600" : "text-gray-700"
                             }`
                           }
                           onClick={() => setIsMobileMenuOpen(false)}
                         >
                           {item.title}
-                        </NavLink>
+                        </Link>
                       ))}
                     </div>
                   )}
@@ -213,7 +231,7 @@ const Navbar: React.FC = () => {
   return (
     <div className="navbar h-16 fixed top-0 left-0 right-0 bg-white border-b border-gray-200 px-4">
       <div className="flex items-center h-full">
-        {/* Botão para toggle do menu lateral */}
+        {/* Button to toggle sidebar */}
         <button
           onClick={toggleSidebar}
           className="p-2 mr-2 rounded-md hover:bg-gray-100 transition-colors"
@@ -228,10 +246,10 @@ const Navbar: React.FC = () => {
           )}
         </button>
 
-        {/* Logo ou nome do sistema */}
+        {/* Logo or system name */}
         <div className="mr-8 font-bold text-lg text-gray-800">SIGMA</div>
 
-        {/* Menus dropdown para desktop */}
+        {/* Dropdown menus for desktop */}
         <div className="hidden md:flex space-x-2">
           {/* Dropdown Cadastros */}
           {showCadastrosMenu && (
@@ -280,7 +298,7 @@ const Navbar: React.FC = () => {
           )}
         </div>
 
-        {/* Botão para menu mobile */}
+        {/* Button for mobile menu */}
         <button
           className="md:hidden p-2 rounded-md hover:bg-gray-100 ml-auto"
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -288,7 +306,7 @@ const Navbar: React.FC = () => {
           <MenuIcon size={20} />
         </button>
 
-        {/* Barra de pesquisa - visível apenas em desktop */}
+        {/* Search bar - visible only on desktop */}
         <div className="hidden md:block relative ml-auto">
           <input
             type="text"
@@ -300,13 +318,13 @@ const Navbar: React.FC = () => {
           </div>
         </div>
 
-        {/* Notificações */}
+        {/* Notifications */}
         <button className="p-2 relative rounded-full hover:bg-gray-100 ml-2">
           <Bell size={20} />
           <span className="absolute top-1 right-1 bg-red-500 rounded-full w-2 h-2"></span>
         </button>
 
-        {/* Perfil de usuário */}
+        {/* User profile */}
         <div className="flex items-center ml-4">
           <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium">
             {user?.name?.charAt(0) || "U"}
@@ -317,7 +335,7 @@ const Navbar: React.FC = () => {
         </div>
       </div>
 
-      {/* Menu mobile */}
+      {/* Mobile menu */}
       {isMobileMenuOpen && <MobileMenu />}
     </div>
   );

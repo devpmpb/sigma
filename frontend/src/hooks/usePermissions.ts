@@ -1,7 +1,7 @@
 import { useAuth } from "../context/AuthContext";
 import { ModuleType, ActionType } from "../types";
 
-const usePermissions = () => {
+export const usePermissions = () => {
   const { user } = useAuth();
 
   // Verifica se o usuário tem permissão específica

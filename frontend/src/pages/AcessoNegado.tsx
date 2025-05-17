@@ -1,6 +1,7 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "@tanstack/react-router";
 import { Shield } from "lucide-react";
+import { routes } from "../router";
 
 const AcessoNegado: React.FC = () => {
   const navigate = useNavigate();
@@ -19,13 +20,13 @@ const AcessoNegado: React.FC = () => {
       </p>
       <div className="flex flex-col sm:flex-row gap-4">
         <button
-          onClick={() => navigate("/")}
+          onClick={() => navigate({ to: routes.index.path })}
           className="px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           Voltar para o Início
         </button>
         <button
-          onClick={() => navigate(-1)}
+          onClick={() => navigate({ to: -1 })} // Go back one
           className="px-6 py-3 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400"
         >
           Voltar para a Página Anterior

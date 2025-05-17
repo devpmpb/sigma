@@ -124,6 +124,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const logout = () => {
     setUser(null);
     localStorage.removeItem("user");
+    // Navegação sem depender do router diretamente
+    window.location.href = '/login';
   };
 
   return (
