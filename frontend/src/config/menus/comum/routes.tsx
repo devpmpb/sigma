@@ -4,12 +4,16 @@ import { lazy } from "react";
 const Bairro = lazy(() => import("../../../pages/cadastros/comum/Bairro"));
 const Logradouros = lazy(() => import("../../../pages/cadastros/comum/logradouro/Logradouros"));
 const LogradouroForm = lazy(() => import("../../../pages/cadastros/comum/Logradouro/LogradouroForm"));
+const Pessoa = lazy(() => import("../../../pages/cadastros/comum/pessoa/Pessoas"));
+const PessoaForm = lazy(() => import("../../../pages/cadastros/comum/pessoa/PessoaForm"));
 const MovimentoComum1 = lazy(() => import("../../../pages/movimentos/comum/Comum"));
 const MovimentoComum2 = lazy(() => import("../../../pages/movimentos/comum/Comum2"));
 const MovimentoComum3 = lazy(() => import("../../../pages/movimentos/comum/Comum3"));
 
 // Exportamos os componentes para compatibilidade com código existente
 export const comunComponents = {
+  Pessoa,
+  PessoaForm,
   Bairro,
   Logradouros,
   LogradouroForm,
@@ -20,6 +24,18 @@ export const comunComponents = {
 
 // Exportamos as configurações das rotas para compatibilidade
 export const comunRouteConfig = [
+  {
+    path: "/cadastros/comum/pessoas",
+    component: Pessoa,
+    module: "comum",
+    action: "view"
+  },
+  {
+    path: "/cadastros/comum/pessoas/:id",
+    component: PessoaForm,
+    module: "comum",
+    action: "view"
+  },
   {
     path: "/cadastros/comum/bairros",
     component: Bairro,

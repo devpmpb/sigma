@@ -2,6 +2,9 @@
  * Utilitários para formatação de dados
  */
 
+// Importação do enum TipoPessoa para uso no formatarCPFCNPJ
+import { TipoPessoa } from "../services/common/pessoaService";
+
 /**
  * Formata uma data para exibição no formato brasileiro
  * @param dataString - String com a data a ser formatada
@@ -85,6 +88,20 @@ export const formatarCNPJ = (cnpj: string): string => {
     /(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/,
     "$1.$2.$3/$4-$5"
   );
+};
+
+/**
+ * Formata um CPF ou CNPJ com base no tipo de pessoa
+ * @param cpfCnpj - CPF ou CNPJ a ser formatado
+ * @param tipo - Tipo de pessoa (FISICA ou JURIDICA)
+ * @returns String formatada do CPF ou CNPJ
+ */
+export const formatarCPFCNPJ = (cpfCnpj: string, tipo: TipoPessoa): string => {
+  if (!cpfCnpj) return "";
+  
+  return tipo === TipoPessoa.FISICA 
+    ? formatarCPF(cpfCnpj) 
+    : formatarCNPJ(cpfCnpj);
 };
 
 /**

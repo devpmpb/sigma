@@ -32,6 +32,8 @@ const MovimentoAgricultura3 = lazy(() => import('./pages/movimentos/agricultura/
 const Bairro = lazy(() => import('./pages/cadastros/comum/Bairro'));
 const Logradouros = lazy(() => import('./pages/cadastros/comum/logradouro/Logradouros'));
 const LogradouroForm = lazy(() => import('./pages/cadastros/comum/Logradouro/LogradouroForm'));
+const Pessoas = lazy(() => import("./pages/cadastros/comum/pessoa/Pessoas"));
+const PessoaForm = lazy(() => import("./pages/cadastros/comum/pessoa/PessoaForm"));
 const MovimentoComum1 = lazy(() => import('./pages/movimentos/comum/Comum'));
 const MovimentoComum2 = lazy(() => import('./pages/movimentos/comum/Comum2'));
 const MovimentoComum3 = lazy(() => import('./pages/movimentos/comum/Comum3'));
@@ -264,6 +266,32 @@ const logradouroFormRoute = createRoute({
   }),
 });
 
+
+const pessoasRoute = createRoute({
+  getParentRoute: () => layoutRoute,
+  path: '/cadastros/comum/pessoas',
+  component: Pessoas,
+  beforeLoad: ({ context }) => permissionGuard({ 
+    context, 
+    requiredModule: 'comum', 
+    requiredAction: 'view' 
+  }),
+});
+
+const pessoaFormRoute = createRoute({
+  getParentRoute: () => layoutRoute,
+  path: '/cadastros/comum/pessoas/$id',
+  component: ({ params }) => {
+    const { id } = params;
+    return <PessoaForm id={id} onSave={() => null} />;
+  },
+  beforeLoad: ({ context }) => permissionGuard({ 
+    context, 
+    requiredModule: 'comum', 
+    requiredAction: 'view' 
+  }),
+});
+
 const movimentoComum1Route = createRoute({
   getParentRoute: () => layoutRoute,
   path: '/movimentos/comum/movimento1',
@@ -329,6 +357,8 @@ const routeTree = rootRoute.addChildren([
     movimentoAgricultura2Route,
     movimentoAgricultura3Route,
     // Comum routes
+    pessoasRoute,
+    pessoaFormRoute,
     bairroRoute,
     logradourosRoute,
     logradouroFormRoute,

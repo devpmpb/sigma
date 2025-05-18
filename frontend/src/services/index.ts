@@ -4,6 +4,7 @@ export { default as apiClient } from "./apiConfig";
 // Serviços de cadastros comuns
 export { default as bairroService } from "./common/bairroService";
 export { default as logradouroService } from "./common/logradouroService";
+export { default as pessoaService } from './common/pessoaService';
 
 // Serviços específicos - Obras
 export { default as tipoVeiculoService } from "./obras/tipoVeiculoService";
@@ -23,3 +24,4 @@ export type {
   GrupoProduto,
   GrupoProdutoDTO,
 } from "./agricultura/grupoProdutoService";
+export * from './common/pessoaService';

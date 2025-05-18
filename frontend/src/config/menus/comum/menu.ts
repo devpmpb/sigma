@@ -7,6 +7,12 @@ export const cadastrosComunMenu: MenuGroup = {
   module: "comum",
   items: [
     {
+      id: "cadastro-pessoas",
+      title: "Pessoas",
+      path: "/cadastros/comum/pessoas",
+      module: "comum",
+    },
+    {
       id: "cadastro-bairros",
       title: "Bairros",
       path: "/cadastros/comum/bairros",

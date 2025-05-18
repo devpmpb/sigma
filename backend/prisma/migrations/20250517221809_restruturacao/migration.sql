@@ -4,6 +4,9 @@ CREATE TYPE "TipoEndereco" AS ENUM ('RESIDENCIAL', 'COMERCIAL', 'RURAL', 'CORRES
 -- CreateEnum
 CREATE TYPE "TipoLogradouro" AS ENUM ('RUA', 'AVENIDA', 'TRAVESSA', 'ALAMEDA', 'RODOVIA', 'LINHA', 'ESTRADA');
 
+-- CreateEnum
+CREATE TYPE "TipoPropriedade" AS ENUM ('RURAL', 'LOTE_URBANO', 'COMERCIAL', 'INDUSTRIAL');
+
 -- CreateTable
 CREATE TABLE "Bairro" (
     "id" SERIAL NOT NULL,
@@ -91,6 +94,7 @@ CREATE TABLE "Endereco" (
     "coordenadas" TEXT,
     "tipoEndereco" "TipoEndereco" NOT NULL,
     "principal" BOOLEAN NOT NULL DEFAULT false,
+    "propriedadeId" INTEGER,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -127,10 +131,13 @@ CREATE TABLE "AreaEfetiva" (
 CREATE TABLE "Propriedade" (
     "id" SERIAL NOT NULL,
     "nome" TEXT NOT NULL,
+    "tipoPropriedade" "TipoPropriedade" NOT NULL DEFAULT 'RURAL',
     "areaTotal" DECIMAL(10,2) NOT NULL,
     "localizacao" TEXT,
     "matricula" TEXT,
     "proprietarioId" INTEGER NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "Propriedade_pkey" PRIMARY KEY ("id")
 );
@@ -226,6 +233,9 @@ ALTER TABLE "Endereco" ADD CONSTRAINT "Endereco_bairroId_fkey" FOREIGN KEY ("bai
 
 -- AddForeignKey
 ALTER TABLE "Endereco" ADD CONSTRAINT "Endereco_areaRuralId_fkey" FOREIGN KEY ("areaRuralId") REFERENCES "AreaRural"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Endereco" ADD CONSTRAINT "Endereco_propriedadeId_fkey" FOREIGN KEY ("propriedadeId") REFERENCES "Propriedade"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Produtor" ADD CONSTRAINT "Produtor_id_fkey" FOREIGN KEY ("id") REFERENCES "Pessoa"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
