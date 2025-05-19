@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate, useSearch } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { useAuth } from "../context/AuthContext";
 
 const Login: React.FC = () => {
@@ -9,7 +9,6 @@ const Login: React.FC = () => {
 
   const { login, isLoading } = useAuth();
   const navigate = useNavigate();
-  const { from } = useSearch({ from: "/" });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,7 +23,7 @@ const Login: React.FC = () => {
       const success = await login(email, password);
 
       if (success) {
-        navigate({ to: from });
+        navigate({ to: "/" });
       } else {
         setError("Email ou senha inválidos");
       }

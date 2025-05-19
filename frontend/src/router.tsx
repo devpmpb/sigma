@@ -13,30 +13,10 @@ import Relatorios from './pages/Relatorios';
 import Dashboards from './pages/Dashboards';
 import Configuracoes from './pages/Configuracoes';
 
-// Lazy-loaded pages
-import { lazy } from 'react';
-
-// Obras pages
-const TipoVeiculo = lazy(() => import('./pages/cadastros/obras/TipoVeiculo'));
-const MovimentoObras1 = lazy(() => import('./pages/movimentos/obras/Obras'));
-const MovimentoObras2 = lazy(() => import('./pages/movimentos/obras/Obras2'));
-const MovimentoObras3 = lazy(() => import('./pages/movimentos/obras/Obras3'));
-
-// Agricultura pages
-const GrupoProduto = lazy(() => import('./pages/cadastros/agricultura/produto/GrupoProduto'));
-const MovimentoAgricultura1 = lazy(() => import('./pages/movimentos/agricultura/Agricultura'));
-const MovimentoAgricultura2 = lazy(() => import('./pages/movimentos/agricultura/Agricultura2'));
-const MovimentoAgricultura3 = lazy(() => import('./pages/movimentos/agricultura/Agricultura3'));
-
-// Comum pages
-const Bairro = lazy(() => import('./pages/cadastros/comum/Bairro'));
-const Logradouros = lazy(() => import('./pages/cadastros/comum/logradouro/Logradouros'));
-const LogradouroForm = lazy(() => import('./pages/cadastros/comum/Logradouro/LogradouroForm'));
-const Pessoas = lazy(() => import("./pages/cadastros/comum/pessoa/Pessoas"));
-const PessoaForm = lazy(() => import("./pages/cadastros/comum/pessoa/PessoaForm"));
-const MovimentoComum1 = lazy(() => import('./pages/movimentos/comum/Comum'));
-const MovimentoComum2 = lazy(() => import('./pages/movimentos/comum/Comum2'));
-const MovimentoComum3 = lazy(() => import('./pages/movimentos/comum/Comum3'));
+// Importar configurações de rotas dos módulos
+import { obrasRouteConfig, obrasComponents } from './config/menus/obras/routes';
+import { agriculturaRouteConfig, agriculturaComponents } from './config/menus/agricultura/routes';
+import { comunRouteConfig, comunComponents } from './config/menus/comum/routes';
 
 // Define route context type
 interface RouterContext {
@@ -77,6 +57,50 @@ function permissionGuard({
   // Otherwise redirect to access denied page
   return redirect({
     to: '/acesso-negado',
+  });
+}
+
+// Função auxiliar para criar rotas a partir da configuração
+function createRoutesFromConfig(configs, parentRoute) {
+  return configs.map(config => {
+    // Lidar com rotas com parâmetros dinâmicos
+    const hasParams = config.path.includes('/:');
+    
+    if (hasParams) {
+      // Extrair nome do parâmetro
+      const paramName = config.path.split('/:').pop();
+      // Converter path de '/:id' para '/$id'
+      const tanStackPath = config.path.replace('/:' + paramName, '/$' + paramName);
+      
+      return createRoute({
+        getParentRoute: () => parentRoute,
+        path: tanStackPath,
+        component: ({ params }) => {
+          const paramValue = params[paramName];
+          // Assumindo que componentes com parâmetros seguem o padrão de receber id e onSave
+          return React.createElement(config.component, { 
+            id: paramValue, 
+            onSave: () => null 
+          });
+        },
+        beforeLoad: ({ context }) => permissionGuard({ 
+          context, 
+          requiredModule: config.module, 
+          requiredAction: config.action 
+        }),
+      });
+    }
+    
+    return createRoute({
+      getParentRoute: () => parentRoute,
+      path: config.path,
+      component: config.component,
+      beforeLoad: ({ context }) => permissionGuard({ 
+        context, 
+        requiredModule: config.module, 
+        requiredAction: config.action 
+      }),
+    });
   });
 }
 
@@ -139,192 +163,6 @@ const configuracoesRoute = createRoute({
   component: Configuracoes,
 });
 
-// Obras routes
-const tipoVeiculoRoute = createRoute({
-  getParentRoute: () => layoutRoute,
-  path: '/cadastros/obras/tipoVeiculo',
-  component: TipoVeiculo,
-  beforeLoad: ({ context }) => permissionGuard({ 
-    context, 
-    requiredModule: 'obras', 
-    requiredAction: 'view' 
-  }),
-});
-
-const movimentoObras1Route = createRoute({
-  getParentRoute: () => layoutRoute,
-  path: '/movimentos/obras/movimento1',
-  component: MovimentoObras1,
-  beforeLoad: ({ context }) => permissionGuard({ 
-    context, 
-    requiredModule: 'obras', 
-    requiredAction: 'view' 
-  }),
-});
-
-const movimentoObras2Route = createRoute({
-  getParentRoute: () => layoutRoute,
-  path: '/movimentos/obras/movimento2',
-  component: MovimentoObras2,
-  beforeLoad: ({ context }) => permissionGuard({ 
-    context, 
-    requiredModule: 'obras', 
-    requiredAction: 'view' 
-  }),
-});
-
-const movimentoObras3Route = createRoute({
-  getParentRoute: () => layoutRoute,
-  path: '/movimentos/obras/movimento3',
-  component: MovimentoObras3,
-  beforeLoad: ({ context }) => permissionGuard({ 
-    context, 
-    requiredModule: 'obras', 
-    requiredAction: 'view' 
-  }),
-});
-
-// Agricultura routes
-const grupoProdutoRoute = createRoute({
-  getParentRoute: () => layoutRoute,
-  path: '/cadastros/agricultura/produto/grupoProduto',
-  component: GrupoProduto,
-  beforeLoad: ({ context }) => permissionGuard({ 
-    context, 
-    requiredModule: 'agricultura', 
-    requiredAction: 'view' 
-  }),
-});
-
-const movimentoAgricultura1Route = createRoute({
-  getParentRoute: () => layoutRoute,
-  path: '/movimentos/agricultura/movimento1',
-  component: MovimentoAgricultura1,
-  beforeLoad: ({ context }) => permissionGuard({ 
-    context, 
-    requiredModule: 'agricultura', 
-    requiredAction: 'view' 
-  }),
-});
-
-const movimentoAgricultura2Route = createRoute({
-  getParentRoute: () => layoutRoute,
-  path: '/movimentos/agricultura/movimento2',
-  component: MovimentoAgricultura2,
-  beforeLoad: ({ context }) => permissionGuard({ 
-    context, 
-    requiredModule: 'agricultura', 
-    requiredAction: 'view' 
-  }),
-});
-
-const movimentoAgricultura3Route = createRoute({
-  getParentRoute: () => layoutRoute,
-  path: '/movimentos/agricultura/movimento3',
-  component: MovimentoAgricultura3,
-  beforeLoad: ({ context }) => permissionGuard({ 
-    context, 
-    requiredModule: 'agricultura', 
-    requiredAction: 'view' 
-  }),
-});
-
-// Comum routes
-const bairroRoute = createRoute({
-  getParentRoute: () => layoutRoute,
-  path: '/cadastros/comum/bairros',
-  component: Bairro,
-  beforeLoad: ({ context }) => permissionGuard({ 
-    context, 
-    requiredModule: 'comum', 
-    requiredAction: 'view' 
-  }),
-});
-
-const logradourosRoute = createRoute({
-  getParentRoute: () => layoutRoute,
-  path: '/cadastros/comum/logradouros',
-  component: Logradouros,
-  beforeLoad: ({ context }) => permissionGuard({ 
-    context, 
-    requiredModule: 'comum', 
-    requiredAction: 'view' 
-  }),
-});
-
-const logradouroFormRoute = createRoute({
-  getParentRoute: () => layoutRoute,
-  path: '/cadastros/comum/logradouros/$id',
-  component: ({ params }) => {
-    const { id } = params;
-    return <LogradouroForm id={id} onSave={() => null} />;
-  },
-  beforeLoad: ({ context }) => permissionGuard({ 
-    context, 
-    requiredModule: 'comum', 
-    requiredAction: 'view' 
-  }),
-});
-
-
-const pessoasRoute = createRoute({
-  getParentRoute: () => layoutRoute,
-  path: '/cadastros/comum/pessoas',
-  component: Pessoas,
-  beforeLoad: ({ context }) => permissionGuard({ 
-    context, 
-    requiredModule: 'comum', 
-    requiredAction: 'view' 
-  }),
-});
-
-const pessoaFormRoute = createRoute({
-  getParentRoute: () => layoutRoute,
-  path: '/cadastros/comum/pessoas/$id',
-  component: ({ params }) => {
-    const { id } = params;
-    return <PessoaForm id={id} onSave={() => null} />;
-  },
-  beforeLoad: ({ context }) => permissionGuard({ 
-    context, 
-    requiredModule: 'comum', 
-    requiredAction: 'view' 
-  }),
-});
-
-const movimentoComum1Route = createRoute({
-  getParentRoute: () => layoutRoute,
-  path: '/movimentos/comum/movimento1',
-  component: MovimentoComum1,
-  beforeLoad: ({ context }) => permissionGuard({ 
-    context, 
-    requiredModule: 'comum', 
-    requiredAction: 'view' 
-  }),
-});
-
-const movimentoComum2Route = createRoute({
-  getParentRoute: () => layoutRoute,
-  path: '/movimentos/comum/movimento2',
-  component: MovimentoComum2,
-  beforeLoad: ({ context }) => permissionGuard({ 
-    context, 
-    requiredModule: 'comum', 
-    requiredAction: 'view' 
-  }),
-});
-
-const movimentoComum3Route = createRoute({
-  getParentRoute: () => layoutRoute,
-  path: '/movimentos/comum/movimento3',
-  component: MovimentoComum3,
-  beforeLoad: ({ context }) => permissionGuard({ 
-    context, 
-    requiredModule: 'comum', 
-    requiredAction: 'view' 
-  }),
-});
-
 // Catch-all route for 404
 const catchAllRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -336,6 +174,11 @@ const catchAllRoute = createRoute({
   },
 });
 
+// Criar rotas a partir das configurações
+const obrasRoutes = createRoutesFromConfig(obrasRouteConfig, layoutRoute);
+const agriculturaRoutes = createRoutesFromConfig(agriculturaRouteConfig, layoutRoute);
+const comunRoutes = createRoutesFromConfig(comunRouteConfig, layoutRoute);
+
 // Create the route tree
 const routeTree = rootRoute.addChildren([
   loginRoute,
@@ -346,25 +189,9 @@ const routeTree = rootRoute.addChildren([
     relatoriosRoute,
     dashboardsRoute,
     configuracoesRoute,
-    // Obras routes
-    tipoVeiculoRoute,
-    movimentoObras1Route,
-    movimentoObras2Route,
-    movimentoObras3Route,
-    // Agricultura routes
-    grupoProdutoRoute,
-    movimentoAgricultura1Route,
-    movimentoAgricultura2Route,
-    movimentoAgricultura3Route,
-    // Comum routes
-    pessoasRoute,
-    pessoaFormRoute,
-    bairroRoute,
-    logradourosRoute,
-    logradouroFormRoute,
-    movimentoComum1Route,
-    movimentoComum2Route,
-    movimentoComum3Route,
+    ...obrasRoutes,
+    ...agriculturaRoutes,
+    ...comunRoutes,
   ]),
   catchAllRoute,
 ]);
@@ -405,6 +232,7 @@ export function RouterProvider() {
 }
 
 // Export routes for type safety in links
+// Esta parte precisará ser modificada para um modelo diferente, mais adequado a este novo padrão
 export const routes = {
   root: rootRoute,
   login: loginRoute,
@@ -415,21 +243,6 @@ export const routes = {
   relatorios: relatoriosRoute,
   dashboards: dashboardsRoute,
   configuracoes: configuracoesRoute,
-  // Obras routes
-  tipoVeiculo: tipoVeiculoRoute,
-  movimentoObras1: movimentoObras1Route,
-  movimentoObras2: movimentoObras2Route,
-  movimentoObras3: movimentoObras3Route,
-  // Agricultura routes
-  grupoProduto: grupoProdutoRoute,
-  movimentoAgricultura1: movimentoAgricultura1Route,
-  movimentoAgricultura2: movimentoAgricultura2Route,
-  movimentoAgricultura3: movimentoAgricultura3Route,
-  // Comum routes
-  bairro: bairroRoute,
-  logradouros: logradourosRoute,
-  logradouroForm: logradouroFormRoute,
-  movimentoComum1: movimentoComum1Route,
-  movimentoComum2: movimentoComum2Route,
-  movimentoComum3: movimentoComum3Route,
+  // As rotas modulares estarão disponíveis de outra forma
+  // Poderia ser implementado um sistema de roteamento baseado em path para uso em links
 };

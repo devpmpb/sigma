@@ -58,14 +58,6 @@ const Logradouros: React.FC = () => {
       module="comum"
       FormComponent={LogradouroForm}
       searchPlaceholder="Buscar logradouros por descrição ou CEP..."
-      actionButtons={
-        <button
-          onClick={() => (window.location.href = "/cadastros/comum/bairros")}
-          className="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500"
-        >
-          Ver Bairros
-        </button>
-      }
     />
   );
 };
