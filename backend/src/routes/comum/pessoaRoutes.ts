@@ -5,7 +5,8 @@ const router = Router();
 
 // Rotas básicas
 router.get("/", pessoaController.findAll);
-router.get("/completo", pessoaController.findAllWithEnderecos);
+router.get("/enderecos", pessoaController.findAllWithEnderecos);
+router.get("/tipo/:tipo", pessoaController.findByTipo);
 router.get("/:id", pessoaController.findById);
 router.get("/:id/detalhes", pessoaController.findByIdWithDetails);
 router.get("/cpfCnpj/:cpfCnpj", pessoaController.findByCpfCnpj);
