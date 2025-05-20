@@ -7,6 +7,9 @@ CREATE TYPE "TipoLogradouro" AS ENUM ('RUA', 'AVENIDA', 'TRAVESSA', 'ALAMEDA', '
 -- CreateEnum
 CREATE TYPE "TipoPropriedade" AS ENUM ('RURAL', 'LOTE_URBANO', 'COMERCIAL', 'INDUSTRIAL');
 
+-- CreateEnum
+CREATE TYPE "TipoPessoa" AS ENUM ('FISICA', 'JURIDICA');
+
 -- CreateTable
 CREATE TABLE "Bairro" (
     "id" SERIAL NOT NULL,
@@ -68,10 +71,9 @@ CREATE TABLE "TipoVeiculo" (
 -- CreateTable
 CREATE TABLE "Pessoa" (
     "id" SERIAL NOT NULL,
+    "tipoPessoa" "TipoPessoa" NOT NULL,
     "nome" TEXT NOT NULL,
     "cpfCnpj" TEXT NOT NULL,
-    "rg" TEXT,
-    "dataNascimento" TIMESTAMP(3),
     "telefone" TEXT,
     "email" TEXT,
     "status" TEXT NOT NULL DEFAULT 'ativo',
@@ -79,6 +81,27 @@ CREATE TABLE "Pessoa" (
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "Pessoa_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "PessoaFisica" (
+    "id" INTEGER NOT NULL,
+    "rg" TEXT,
+    "dataNascimento" TIMESTAMP(3),
+
+    CONSTRAINT "PessoaFisica_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "PessoaJuridica" (
+    "id" INTEGER NOT NULL,
+    "nomeFantasia" TEXT,
+    "inscricaoEstadual" TEXT,
+    "inscricaoMunicipal" TEXT,
+    "dataFundacao" TIMESTAMP(3),
+    "representanteLegal" TEXT,
+
+    CONSTRAINT "PessoaJuridica_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -223,6 +246,12 @@ CREATE UNIQUE INDEX "Pessoa_cpfCnpj_key" ON "Pessoa"("cpfCnpj");
 ALTER TABLE "Logradouro" ADD CONSTRAINT "Logradouro_bairroId_fkey" FOREIGN KEY ("bairroId") REFERENCES "Bairro"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "PessoaFisica" ADD CONSTRAINT "PessoaFisica_id_fkey" FOREIGN KEY ("id") REFERENCES "Pessoa"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "PessoaJuridica" ADD CONSTRAINT "PessoaJuridica_id_fkey" FOREIGN KEY ("id") REFERENCES "Pessoa"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "Endereco" ADD CONSTRAINT "Endereco_pessoaId_fkey" FOREIGN KEY ("pessoaId") REFERENCES "Pessoa"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -238,7 +267,7 @@ ALTER TABLE "Endereco" ADD CONSTRAINT "Endereco_areaRuralId_fkey" FOREIGN KEY ("
 ALTER TABLE "Endereco" ADD CONSTRAINT "Endereco_propriedadeId_fkey" FOREIGN KEY ("propriedadeId") REFERENCES "Propriedade"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Produtor" ADD CONSTRAINT "Produtor_id_fkey" FOREIGN KEY ("id") REFERENCES "Pessoa"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Produtor" ADD CONSTRAINT "Produtor_id_fkey" FOREIGN KEY ("id") REFERENCES "PessoaFisica"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "AreaEfetiva" ADD CONSTRAINT "AreaEfetiva_id_fkey" FOREIGN KEY ("id") REFERENCES "Produtor"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -250,10 +279,10 @@ ALTER TABLE "Propriedade" ADD CONSTRAINT "Propriedade_proprietarioId_fkey" FOREI
 ALTER TABLE "Arrendamento" ADD CONSTRAINT "Arrendamento_propriedadeId_fkey" FOREIGN KEY ("propriedadeId") REFERENCES "Propriedade"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Arrendamento" ADD CONSTRAINT "Arrendamento_proprietarioId_fkey" FOREIGN KEY ("proprietarioId") REFERENCES "Pessoa"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Arrendamento" ADD CONSTRAINT "Arrendamento_proprietarioId_fkey" FOREIGN KEY ("proprietarioId") REFERENCES "PessoaFisica"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Arrendamento" ADD CONSTRAINT "Arrendamento_arrendatarioId_fkey" FOREIGN KEY ("arrendatarioId") REFERENCES "Pessoa"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Arrendamento" ADD CONSTRAINT "Arrendamento_arrendatarioId_fkey" FOREIGN KEY ("arrendatarioId") REFERENCES "PessoaFisica"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "SolicitacaoBeneficio" ADD CONSTRAINT "SolicitacaoBeneficio_produtorId_fkey" FOREIGN KEY ("produtorId") REFERENCES "Produtor"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

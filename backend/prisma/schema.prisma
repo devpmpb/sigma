@@ -31,6 +31,11 @@ enum TipoPropriedade {
   INDUSTRIAL
 }
 
+enum TipoPessoa {
+  FISICA
+  JURIDICA
+}
+
 model Bairro {
   id          Int          @id @default(autoincrement())
   nome        String       @unique
@@ -81,10 +86,9 @@ model TipoVeiculo {
 
 model Pessoa {
   id             Int           @id @default(autoincrement())
-  nome           String
+  tipoPessoa     TipoPessoa    
+  nome           String        // Razão social para PJ, nome completo para PF
   cpfCnpj        String        @unique
-  rg             String?
-  dataNascimento DateTime?
   telefone       String?
   email          String?
   status         String        @default("ativo")
@@ -93,10 +97,33 @@ model Pessoa {
   
   // Relacionamentos
   enderecos      Endereco[]
-  produtor       Produtor?
   propriedades   Propriedade[]
+  pessoaFisica   PessoaFisica?
+  pessoaJuridica PessoaJuridica?
+}
+
+model PessoaFisica {
+  id             Int       @id
+  pessoa         Pessoa    @relation(fields: [id], references: [id])
+  rg             String?
+  dataNascimento DateTime?
+  // Outros campos específicos de pessoa física
+  
+  // Relacionamentos específicos
+  produtor       Produtor?
   arrendamentos  Arrendamento[] @relation("arrendatario")
   arrendou       Arrendamento[] @relation("proprietario")
+}
+
+model PessoaJuridica {
+  id                 Int      @id
+  pessoa             Pessoa   @relation(fields: [id], references: [id])
+  nomeFantasia       String?
+  inscricaoEstadual  String?
+  inscricaoMunicipal String?
+  dataFundacao       DateTime?
+  representanteLegal String?
+  // Outros campos específicos de pessoa jurídica
 }
 
 model Endereco {
@@ -132,7 +159,7 @@ model Endereco {
 
 model Produtor {
   id                  Int                   @id
-  pessoa              Pessoa                @relation(fields: [id], references: [id])
+  pessoa              PessoaFisica                @relation(fields: [id], references: [id])
   inscricaoEstadual   String?
   dap                 String?
   tipoProdutor        String?
@@ -179,9 +206,9 @@ model Arrendamento {
   propriedadeId  Int
   propriedade    Propriedade @relation(fields: [propriedadeId], references: [id])
   proprietarioId Int
-  proprietario   Pessoa      @relation("proprietario", fields: [proprietarioId], references: [id])
+  proprietario   PessoaFisica      @relation("proprietario", fields: [proprietarioId], references: [id])
   arrendatarioId Int
-  arrendatario   Pessoa      @relation("arrendatario", fields: [arrendatarioId], references: [id])
+  arrendatario   PessoaFisica      @relation("arrendatario", fields: [arrendatarioId], references: [id])
   areaArrendada  Decimal     @db.Decimal(10, 2)
   dataInicio     DateTime
   dataFim        DateTime?
