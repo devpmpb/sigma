@@ -17,6 +17,7 @@ import Configuracoes from './pages/Configuracoes';
 import { obrasRouteConfig, obrasComponents } from './config/menus/obras/routes';
 import { agriculturaRouteConfig, agriculturaComponents } from './config/menus/agricultura/routes';
 import { comunRouteConfig, comunComponents } from './config/menus/comum/routes';
+import React from 'react';
 
 // Define route context type
 interface RouterContext {
@@ -76,10 +77,12 @@ function createRoutesFromConfig(configs, parentRoute) {
         getParentRoute: () => parentRoute,
         path: tanStackPath,
         component: ({ params }) => {
-          const paramValue = params[paramName];
-          // Assumindo que componentes com parâmetros seguem o padrão de receber id e onSave
+          const paramValue = params && params[paramName] ? params[paramName] : undefined;
+          
+          const finalId = paramValue === "novo" ? undefined : paramValue;
+          
           return React.createElement(config.component, { 
-            id: paramValue, 
+            id: finalId, 
             onSave: () => null 
           });
         },
