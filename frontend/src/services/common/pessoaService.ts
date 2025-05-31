@@ -9,7 +9,7 @@ export enum TipoPessoa {
 // Interface para o modelo de Pessoa vindo da API
 export interface Pessoa {
   id: number;
-  tipo: TipoPessoa;
+  tipoPessoa: TipoPessoa;
   nome: string;
   cpfCnpj: string;
   email: string;
@@ -22,7 +22,7 @@ export interface Pessoa {
 
 // DTO para criação/atualização de Pessoa
 export interface PessoaDTO {
-  tipo: TipoPessoa;
+  tipoPessoa: TipoPessoa;
   nome: string;
   cpfCnpj: string;
   email: string;

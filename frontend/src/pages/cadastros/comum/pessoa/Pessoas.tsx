@@ -21,14 +21,14 @@ const Pessoas: React.FC = () => {
     { title: "ID", key: "id", width: "80px" },
     {
       title: "Tipo",
-      key: "tipo",
+      key: "tipoPessoa",
       render: (pessoa) => (
         <span className={`px-2 py-1 rounded-full text-xs ${
-          pessoa.tipo === TipoPessoa.FISICA 
+          pessoa.tipoPessoa === TipoPessoa.FISICA 
             ? "bg-green-100 text-green-800" 
             : "bg-purple-100 text-purple-800"
         }`}>
-          {pessoa.tipo === TipoPessoa.FISICA ? "Física" : "Jurídica"}
+          {pessoa.tipoPessoa === TipoPessoa.FISICA ? "Física" : "Jurídica"}
         </span>
       ),
     },
@@ -36,7 +36,7 @@ const Pessoas: React.FC = () => {
     {
       title: "CPF/CNPJ",
       key: "cpfCnpj",
-      render: (pessoa) => formatarCPFCNPJ(pessoa.cpfCnpj, pessoa.tipo),
+      render: (pessoa) => formatarCPFCNPJ(pessoa.cpfCnpj, pessoa.tipoPessoa),
     },
     { title: "E-mail", key: "email" },
     {

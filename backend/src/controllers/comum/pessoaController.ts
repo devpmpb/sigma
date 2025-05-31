@@ -84,10 +84,12 @@ export const pessoaController = {
         ...dadosPessoa 
       });
         
+     
       if (!validationResult.isValid) {
         return res.status(400).json({
           erro: "Dados inválidos para criar pessoa",
           detalhes: validationResult.errors,
+          
         });
       }
       

@@ -64,8 +64,8 @@ export default class BaseApiService<T, R = Partial<T>> {
    * @returns Uma promessa com a entidade criada do tipo T
    */
   create = async (data: R): Promise<T> => {
-    const response: AxiosResponse<T> = await apiClient.post(this.baseUrl, data);
-    return response.data;
+      const response: AxiosResponse<T> = await apiClient.post(this.baseUrl, data);
+      return response.data;
   };
 
   /**

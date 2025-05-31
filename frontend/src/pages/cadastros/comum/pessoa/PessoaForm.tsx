@@ -24,7 +24,7 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
 
   // Valor inicial para o formulário
   const initialValues: PessoaDTO = {
-    tipo: TipoPessoa.FISICA,
+    tipoPessoa: TipoPessoa.FISICA,
     nome: "",
     cpfCnpj: "",
     email: "",
@@ -44,12 +44,12 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
     if (!values.cpfCnpj) {
       errors.cpfCnpj = "CPF/CNPJ é obrigatório";
     } else if (
-      values.tipo === TipoPessoa.FISICA &&
+      values.tipoPessoa === TipoPessoa.FISICA &&
       !/^\d{3}\.?\d{3}\.?\d{3}-?\d{2}$/.test(values.cpfCnpj.replace(/[^\d-]/g, ""))
     ) {
       errors.cpfCnpj = "CPF inválido. Formato esperado: 123.456.789-00";
     } else if (
-      values.tipo === TipoPessoa.JURIDICA &&
+      values.tipoPessoa === TipoPessoa.JURIDICA &&
       !/^\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}$/.test(values.cpfCnpj.replace(/[^\d\/-]/g, ""))
     ) {
       errors.cpfCnpj = "CNPJ inválido. Formato esperado: 12.345.678/0001-90";
@@ -59,7 +59,7 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
       errors.email = "Email inválido";
     }
 
-    if (values.tipo === TipoPessoa.FISICA && !values.dataNascimento) {
+    if (values.tipoPessoa === TipoPessoa.FISICA && !values.dataNascimento) {
       errors.dataNascimento = "Data de nascimento é obrigatória para pessoa física";
     }
 
@@ -82,7 +82,7 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
         const handleCpfCnpjBlur = (e: React.FocusEvent<HTMLInputElement>) => {
           const value = e.target.value;
           if (value) {
-            const formatted = values.tipo === TipoPessoa.FISICA
+            const formatted = values.tipoPessoa === TipoPessoa.FISICA
               ? formatarCPF(value)
               : formatarCNPJ(value);
             setValue('cpfCnpj', formatted);
@@ -107,25 +107,25 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
           }
           
           // Limpar data de nascimento se mudar para pessoa jurídica
-          if (values.tipo === TipoPessoa.JURIDICA && values.dataNascimento) {
+          if (values.tipoPessoa === TipoPessoa.JURIDICA && values.dataNascimento) {
             setValue('dataNascimento', '');
           }
-        }, [values.tipo]);
+        }, [values.tipoPessoa]);
 
         return (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
-                name="tipo"
+                name="tipoPessoa"
                 label="Tipo de Pessoa"
-                error={errors.tipo}
-                touched={touched.tipo}
+                error={errors.tipoPessoa}
+                touched={touched.tipoPessoa}
                 required
               >
                 <select
-                  id="tipo"
-                  name="tipo"
-                  value={values.tipo}
+                  id="tipoPessoa"
+                  name="tipoPessoa"
+                  value={values.tipoPessoa}
                   onChange={handleChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
@@ -136,12 +136,12 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
 
               <FormField
                 name="cpfCnpj"
-                label={values.tipo === TipoPessoa.FISICA ? "CPF" : "CNPJ"}
+                label={values.tipoPessoa === TipoPessoa.FISICA ? "CPF" : "CNPJ"}
                 error={errors.cpfCnpj}
                 touched={touched.cpfCnpj}
                 required
                 helpText={
-                  values.tipo === TipoPessoa.FISICA
+                  values.tipoPessoa === TipoPessoa.FISICA
                     ? "Formato: 123.456.789-00"
                     : "Formato: 12.345.678/0001-90"
                 }
@@ -155,16 +155,16 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
                   onBlur={handleCpfCnpjBlur}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder={
-                    values.tipo === TipoPessoa.FISICA ? "123.456.789-00" : "12.345.678/0001-90"
+                    values.tipoPessoa === TipoPessoa.FISICA ? "123.456.789-00" : "12.345.678/0001-90"
                   }
-                  maxLength={values.tipo === TipoPessoa.FISICA ? 14 : 18}
+                  maxLength={values.tipoPessoa === TipoPessoa.FISICA ? 14 : 18}
                 />
               </FormField>
             </div>
 
             <FormField
               name="nome"
-              label={values.tipo === TipoPessoa.FISICA ? "Nome Completo" : "Razão Social"}
+              label={values.tipoPessoa === TipoPessoa.FISICA ? "Nome Completo" : "Razão Social"}
               error={errors.nome}
               touched={touched.nome}
               required
@@ -176,7 +176,7 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
                 value={values.nome}
                 onChange={handleChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder={values.tipo === TipoPessoa.FISICA ? "Nome completo" : "Razão social"}
+                placeholder={values.tipoPessoa === TipoPessoa.FISICA ? "Nome completo" : "Razão social"}
               />
             </FormField>
 
@@ -219,13 +219,13 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
               </FormField>
             </div>
 
-            {values.tipo === TipoPessoa.FISICA && (
+            {values.tipoPessoa === TipoPessoa.FISICA && (
               <FormField
                 name="dataNascimento"
                 label="Data de Nascimento"
                 error={errors.dataNascimento}
                 touched={touched.dataNascimento}
-                required={values.tipo === TipoPessoa.FISICA}
+                required={values.tipoPessoa === TipoPessoa.FISICA}
               >
                 <input
                   type="date"
