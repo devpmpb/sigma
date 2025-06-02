@@ -32,23 +32,57 @@ const Pessoas: React.FC = () => {
         </span>
       ),
     },
-    { title: "Nome", key: "nome" },
+    { 
+      title: "Nome", 
+      key: "nome",
+      render: (pessoa) => (
+        <div>
+          <div className="font-medium">{pessoa.nome}</div>
+          {pessoa.tipoPessoa === TipoPessoa.JURIDICA && pessoa.pessoaJuridica?.nomeFantasia && (
+            <div className="text-sm text-gray-500">
+              {pessoa.pessoaJuridica.nomeFantasia}
+            </div>
+          )}
+        </div>
+      )
+    },
     {
       title: "CPF/CNPJ",
       key: "cpfCnpj",
       render: (pessoa) => formatarCPFCNPJ(pessoa.cpfCnpj, pessoa.tipoPessoa),
     },
-    { title: "E-mail", key: "email" },
+    { 
+      title: "E-mail", 
+      key: "email",
+      render: (pessoa) => pessoa.email || "-"
+    },
     {
       title: "Telefone",
       key: "telefone",
-      render: (pessoa) => formatarTelefone(pessoa.telefone),
+      render: (pessoa) => pessoa.telefone ? formatarTelefone(pessoa.telefone) : "-",
+    },
+    {
+      title: "Info Adicional",
+      key: "info",
+      render: (pessoa) => (
+        <div className="text-sm text-gray-600">
+          {pessoa.tipoPessoa === TipoPessoa.FISICA ? (
+            pessoa.pessoaFisica?.dataNascimento ? (
+              <div>Nasc: {formatarData(pessoa.pessoaFisica.dataNascimento, false)}</div>
+            ) : null
+          ) : (
+            pessoa.pessoaJuridica?.representanteLegal ? (
+              <div>Rep: {pessoa.pessoaJuridica.representanteLegal}</div>
+            ) : null
+          )}
+        </div>
+      ),
     },
     {
       title: "Status",
-      key: "ativo",
+      key: "status",
       render: (pessoa) => (
-        <StatusBadge ativo={pessoa.ativo} showToggle={false} />
+        <StatusBadge ativo={pessoa.status === "ativo"} showToggle={false} />
       ),
     },
     {

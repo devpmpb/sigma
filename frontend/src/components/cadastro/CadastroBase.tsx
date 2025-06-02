@@ -208,6 +208,7 @@ function CadastroBase<T extends Record<string, any>, R>({
       <FormComponent
         id={params.id !== "novo" ? params.id : undefined}
         onSave={() => {
+          console.log("baseUrl:", baseUrl);
           navigate({ to: baseUrl });
           fetchAll();
         }}

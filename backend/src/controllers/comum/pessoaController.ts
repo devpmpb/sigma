@@ -46,6 +46,19 @@ const validatePessoaUpdate = (data: any) => {
   };
 };
 
+// Função para converter strings de data para objetos Date
+const convertDateStrings = (data: any) => {
+  if (data.dataNascimento && typeof data.dataNascimento === 'string') {
+    data.dataNascimento = new Date(data.dataNascimento + 'T00:00:00.000Z');
+  }
+  
+  if (data.dataFundacao && typeof data.dataFundacao === 'string') {
+    data.dataFundacao = new Date(data.dataFundacao + 'T00:00:00.000Z');
+  }
+  
+  return data;
+};
+
 // Controlador com os métodos genéricos
 const genericController = createGenericController({
   modelName: "pessoa",
@@ -84,12 +97,10 @@ export const pessoaController = {
         ...dadosPessoa 
       });
         
-     
       if (!validationResult.isValid) {
         return res.status(400).json({
           erro: "Dados inválidos para criar pessoa",
           detalhes: validationResult.errors,
-          
         });
       }
       
@@ -117,33 +128,38 @@ export const pessoaController = {
         });
         
         // Criar detalhes específicos conforme o tipo
-        if (tipoPessoa === 'FISICA') {
+        if (tipoPessoa === 'FISICA' && pessoaFisica) {
+          // Converter datas antes de salvar
+          const dadosPF = convertDateStrings({ ...pessoaFisica });
+          
           await tx.pessoaFisica.create({
             data: {
               id: novaPessoa.id,
-              ...pessoaFisica
+              ...dadosPF
             }
           });
-        } else if (tipoPessoa === 'JURIDICA') {
+        } else if (tipoPessoa === 'JURIDICA' && pessoaJuridica) {
+          // Converter datas antes de salvar
+          const dadosPJ = convertDateStrings({ ...pessoaJuridica });
+          
           await tx.pessoaJuridica.create({
             data: {
               id: novaPessoa.id,
-              ...pessoaJuridica
+              ...dadosPJ
             }
           });
         }
         
-        return {
-          ...novaPessoa,
-          pessoaFisica: tipoPessoa === 'FISICA' ? pessoaFisica : null,
-          pessoaJuridica: tipoPessoa === 'JURIDICA' ? pessoaJuridica : null
-        };
+        return novaPessoa;
       });
       
       return res.status(201).json(result);
     } catch (error) {
       console.error("Erro ao criar pessoa:", error);
-      return res.status(500).json({ erro: "Erro ao criar pessoa" });
+      return res.status(500).json({ 
+        erro: "Erro ao criar pessoa",
+        detalhes: process.env.NODE_ENV === 'development' ? error : undefined
+      });
     }
   },
   
@@ -192,14 +208,20 @@ export const pessoaController = {
         
         // Atualizar dados específicos conforme o tipo
         if (pessoaExistente.tipoPessoa === 'FISICA' && pessoaFisica) {
+          // Converter datas antes de salvar
+          const dadosPF = convertDateStrings({ ...pessoaFisica });
+          
           await tx.pessoaFisica.update({
             where: { id: Number(id) },
-            data: pessoaFisica
+            data: dadosPF
           });
         } else if (pessoaExistente.tipoPessoa === 'JURIDICA' && pessoaJuridica) {
+          // Converter datas antes de salvar
+          const dadosPJ = convertDateStrings({ ...pessoaJuridica });
+          
           await tx.pessoaJuridica.update({
             where: { id: Number(id) },
-            data: pessoaJuridica
+            data: dadosPJ
           });
         }
         
@@ -209,7 +231,10 @@ export const pessoaController = {
       return res.status(200).json(result);
     } catch (error) {
       console.error("Erro ao atualizar pessoa:", error);
-      return res.status(500).json({ erro: "Erro ao atualizar pessoa" });
+      return res.status(500).json({ 
+        erro: "Erro ao atualizar pessoa",
+        detalhes: process.env.NODE_ENV === 'development' ? error : undefined
+      });
     }
   },
   

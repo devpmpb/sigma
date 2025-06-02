@@ -4,6 +4,8 @@ import pessoaService, {
   Pessoa,
   PessoaDTO,
   TipoPessoa,
+  PessoaFisicaData,
+  PessoaJuridicaData,
 } from "../../../../services/common/pessoaService";
 import { FormBase } from "../../../../components/cadastro";
 import { FormField } from "../../../../components/common";
@@ -29,8 +31,18 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
     cpfCnpj: "",
     email: "",
     telefone: "",
-    dataNascimento: "",
-    ativo: true,
+    status: "ativo",
+    pessoaFisica: {
+      rg: "",
+      dataNascimento: "",
+    },
+    pessoaJuridica: {
+      nomeFantasia: "",
+      inscricaoEstadual: "",
+      inscricaoMunicipal: "",
+      dataFundacao: "",
+      representanteLegal: "",
+    },
   };
 
   // Validação do formulário
@@ -59,8 +71,18 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
       errors.email = "Email inválido";
     }
 
-    if (values.tipoPessoa === TipoPessoa.FISICA && !values.dataNascimento) {
-      errors.dataNascimento = "Data de nascimento é obrigatória para pessoa física";
+    // Validações específicas para pessoa física
+    if (values.tipoPessoa === TipoPessoa.FISICA) {
+      if (!values.pessoaFisica?.dataNascimento) {
+        errors.dataNascimento = "Data de nascimento é obrigatória para pessoa física";
+      }
+    }
+
+    // Validações específicas para pessoa jurídica
+    if (values.tipoPessoa === TipoPessoa.JURIDICA) {
+      if (!values.pessoaJuridica?.representanteLegal) {
+        errors.representanteLegal = "Representante legal é obrigatório para pessoa jurídica";
+      }
     }
 
     return Object.keys(errors).length > 0 ? errors : null;
@@ -77,6 +99,62 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
       onSave={onSave}
     >
       {({ values, errors, touched, handleChange, setValue, setFieldTouched }) => {
+        
+        // Função para transformar dados do backend para o formulário
+        useEffect(() => {
+          const transformBackendData = async () => {
+            if (pessoaId && pessoaId !== "novo") {
+              try {
+                const pessoaData = await pessoaService.getById(pessoaId);
+                
+                // Transformar os dados para o formato do formulário
+                const formData: PessoaDTO = {
+                  tipoPessoa: pessoaData.tipoPessoa,
+                  nome: pessoaData.nome,
+                  cpfCnpj: pessoaData.cpfCnpj,
+                  email: pessoaData.email || "",
+                  telefone: pessoaData.telefone || "",
+                  status: pessoaData.status,
+                  pessoaFisica: {
+                    rg: pessoaData.pessoaFisica?.rg || "",
+                    dataNascimento: pessoaData.pessoaFisica?.dataNascimento || "",
+                  },
+                  pessoaJuridica: {
+                    nomeFantasia: pessoaData.pessoaJuridica?.nomeFantasia || "",
+                    inscricaoEstadual: pessoaData.pessoaJuridica?.inscricaoEstadual || "",
+                    inscricaoMunicipal: pessoaData.pessoaJuridica?.inscricaoMunicipal || "",
+                    dataFundacao: pessoaData.pessoaJuridica?.dataFundacao || "",
+                    representanteLegal: pessoaData.pessoaJuridica?.representanteLegal || "",
+                  },
+                };
+
+                // Atualizar o formulário com os dados carregados
+                Object.keys(formData).forEach(key => {
+                  setValue(key, (formData as any)[key]);
+                });
+              } catch (error) {
+                console.error("Erro ao carregar dados da pessoa:", error);
+              }
+            }
+          };
+
+          transformBackendData();
+        }, [pessoaId, setValue]);
+        
+        // Função auxiliar para atualizar dados específicos
+        const updatePessoaFisica = (field: keyof PessoaFisicaData, value: any) => {
+          setValue('pessoaFisica', {
+            ...values.pessoaFisica,
+            [field]: value
+          });
+        };
+
+        const updatePessoaJuridica = (field: keyof PessoaJuridicaData, value: any) => {
+          setValue('pessoaJuridica', {
+            ...values.pessoaJuridica,
+            [field]: value
+          });
+        };
         
         // Formatar CPF/CNPJ quando o usuário terminar de digitar
         const handleCpfCnpjBlur = (e: React.FocusEvent<HTMLInputElement>) => {
@@ -105,12 +183,7 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
           if (values.cpfCnpj) {
             setValue('cpfCnpj', '');
           }
-          
-          // Limpar data de nascimento se mudar para pessoa jurídica
-          if (values.tipoPessoa === TipoPessoa.JURIDICA && values.dataNascimento) {
-            setValue('dataNascimento', '');
-          }
-        }, [values.tipoPessoa]);
+        }, [values.tipoPessoa, setValue]);
 
         return (
           <>
@@ -191,7 +264,7 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
                   type="email"
                   id="email"
                   name="email"
-                  value={values.email}
+                  value={values.email || ''}
                   onChange={handleChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="exemplo@email.com"
@@ -209,7 +282,7 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
                   type="text"
                   id="telefone"
                   name="telefone"
-                  value={values.telefone}
+                  value={values.telefone || ''}
                   onChange={handleChange}
                   onBlur={handleTelefoneBlur}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -219,36 +292,141 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
               </FormField>
             </div>
 
+            {/* Campos específicos para Pessoa Física */}
             {values.tipoPessoa === TipoPessoa.FISICA && (
-              <FormField
-                name="dataNascimento"
-                label="Data de Nascimento"
-                error={errors.dataNascimento}
-                touched={touched.dataNascimento}
-                required={values.tipoPessoa === TipoPessoa.FISICA}
-              >
-                <input
-                  type="date"
-                  id="dataNascimento"
-                  name="dataNascimento"
-                  value={values.dataNascimento}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </FormField>
+              <div className="border-t pt-4 mt-4">
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Dados da Pessoa Física</h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    name="rg"
+                    label="RG"
+                    error={errors.rg}
+                    touched={touched.rg}
+                  >
+                    <input
+                      type="text"
+                      id="rg"
+                      name="rg"
+                      value={values.pessoaFisica?.rg || ''}
+                      onChange={(e) => updatePessoaFisica('rg', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="12.345.678-9"
+                    />
+                  </FormField>
+
+                  <FormField
+                    name="dataNascimento"
+                    label="Data de Nascimento"
+                    error={errors.dataNascimento}
+                    touched={touched.dataNascimento}
+                    required
+                  >
+                    <input
+                      type="date"
+                      id="dataNascimento"
+                      name="dataNascimento"
+                      value={values.pessoaFisica?.dataNascimento || ''}
+                      onChange={(e) => updatePessoaFisica('dataNascimento', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </FormField>
+                </div>
+              </div>
             )}
 
-            {pessoaId && pessoaId !== "novo" && (
-              <FormField name="ativo" label="Ativo" type="checkbox">
-                <input
-                  type="checkbox"
-                  id="ativo"
-                  name="ativo"
-                  checked={values.ativo}
-                  onChange={handleChange}
-                  className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                />
-              </FormField>
+            {/* Campos específicos para Pessoa Jurídica */}
+            {values.tipoPessoa === TipoPessoa.JURIDICA && (
+              <div className="border-t pt-4 mt-4">
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Dados da Pessoa Jurídica</h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    name="nomeFantasia"
+                    label="Nome Fantasia"
+                    error={errors.nomeFantasia}
+                    touched={touched.nomeFantasia}
+                  >
+                    <input
+                      type="text"
+                      id="nomeFantasia"
+                      name="nomeFantasia"
+                      value={values.pessoaJuridica?.nomeFantasia || ''}
+                      onChange={(e) => updatePessoaJuridica('nomeFantasia', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Nome fantasia da empresa"
+                    />
+                  </FormField>
+
+                  <FormField
+                    name="representanteLegal"
+                    label="Representante Legal"
+                    error={errors.representanteLegal}
+                    touched={touched.representanteLegal}
+                    required
+                  >
+                    <input
+                      type="text"
+                      id="representanteLegal"
+                      name="representanteLegal"
+                      value={values.pessoaJuridica?.representanteLegal || ''}
+                      onChange={(e) => updatePessoaJuridica('representanteLegal', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Nome do representante legal"
+                    />
+                  </FormField>
+
+                  <FormField
+                    name="inscricaoEstadual"
+                    label="Inscrição Estadual"
+                    error={errors.inscricaoEstadual}
+                    touched={touched.inscricaoEstadual}
+                  >
+                    <input
+                      type="text"
+                      id="inscricaoEstadual"
+                      name="inscricaoEstadual"
+                      value={values.pessoaJuridica?.inscricaoEstadual || ''}
+                      onChange={(e) => updatePessoaJuridica('inscricaoEstadual', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="123456789"
+                    />
+                  </FormField>
+
+                  <FormField
+                    name="inscricaoMunicipal"
+                    label="Inscrição Municipal"
+                    error={errors.inscricaoMunicipal}
+                    touched={touched.inscricaoMunicipal}
+                  >
+                    <input
+                      type="text"
+                      id="inscricaoMunicipal"
+                      name="inscricaoMunicipal"
+                      value={values.pessoaJuridica?.inscricaoMunicipal || ''}
+                      onChange={(e) => updatePessoaJuridica('inscricaoMunicipal', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="987654321"
+                    />
+                  </FormField>
+
+                  <FormField
+                    name="dataFundacao"
+                    label="Data de Fundação"
+                    error={errors.dataFundacao}
+                    touched={touched.dataFundacao}
+                  >
+                    <input
+                      type="date"
+                      id="dataFundacao"
+                      name="dataFundacao"
+                      value={values.pessoaJuridica?.dataFundacao || ''}
+                      onChange={(e) => updatePessoaJuridica('dataFundacao', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </FormField>
+                </div>
+              </div>
             )}
           </>
         );
