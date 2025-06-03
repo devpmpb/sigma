@@ -29,6 +29,31 @@ export const formatarData = (
   });
 };
 
+export const formatDateForInput = (dateString: string | null | undefined): string => {
+  if (!dateString) return "";
+  
+  try {
+    // Se a data já estiver no formato yyyy-mm-dd, retorna como está
+    if (dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      return dateString;
+    }
+    
+    // Converte data do backend para formato ISO
+    const date = new Date(dateString);
+    
+    // Verifica se é uma data válida
+    if (isNaN(date.getTime())) {
+      return "";
+    }
+    
+    // Retorna no formato yyyy-mm-dd
+    return date.toISOString().split('T')[0];
+  } catch {
+    return "";
+  }
+};
+
+
 /**
  * Formata um valor monetário para exibição
  * @param valor - Valor a ser formatado

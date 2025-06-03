@@ -1,3 +1,5 @@
+import { AxiosResponse } from "axios";
+import apiClient from "../apiConfig";
 import BaseApiService from "../baseApiService";
 
 // Enum para o tipo de pessoa (Física ou Jurídica)
@@ -29,7 +31,7 @@ export interface Pessoa {
   cpfCnpj: string;
   email?: string;
   telefone?: string;
-  status: string;
+  ativo: boolean;
   createdAt: string;
   updatedAt: string;
   // Dados específicos retornados pelo backend
@@ -44,7 +46,7 @@ export interface PessoaDTO {
   cpfCnpj: string;
   email?: string;
   telefone?: string;
-  status?: string;
+  ativo?: boolean;
   // Dados específicos para cada tipo
   pessoaFisica?: PessoaFisicaData;
   pessoaJuridica?: PessoaJuridicaData;
@@ -71,6 +73,15 @@ class PessoaService extends BaseApiService<Pessoa, PessoaDTO> {
     const response = await this.getAll();
     // Se precisar de uma rota específica, pode implementar aqui
     return response.filter(pessoa => pessoa.tipoPessoa === tipo);
+  };
+
+
+
+  getByIdWithDetails = async (id: number | string): Promise<Pessoa> => {
+    const response: AxiosResponse<Pessoa> = await apiClient.get(
+      `${this.baseUrl}/${id}/detalhes`
+    );
+    return response.data;
   };
 }
 

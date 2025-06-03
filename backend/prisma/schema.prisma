@@ -91,7 +91,7 @@ model Pessoa {
   cpfCnpj        String        @unique
   telefone       String?
   email          String?
-  status         String        @default("ativo")
+  ativo          Boolean       @default(true)
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
   

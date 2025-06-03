@@ -76,7 +76,7 @@ CREATE TABLE "Pessoa" (
     "cpfCnpj" TEXT NOT NULL,
     "telefone" TEXT,
     "email" TEXT,
-    "status" TEXT NOT NULL DEFAULT 'ativo',
+    "ativo" BOOLEAN NOT NULL DEFAULT true,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 

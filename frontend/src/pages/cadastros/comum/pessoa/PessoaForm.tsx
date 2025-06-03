@@ -9,7 +9,7 @@ import pessoaService, {
 } from "../../../../services/common/pessoaService";
 import { FormBase } from "../../../../components/cadastro";
 import { FormField } from "../../../../components/common";
-import { formatarCPF, formatarCNPJ, formatarTelefone } from "../../../../utils/formatters";
+import { formatarCPF, formatarCNPJ, formatarTelefone, formatDateForInput } from "../../../../utils/formatters";
 
 interface PessoaFormProps {
   id?: string | number;
@@ -31,7 +31,7 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
     cpfCnpj: "",
     email: "",
     telefone: "",
-    status: "ativo",
+    ativo: true,
     pessoaFisica: {
       rg: "",
       dataNascimento: "",
@@ -105,7 +105,7 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
           const transformBackendData = async () => {
             if (pessoaId && pessoaId !== "novo") {
               try {
-                const pessoaData = await pessoaService.getById(pessoaId);
+                const pessoaData = await pessoaService.getByIdWithDetails(pessoaId);
                 
                 // Transformar os dados para o formato do formulário
                 const formData: PessoaDTO = {
@@ -117,13 +117,13 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
                   status: pessoaData.status,
                   pessoaFisica: {
                     rg: pessoaData.pessoaFisica?.rg || "",
-                    dataNascimento: pessoaData.pessoaFisica?.dataNascimento || "",
+                    dataNascimento: formatDateForInput(pessoaData.pessoaFisica?.dataNascimento || ""),
                   },
                   pessoaJuridica: {
                     nomeFantasia: pessoaData.pessoaJuridica?.nomeFantasia || "",
                     inscricaoEstadual: pessoaData.pessoaJuridica?.inscricaoEstadual || "",
                     inscricaoMunicipal: pessoaData.pessoaJuridica?.inscricaoMunicipal || "",
-                    dataFundacao: pessoaData.pessoaJuridica?.dataFundacao || "",
+                    dataFundacao: formatDateForInput(pessoaData.pessoaJuridica?.dataFundacao || ""),
                     representanteLegal: pessoaData.pessoaJuridica?.representanteLegal || "",
                   },
                 };
