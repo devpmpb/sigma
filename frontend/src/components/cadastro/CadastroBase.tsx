@@ -156,7 +156,12 @@ function CadastroBase<T extends Record<string, any>, R>({
   };
 
   // Function to toggle status
-  const handleToggleStatus = async (item: T) => {
+  const handleToggleStatus = async (item: T, event?: React.MouseEvent) => {
+    // Prevenir propagação do evento para evitar redirecionamento
+    if (event) {
+      event.stopPropagation();
+    }
+    
     try {
       const isAtivo = item.ativo === true;
       const statusText = isAtivo ? "inativar" : "ativar";
@@ -190,7 +195,7 @@ function CadastroBase<T extends Record<string, any>, R>({
           textoAtivo={statusColumn.activeText}
           textoInativo={statusColumn.inactiveText}
           showToggle={true}
-          onToggle={() => handleToggleStatus(item)}
+          onToggle={(event) => handleToggleStatus(item, event)}
         />
       ),
     };

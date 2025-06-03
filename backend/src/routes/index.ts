@@ -1,5 +1,8 @@
-// src/routes/index.ts
+// backend/src/routes/index.ts - ARQUIVO COMPLETO
 import { Router } from "express";
+import authRoutes from "./auth/authRoutes";
+import usuarioRoutes from "./admin/usuarioRoutes";
+import perfilRoutes from "./admin/perfilRoutes";
 import bairroRoutes from "./comum/bairroRoutes";
 import grupoProdutoRoutes from "./agricultura/grupoProdutoRoutes";
 import tipoVeiculoRoutes from "./obras/tipoVeiculoRoutes";
@@ -8,29 +11,33 @@ import pessoaRoutes from "./comum/pessoaRoutes";
 import propriedadeRoutes from "./comum/propriedadeRoutes";
 import enderecoRoutes from "./comum/enderecoRoutes";
 
+// Importar middleware de autenticação
+import { authenticateToken, requireModuleAccess } from "../middleware/authMiddleware";
+import { ModuloSistema } from "@prisma/client";
+
 const router = Router();
 
-// COMUM
-router.use("/bairros", bairroRoutes);
-router.use("/logradouros", logradouroRoutes);
-router.use("/pessoas", pessoaRoutes);
-router.use("/enderecos", enderecoRoutes);
-router.use("/propriedades", propriedadeRoutes);
+// AUTENTICAÇÃO (rotas públicas)
+router.use("/auth", authRoutes);
 
-// AGRICULTURA
-router.use("/grupoProdutos", grupoProdutoRoutes);
+// MIDDLEWARE DE AUTENTICAÇÃO para todas as rotas abaixo
+router.use(authenticateToken);
 
-// OBRAS
-router.use("/tipoVeiculos", tipoVeiculoRoutes);
+// ADMINISTRAÇÃO (requer acesso admin)
+router.use("/usuarios", usuarioRoutes);
+router.use("/perfis", perfilRoutes);
 
-/* 
-Para implementação futura:
-- Produtor
-- Arrendamento
-- AreaEfetiva
-- SolicitacaoBeneficio
-- Programa
-- RegrasNegocio
-*/
+// COMUM (requer pelo menos acesso ao módulo comum)
+router.use("/bairros", requireModuleAccess(ModuloSistema.COMUM), bairroRoutes);
+router.use("/logradouros", requireModuleAccess(ModuloSistema.COMUM), logradouroRoutes);
+router.use("/pessoas", requireModuleAccess(ModuloSistema.COMUM), pessoaRoutes);
+router.use("/enderecos", requireModuleAccess(ModuloSistema.COMUM), enderecoRoutes);
+router.use("/propriedades", requireModuleAccess(ModuloSistema.COMUM), propriedadeRoutes);
+
+// AGRICULTURA (requer acesso ao módulo agricultura)
+router.use("/grupoProdutos", requireModuleAccess(ModuloSistema.AGRICULTURA), grupoProdutoRoutes);
+
+// OBRAS (requer acesso ao módulo obras)
+router.use("/tipoVeiculos", requireModuleAccess(ModuloSistema.OBRAS), tipoVeiculoRoutes);
 
 export default router;

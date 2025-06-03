@@ -19,7 +19,7 @@ interface StatusBadgeProps {
   /**
    * Função chamada quando o botão de alternar é clicado
    */
-  onToggle?: () => void;
+  onToggle?: (event?: React.MouseEvent) => void;
 
   /**
    * Se deve mostrar o botão de alternar (default: true)
@@ -55,7 +55,10 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({
 
       {showToggle && onToggle && (
         <button
-          onClick={onToggle}
+          onClick={(e) => {
+            e.stopPropagation(); // Prevenir propagação para evitar redirecionamento
+            onToggle(e);
+          }}
           className="ml-2 text-xs text-blue-600 hover:text-blue-900"
           title={`Alternar para ${ativo ? textoInativo : textoAtivo}`}
         >

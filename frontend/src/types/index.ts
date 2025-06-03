@@ -1,7 +1,7 @@
 import { LucideIcon } from "lucide-react";
 
 // Tipos compartilhados
-export type ModuleType = "obras" | "agricultura" | "comum";
+export type ModuleType = "obras" | "agricultura" | "comum" | "admin";
 export type ActionType = "view" | "create" | "edit" | "delete";
 
 // Interfaces relacionadas a usuários e permissões

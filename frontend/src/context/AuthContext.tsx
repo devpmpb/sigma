@@ -67,6 +67,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
             { module: "comum", action: "create" },
             { module: "comum", action: "edit" },
             { module: "comum", action: "delete" },
+            { module: "admin", action: "view" },
+            { module: "admin", action: "create" },
+            { module: "admin", action: "edit" },
+            { module: "admin", action: "delete" },
           ],
         };
 
@@ -87,6 +91,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
             { module: "obras", action: "create" },
             { module: "obras", action: "edit" },
             { module: "comum", action: "view" },
+            { module: "comum", action: "create" },
+            { module: "comum", action: "edit" },
+            { module: "comum", action: "delete" },
           ],
         };
 
@@ -107,6 +114,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
             { module: "agricultura", action: "create" },
             { module: "agricultura", action: "edit" },
             { module: "comum", action: "view" },
+            { module: "comum", action: "create" },
+            { module: "comum", action: "edit" },
+            { module: "comum", action: "delete" },
           ],
         };
 
