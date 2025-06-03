@@ -2,6 +2,7 @@ import React, { useEffect, useState, ReactNode } from "react";
 import { useNavigate, useParams } from "@tanstack/react-router";
 import SearchBar from "../common/SearchBar";
 import DataTable, { Column } from "../common/DataTable";
+import StatusBadge from "../common/StatusBadge";
 import BaseApiService from "../../services/baseApiService";
 import useApiService from "../../hooks/useApiService";
 import usePermissions from "../../hooks/usePermissions";
@@ -61,6 +62,21 @@ interface CadastroBaseProps<T, R> {
    * Additional buttons for the action bar
    */
   actionButtons?: ReactNode;
+
+  /**
+   * Enable status toggle functionality
+   * Automatically adds a status column with toggle button
+   */
+  enableStatusToggle?: boolean;
+
+  /**
+   * Custom status column configuration
+   */
+  statusColumn?: {
+    title?: string;
+    activeText?: string;
+    inactiveText?: string;
+  };
 }
 
 /**
@@ -78,6 +94,8 @@ function CadastroBase<T extends Record<string, any>, R>({
   showSearch = true,
   searchPlaceholder = "Buscar...",
   actionButtons,
+  enableStatusToggle = false,
+  statusColumn = {},
 }: CadastroBaseProps<T, R>) {
   const [termoBusca, setTermoBusca] = useState("");
   const navigate = useNavigate();
@@ -90,7 +108,7 @@ function CadastroBase<T extends Record<string, any>, R>({
   const canDelete = hasPermission(module, "delete");
 
   // API hook
-  const { data, loading, error, fetchAll, searchByTerm } = useApiService<T, R>(
+  const { data, loading, error, fetchAll, searchByTerm, toggleStatus } = useApiService<T, R>(
     service
   );
 
@@ -137,9 +155,50 @@ function CadastroBase<T extends Record<string, any>, R>({
     }
   };
 
-  // Add action column if user has permission
+  // Function to toggle status
+  const handleToggleStatus = async (item: T) => {
+    try {
+      const isAtivo = item.ativo === true;
+      const statusText = isAtivo ? "inativar" : "ativar";
+      
+      if (!window.confirm(`Tem certeza que deseja ${statusText} este registro?`)) {
+        return;
+      }
+
+      const result = await toggleStatus(item.id, !isAtivo);
+      
+      if (result) {
+        fetchAll();
+      }
+    } catch (error) {
+      console.error("Erro ao alterar status:", error);
+      alert("Erro ao alterar status. Tente novamente.");
+    }
+  };
+
+  // Build final columns array
   const finalColumns = [...columns];
 
+  // Add status column if enabled
+  if (enableStatusToggle) {
+    const statusCol: Column<T> = {
+      title: statusColumn.title || "Status",
+      align: "center",
+      render: (item) => (
+        <StatusBadge 
+          ativo={item.ativo} 
+          textoAtivo={statusColumn.activeText}
+          textoInativo={statusColumn.inactiveText}
+          showToggle={true}
+          onToggle={() => handleToggleStatus(item)}
+        />
+      ),
+    };
+
+    finalColumns.push(statusCol);
+  }
+
+  // Add action column if user has permission
   if (canEdit || canDelete) {
     const actionsColumn: Column<T> = {
       title: "Ações",

@@ -65,6 +65,7 @@ const genericController = createGenericController({
   displayName: "Pessoa",
   uniqueField: "cpfCnpj",
   orderBy: { nome: "asc" },
+  softDelete: true,
   validateCreate: validatePessoaCreate,
   validateUpdate: validatePessoaUpdate
 });

@@ -46,7 +46,7 @@ export interface PessoaDTO {
   cpfCnpj: string;
   email?: string;
   telefone?: string;
-  ativo?: boolean;
+  ativo: boolean;
   // Dados específicos para cada tipo
   pessoaFisica?: PessoaFisicaData;
   pessoaJuridica?: PessoaJuridicaData;

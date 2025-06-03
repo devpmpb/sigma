@@ -1,6 +1,5 @@
-import React, { useState } from "react";
+import React from "react";
 import { formatarData, formatarCPFCNPJ, formatarTelefone } from "../../../../utils/formatters";
-import StatusBadge from "../../../../components/common/StatusBadge";
 import { Column } from "../../../../components/common/DataTable";
 import {
   Pessoa,
@@ -10,39 +9,12 @@ import {
 } from "../../../../services";
 import { CadastroBase } from "../../../../components/cadastro";
 import PessoaForm from "./PessoaForm";
-import useApiService from "../../../../hooks/useApiService";
 
 /**
  * Componente de Listagem de Pessoas
  * Utiliza o CadastroBase para mostrar a listagem em uma página separada
  */
 const Pessoas: React.FC = () => {
-
- 
-
-  const handleToggleStatus = async (pessoa: Pessoa) => {
-    try {
-      const isAtivo = pessoa.ativo === true;
-      const statusText = isAtivo ? "inativar" : "ativar";
-      
-      if (!window.confirm(`Tem certeza que deseja ${statusText} esta pessoa?`)) {
-        return;
-      }
-      // Usa o método do BaseApiService que espera (id, ativo: boolean)
-      await pessoaService.alterarStatus(pessoa.id, !isAtivo);
-          
-    } catch (error) {
-      console.error("Erro ao alterar status da pessoa:", error);
-      alert("Erro ao alterar status. Tente novamente.");
-    }
-  };
-
-  const handleToggleAtivo = async (item: T) => {
-    const result = await toggleStatus(item.id, !item.ativo);
-
-    if (result) fetchAll();
-  };
-
   // Definição das colunas da tabela
   const columns: Column<Pessoa>[] = [
     { title: "ID", key: "id", width: "80px" },
@@ -106,17 +78,6 @@ const Pessoas: React.FC = () => {
       ),
     },
     {
-      title: "Status",
-      key: "status",
-      render: (pessoa) => (
-        <StatusBadge 
-          ativo={pessoa.ativo} 
-          showToggle={true}
-          onToggle={() => handleToggleStatus(pessoa)}
-        />
-      ),
-    },
-    {
       title: "Cadastrado em",
       key: "createdAt",
       render: (pessoa) => formatarData(pessoa.createdAt, false),
@@ -133,6 +94,12 @@ const Pessoas: React.FC = () => {
       module="comum"
       FormComponent={PessoaForm}
       searchPlaceholder="Buscar pessoas por nome, CPF/CNPJ ou e-mail..."
+      enableStatusToggle={true}
+      statusColumn={{
+        title: "Status",
+        activeText: "Ativo",
+        inactiveText: "Inativo"
+      }}
     />
   );
 };
