@@ -1,205 +1,123 @@
-// backend/prisma/seeds/authSeed.ts - ARQUIVO COMPLETO
-import { PrismaClient, TipoPerfil, ModuloSistema, AcaoPermissao } from "@prisma/client";
-import bcrypt from "bcryptjs";
+// backend/prisma/seed.ts - ARQUIVO COMPLETO
+import { PrismaClient } from "@prisma/client";
+import seedAuth from "./seeds/authSeed";
 
 const prisma = new PrismaClient();
 
-export async function seedAuth() {
-  console.log("🔐 Criando permissões do sistema...");
+async function main() {
+  console.log("🌱 Iniciando seed do banco de dados...");
 
-  // 1. Criar todas as permissões possíveis usando ENUMs
-  const permissoes = [
-    // Módulo Obras
-    { modulo: ModuloSistema.OBRAS, acao: AcaoPermissao.VIEW, descricao: "Visualizar módulo de obras" },
-    { modulo: ModuloSistema.OBRAS, acao: AcaoPermissao.CREATE, descricao: "Criar registros em obras" },
-    { modulo: ModuloSistema.OBRAS, acao: AcaoPermissao.EDIT, descricao: "Editar registros em obras" },
-    { modulo: ModuloSistema.OBRAS, acao: AcaoPermissao.DELETE, descricao: "Excluir registros em obras" },
+  // Seed de autenticação (usuários, perfis, permissões) com ENUMs
+  await seedAuth();
 
-    // Módulo Agricultura
-    { modulo: ModuloSistema.AGRICULTURA, acao: AcaoPermissao.VIEW, descricao: "Visualizar módulo de agricultura" },
-    { modulo: ModuloSistema.AGRICULTURA, acao: AcaoPermissao.CREATE, descricao: "Criar registros em agricultura" },
-    { modulo: ModuloSistema.AGRICULTURA, acao: AcaoPermissao.EDIT, descricao: "Editar registros em agricultura" },
-    { modulo: ModuloSistema.AGRICULTURA, acao: AcaoPermissao.DELETE, descricao: "Excluir registros em agricultura" },
-
-    // Módulo Comum
-    { modulo: ModuloSistema.COMUM, acao: AcaoPermissao.VIEW, descricao: "Visualizar módulo comum" },
-    { modulo: ModuloSistema.COMUM, acao: AcaoPermissao.CREATE, descricao: "Criar registros comuns" },
-    { modulo: ModuloSistema.COMUM, acao: AcaoPermissao.EDIT, descricao: "Editar registros comuns" },
-    { modulo: ModuloSistema.COMUM, acao: AcaoPermissao.DELETE, descricao: "Excluir registros comuns" },
-
-    // Módulo Admin
-    { modulo: ModuloSistema.ADMIN, acao: AcaoPermissao.VIEW, descricao: "Visualizar módulo administrativo" },
-    { modulo: ModuloSistema.ADMIN, acao: AcaoPermissao.CREATE, descricao: "Criar registros administrativos" },
-    { modulo: ModuloSistema.ADMIN, acao: AcaoPermissao.EDIT, descricao: "Editar registros administrativos" },
-    { modulo: ModuloSistema.ADMIN, acao: AcaoPermissao.DELETE, descricao: "Excluir registros administrativos" },
+  // Cadastrar bairros iniciais de Pato Bragado
+  console.log("🏘️ Criando bairros iniciais...");
+  const bairros = [
+    { nome: "Centro" },
+    { nome: "Loteamento Fischer" },
+    { nome: "Loteamento Bragadense" },
+    { nome: "Vila Nova" },
+    { nome: "Jardim América" },
+    { nome: "Zona Rural" },
   ];
 
-  for (const permissao of permissoes) {
-    await prisma.permissao.upsert({
-      where: { 
-        modulo_acao: { 
-          modulo: permissao.modulo, 
-          acao: permissao.acao 
-        } 
-      },
+  for (const bairro of bairros) {
+    await prisma.bairro.upsert({
+      where: { nome: bairro.nome },
       update: {},
-      create: permissao,
+      create: { nome: bairro.nome },
     });
   }
 
-  console.log("✅ Permissões criadas!");
+  console.log("✅ Bairros iniciais cadastrados!");
 
-  // 2. Criar perfis usando ENUMs
-  console.log("👥 Criando perfis de usuário...");
+  // Cadastrar algumas áreas rurais
+  console.log("🌾 Criando áreas rurais iniciais...");
+  const areasRurais = [
+    { nome: "Linha São Francisco" },
+    { nome: "Linha Santa Rita" },
+    { nome: "Estrada do Açude" },
+    { nome: "Linha dos Alemães" },
+  ];
 
-  const perfilAdmin = await prisma.perfil.upsert({
-    where: { nome: TipoPerfil.ADMIN },
-    update: {},
-    create: {
-      nome: TipoPerfil.ADMIN,
-      descricao: "Administrador do sistema - Acesso total",
-    },
-  });
-
-  const perfilObras = await prisma.perfil.upsert({
-    where: { nome: TipoPerfil.OBRAS },
-    update: {},
-    create: {
-      nome: TipoPerfil.OBRAS,
-      descricao: "Usuário da Secretaria de Obras",
-    },
-  });
-
-  const perfilAgricultura = await prisma.perfil.upsert({
-    where: { nome: TipoPerfil.AGRICULTURA },
-    update: {},
-    create: {
-      nome: TipoPerfil.AGRICULTURA, 
-      descricao: "Usuário da Secretaria de Agricultura",
-    },
-  });
-
-  console.log("✅ Perfis criados!");
-
-  // 3. Associar permissões aos perfis
-  console.log("🔗 Associando permissões aos perfis...");
-
-  // Admin tem todas as permissões
-  const todasPermissoes = await prisma.permissao.findMany();
-  for (const permissao of todasPermissoes) {
-    await prisma.perfilPermissao.upsert({
-      where: {
-        perfilId_permissaoId: {
-          perfilId: perfilAdmin.id,
-          permissaoId: permissao.id,
-        },
-      },
+  for (const area of areasRurais) {
+    await prisma.areaRural.upsert({
+      where: { nome: area.nome },
       update: {},
-      create: {
-        perfilId: perfilAdmin.id,
-        permissaoId: permissao.id,
-      },
+      create: { nome: area.nome },
     });
   }
 
-  // Perfil Obras: obras (todas) + comum (view)
-  const permissoesObras = await prisma.permissao.findMany({
-    where: {
-      OR: [
-        { modulo: ModuloSistema.OBRAS },
-        { modulo: ModuloSistema.COMUM, acao: AcaoPermissao.VIEW },
-      ],
-    },
-  });
+  console.log("✅ Áreas rurais cadastradas!");
 
-  for (const permissao of permissoesObras) {
-    await prisma.perfilPermissao.upsert({
-      where: {
-        perfilId_permissaoId: {
-          perfilId: perfilObras.id,
-          permissaoId: permissao.id,
-        },
-      },
+  // Cadastrar alguns grupos de produtos iniciais
+  console.log("🌱 Criando grupos de produtos iniciais...");
+  const gruposProdutos = [
+    { descricao: "Grãos" },
+    { descricao: "Hortaliças" },
+    { descricao: "Frutas" },
+    { descricao: "Cereais" },
+    { descricao: "Leguminosas" },
+  ];
+
+  for (const grupo of gruposProdutos) {
+    await prisma.grupoProduto.upsert({
+      where: { descricao: grupo.descricao },
       update: {},
-      create: {
-        perfilId: perfilObras.id,
-        permissaoId: permissao.id,
-      },
+      create: { descricao: grupo.descricao },
     });
   }
 
-  // Perfil Agricultura: agricultura (todas) + comum (view)
-  const permissoesAgricultura = await prisma.permissao.findMany({
-    where: {
-      OR: [
-        { modulo: ModuloSistema.AGRICULTURA },
-        { modulo: ModuloSistema.COMUM, acao: AcaoPermissao.VIEW },
-      ],
-    },
-  });
+  console.log("✅ Grupos de produtos cadastrados!");
 
-  for (const permissao of permissoesAgricultura) {
-    await prisma.perfilPermissao.upsert({
-      where: {
-        perfilId_permissaoId: {
-          perfilId: perfilAgricultura.id,
-          permissaoId: permissao.id,
-        },
-      },
+  // Cadastrar alguns tipos de veículos iniciais
+  console.log("🚜 Criando tipos de veículos iniciais...");
+  const tiposVeiculos = [
+    { descricao: "Trator" },
+    { descricao: "Caminhão" },
+    { descricao: "Retroescavadeira" },
+    { descricao: "Motoniveladora" },
+    { descricao: "Pá Carregadeira" },
+  ];
+
+  for (const tipo of tiposVeiculos) {
+    await prisma.tipoVeiculo.upsert({
+      where: { descricao: tipo.descricao },
       update: {},
-      create: {
-        perfilId: perfilAgricultura.id,
-        permissaoId: permissao.id,
-      },
+      create: { descricao: tipo.descricao },
     });
   }
 
-  console.log("✅ Permissões associadas!");
+  console.log("✅ Tipos de veículos cadastrados!");
 
-  // 4. Criar usuários iniciais
-  console.log("👤 Criando usuários iniciais...");
-
-  const senhaHash = await bcrypt.hash("123456", 10);
-
-  await prisma.usuario.upsert({
-    where: { email: "admin@sigma.com" },
-    update: {},
-    create: {
-      nome: "Administrador",
-      email: "admin@sigma.com",
-      senha: senhaHash,
-      perfilId: perfilAdmin.id,
-    },
-  });
-
-  await prisma.usuario.upsert({
-    where: { email: "obras@sigma.com" },
-    update: {},
-    create: {
-      nome: "Usuário Obras",
-      email: "obras@sigma.com",
-      senha: senhaHash,
-      perfilId: perfilObras.id,
-    },
-  });
-
-  await prisma.usuario.upsert({
-    where: { email: "agricultura@sigma.com" },
-    update: {},
-    create: {
-      nome: "Usuário Agricultura",
-      email: "agricultura@sigma.com",
-      senha: senhaHash,
-      perfilId: perfilAgricultura.id,
-    },
-  });
-
-  console.log("✅ Usuários criados!");
-  console.log("📧 Credenciais:");
+  console.log("🎉 Seed concluído com sucesso!");
+  console.log("");
+  console.log("📋 Resumo do que foi criado:");
+  console.log("   • ENUMs: TipoPerfil, ModuloSistema, AcaoPermissao");
+  console.log("   • Permissões do sistema (16 permissões)");
+  console.log("   • Perfis de usuário (ADMIN, OBRAS, AGRICULTURA)");
+  console.log("   • Usuários iniciais com senhas");
+  console.log("   • Bairros de exemplo");
+  console.log("   • Áreas rurais de exemplo");
+  console.log("   • Grupos de produtos iniciais");
+  console.log("   • Tipos de veículos iniciais");
+  console.log("");
+  console.log("🔐 Credenciais de acesso:");
   console.log("   Admin: admin@sigma.com / 123456");
   console.log("   Obras: obras@sigma.com / 123456");
   console.log("   Agricultura: agricultura@sigma.com / 123456");
+  console.log("");
+  console.log("💡 Dica: Use os ENUMs no código para garantir type safety!");
+  console.log("   - TipoPerfil.ADMIN");
+  console.log("   - ModuloSistema.OBRAS");
+  console.log("   - AcaoPermissao.VIEW");
 }
 
-// Para usar no seed principal
-export default seedAuth;
+main()
+  .catch((e) => {
+    console.error("❌ Erro durante o seed:", e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });
