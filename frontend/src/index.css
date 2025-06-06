@@ -35,6 +35,11 @@ body {
   z-index: 999 !important; /* Força o valor mais alto possível */
 }
 
+/* Z-index específico para o dropdown do usuário */
+.user-dropdown {
+  z-index: 1000 !important; /* Força um valor ainda mais alto */
+}
+
 /* Ajustes para barra lateral */
 .sidebar {
   width: var(--sidebar-width);
@@ -105,4 +110,38 @@ body {
 
 .dropdown-link-active {
   @apply bg-blue-50 text-blue-600;
+}
+
+/* Animações para dropdowns */
+.dropdown {
+  animation: fadeIn 0.15s ease-out;
+}
+
+.user-dropdown {
+  animation: fadeIn 0.15s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Estilo para o botão do usuário quando ativo */
+.user-button-active {
+  @apply bg-gray-100 shadow-sm;
+}
+
+/* Hover effects melhorados */
+.user-dropdown button:hover {
+  @apply bg-gray-100 transition-colors duration-150;
+}
+
+.user-dropdown button.logout-button:hover {
+  @apply bg-red-50 text-red-700 transition-colors duration-150;
 }

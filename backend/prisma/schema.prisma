@@ -1,3 +1,4 @@
+// backend/prisma/schema.prisma - ARQUIVO COMPLETO
 generator client {
   provider = "prisma-client-js"
 }
@@ -7,6 +8,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ENUMs existentes
 enum TipoEndereco {
   RESIDENCIAL
   COMERCIAL
@@ -36,6 +38,28 @@ enum TipoPessoa {
   JURIDICA
 }
 
+// NOVOS ENUMs para Autenticação
+enum TipoPerfil {
+  ADMIN
+  OBRAS
+  AGRICULTURA
+}
+
+enum ModuloSistema {
+  OBRAS
+  AGRICULTURA
+  COMUM
+  ADMIN
+}
+
+enum AcaoPermissao {
+  VIEW
+  CREATE
+  EDIT
+  DELETE
+}
+
+// Modelos existentes
 model Bairro {
   id          Int          @id @default(autoincrement())
   nome        String       @unique
@@ -258,4 +282,103 @@ model RegrasNegocio {
   limiteBeneficio Json?     // Estrutura JSON com limites
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
+}
+
+// NOVOS MODELOS DE AUTENTICAÇÃO COM ENUMs
+// Modelo de usuário do sistema
+model Usuario {
+  id        Int      @id @default(autoincrement())
+  nome      String
+  email     String   @unique
+  senha     String   // Hash da senha
+  ativo     Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relacionamentos
+  perfilId Int
+  perfil   Perfil @relation(fields: [perfilId], references: [id])
+  
+  // Sessões ativas do usuário
+  sessoes UsuarioSessao[]
+  
+  // Auditoria
+  ultimoLogin DateTime?
+  tentativasLogin Int @default(0)
+  bloqueadoAte DateTime?
+}
+
+// Perfis de usuário (Admin, Obras, Agricultura, etc) - USANDO ENUM
+model Perfil {
+  id        Int         @id @default(autoincrement())
+  nome      TipoPerfil  @unique // ENUM em vez de String
+  descricao String?
+  ativo     Boolean     @default(true)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  // Relacionamentos
+  usuarios   Usuario[]
+  permissoes PerfilPermissao[]
+}
+
+// Permissões disponíveis no sistema - USANDO ENUMs
+model Permissao {
+  id        Int            @id @default(autoincrement())
+  modulo    ModuloSistema  // ENUM em vez de String
+  acao      AcaoPermissao  // ENUM em vez de String
+  descricao String?
+  ativo     Boolean        @default(true)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  // Relacionamentos
+  perfis PerfilPermissao[]
+  
+  // Índice composto para evitar duplicatas
+  @@unique([modulo, acao])
+}
+
+// Relacionamento Many-to-Many entre Perfil e Permissão
+model PerfilPermissao {
+  id Int @id @default(autoincrement())
+  
+  perfilId    Int
+  permissaoId Int
+  
+  perfil    Perfil    @relation(fields: [perfilId], references: [id])
+  permissao Permissao @relation(fields: [permissaoId], references: [id])
+  
+  createdAt DateTime @default(now())
+  
+  // Evita permissões duplicadas para o mesmo perfil
+  @@unique([perfilId, permissaoId])
+}
+
+// Sessões ativas dos usuários (para controle de login)
+model UsuarioSessao {
+  id           Int      @id @default(autoincrement())
+  usuarioId    Int
+  token        String   @unique
+  refreshToken String?  @unique
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+  revokedAt    DateTime?
+  
+  // IP e User Agent para auditoria
+  ipAddress String?
+  userAgent String?
+  
+  usuario Usuario @relation(fields: [usuarioId], references: [id])
+}
+
+// Log de auditoria para ações sensíveis
+model AuditoriaLogin {
+  id        Int      @id @default(autoincrement())
+  email     String
+  sucesso   Boolean
+  ipAddress String?
+  userAgent String?
+  motivo    String?  // "senha_incorreta", "usuario_bloqueado", etc
+  createdAt DateTime @default(now())
 }

@@ -10,6 +10,15 @@ CREATE TYPE "TipoPropriedade" AS ENUM ('RURAL', 'LOTE_URBANO', 'COMERCIAL', 'IND
 -- CreateEnum
 CREATE TYPE "TipoPessoa" AS ENUM ('FISICA', 'JURIDICA');
 
+-- CreateEnum
+CREATE TYPE "TipoPerfil" AS ENUM ('ADMIN', 'OBRAS', 'AGRICULTURA');
+
+-- CreateEnum
+CREATE TYPE "ModuloSistema" AS ENUM ('OBRAS', 'AGRICULTURA', 'COMUM', 'ADMIN');
+
+-- CreateEnum
+CREATE TYPE "AcaoPermissao" AS ENUM ('VIEW', 'CREATE', 'EDIT', 'DELETE');
+
 -- CreateTable
 CREATE TABLE "Bairro" (
     "id" SERIAL NOT NULL,
@@ -224,6 +233,86 @@ CREATE TABLE "RegrasNegocio" (
     CONSTRAINT "RegrasNegocio_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "Usuario" (
+    "id" SERIAL NOT NULL,
+    "nome" TEXT NOT NULL,
+    "email" TEXT NOT NULL,
+    "senha" TEXT NOT NULL,
+    "ativo" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "perfilId" INTEGER NOT NULL,
+    "ultimoLogin" TIMESTAMP(3),
+    "tentativasLogin" INTEGER NOT NULL DEFAULT 0,
+    "bloqueadoAte" TIMESTAMP(3),
+
+    CONSTRAINT "Usuario_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Perfil" (
+    "id" SERIAL NOT NULL,
+    "nome" "TipoPerfil" NOT NULL,
+    "descricao" TEXT,
+    "ativo" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Perfil_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Permissao" (
+    "id" SERIAL NOT NULL,
+    "modulo" "ModuloSistema" NOT NULL,
+    "acao" "AcaoPermissao" NOT NULL,
+    "descricao" TEXT,
+    "ativo" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Permissao_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "PerfilPermissao" (
+    "id" SERIAL NOT NULL,
+    "perfilId" INTEGER NOT NULL,
+    "permissaoId" INTEGER NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "PerfilPermissao_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "UsuarioSessao" (
+    "id" SERIAL NOT NULL,
+    "usuarioId" INTEGER NOT NULL,
+    "token" TEXT NOT NULL,
+    "refreshToken" TEXT,
+    "expiresAt" TIMESTAMP(3) NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "revokedAt" TIMESTAMP(3),
+    "ipAddress" TEXT,
+    "userAgent" TEXT,
+
+    CONSTRAINT "UsuarioSessao_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "AuditoriaLogin" (
+    "id" SERIAL NOT NULL,
+    "email" TEXT NOT NULL,
+    "sucesso" BOOLEAN NOT NULL,
+    "ipAddress" TEXT,
+    "userAgent" TEXT,
+    "motivo" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "AuditoriaLogin_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "Bairro_nome_key" ON "Bairro"("nome");
 
@@ -241,6 +330,24 @@ CREATE UNIQUE INDEX "TipoVeiculo_descricao_key" ON "TipoVeiculo"("descricao");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Pessoa_cpfCnpj_key" ON "Pessoa"("cpfCnpj");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Usuario_email_key" ON "Usuario"("email");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Perfil_nome_key" ON "Perfil"("nome");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Permissao_modulo_acao_key" ON "Permissao"("modulo", "acao");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "PerfilPermissao_perfilId_permissaoId_key" ON "PerfilPermissao"("perfilId", "permissaoId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "UsuarioSessao_token_key" ON "UsuarioSessao"("token");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "UsuarioSessao_refreshToken_key" ON "UsuarioSessao"("refreshToken");
 
 -- AddForeignKey
 ALTER TABLE "Logradouro" ADD CONSTRAINT "Logradouro_bairroId_fkey" FOREIGN KEY ("bairroId") REFERENCES "Bairro"("id") ON DELETE SET NULL ON UPDATE CASCADE;
@@ -292,3 +399,15 @@ ALTER TABLE "SolicitacaoBeneficio" ADD CONSTRAINT "SolicitacaoBeneficio_programa
 
 -- AddForeignKey
 ALTER TABLE "RegrasNegocio" ADD CONSTRAINT "RegrasNegocio_programaId_fkey" FOREIGN KEY ("programaId") REFERENCES "Programa"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Usuario" ADD CONSTRAINT "Usuario_perfilId_fkey" FOREIGN KEY ("perfilId") REFERENCES "Perfil"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "PerfilPermissao" ADD CONSTRAINT "PerfilPermissao_perfilId_fkey" FOREIGN KEY ("perfilId") REFERENCES "Perfil"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "PerfilPermissao" ADD CONSTRAINT "PerfilPermissao_permissaoId_fkey" FOREIGN KEY ("permissaoId") REFERENCES "Permissao"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "UsuarioSessao" ADD CONSTRAINT "UsuarioSessao_usuarioId_fkey" FOREIGN KEY ("usuarioId") REFERENCES "Usuario"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

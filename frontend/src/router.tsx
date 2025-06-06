@@ -12,6 +12,7 @@ import Inicio from './pages/Inicio';
 import Relatorios from './pages/Relatorios';
 import Dashboards from './pages/Dashboards';
 import Configuracoes from './pages/Configuracoes';
+import AlterarSenha from './pages/AlterarSenha';
 
 // Importar configurações de rotas dos módulos
 import { obrasRouteConfig, obrasComponents } from './config/menus/obras/routes';
@@ -166,6 +167,13 @@ const configuracoesRoute = createRoute({
   component: Configuracoes,
 });
 
+// Change password route
+const alterarSenhaRoute = createRoute({
+  getParentRoute: () => layoutRoute,
+  path: '/alterar-senha',
+  component: AlterarSenha,
+});
+
 // Catch-all route for 404
 const catchAllRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -192,6 +200,7 @@ const routeTree = rootRoute.addChildren([
     relatoriosRoute,
     dashboardsRoute,
     configuracoesRoute,
+    alterarSenhaRoute,
     ...obrasRoutes,
     ...agriculturaRoutes,
     ...comunRoutes,
@@ -235,7 +244,6 @@ export function RouterProvider() {
 }
 
 // Export routes for type safety in links
-// Esta parte precisará ser modificada para um modelo diferente, mais adequado a este novo padrão
 export const routes = {
   root: rootRoute,
   login: loginRoute,
@@ -246,6 +254,6 @@ export const routes = {
   relatorios: relatoriosRoute,
   dashboards: dashboardsRoute,
   configuracoes: configuracoesRoute,
+  alterarSenha: alterarSenhaRoute,
   // As rotas modulares estarão disponíveis de outra forma
-  // Poderia ser implementado um sistema de roteamento baseado em path para uso em links
 };

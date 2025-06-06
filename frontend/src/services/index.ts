@@ -25,3 +25,6 @@ export type {
   GrupoProdutoDTO,
 } from "./agricultura/grupoProdutoService";
 export * from './common/pessoaService';
+
+export { default as userService } from "./admin/userService";
+export type { Usuario, UsuarioDTO, ChangePasswordDTO } from "./admin/userService";
