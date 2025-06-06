@@ -6,6 +6,9 @@ import {
   X,
   ChevronDown,
   ChevronRight,
+  User,
+  Key,
+  LogOut,
 } from "lucide-react";
 import { Link, useRouter } from "@tanstack/react-router";
 import useClickOutside from "../../hooks/useClickOutside";
@@ -18,7 +21,7 @@ import { MenuGroup } from "../../types";
 
 const Navbar: React.FC = () => {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const {
     isSidebarOpen,
     toggleSidebar,
@@ -45,10 +48,14 @@ const Navbar: React.FC = () => {
     [key: string]: boolean;
   }>({});
 
+  // State for user dropdown
+  const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
+
   // Refs to detect clicks outside dropdowns
   const cadastrosRef = useRef<HTMLDivElement>(null);
   const movimentosRef = useRef<HTMLDivElement>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
+  const userDropdownRef = useRef<HTMLDivElement>(null);
 
   // Hooks to close dropdowns when clicking outside
   useClickOutside(cadastrosRef, () => {
@@ -63,12 +70,38 @@ const Navbar: React.FC = () => {
     if (isMobileMenuOpen) setIsMobileMenuOpen(false);
   });
 
+  useClickOutside(userDropdownRef, () => {
+    if (isUserDropdownOpen) setIsUserDropdownOpen(false);
+  });
+
   // Functions for mobile menu
   const toggleMobileGroup = (groupId: string) => {
     setExpandedMobileGroups((prev) => ({
       ...prev,
       [groupId]: !prev[groupId],
     }));
+  };
+
+  // Function to handle logout
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error("Erro ao fazer logout:", error);
+      // Em caso de erro, ainda assim redirecionar
+      window.location.href = '/login';
+    }
+  };
+
+  // Function to toggle user dropdown
+  const toggleUserDropdown = () => {
+    setIsUserDropdownOpen(!isUserDropdownOpen);
+  };
+
+  // Function to handle change password
+  const handleChangePassword = () => {
+    setIsUserDropdownOpen(false);
+    router.navigate({ to: "/alterar-senha" });
   };
 
   // Função auxiliar para verificar se um link está ativo
@@ -324,14 +357,53 @@ const Navbar: React.FC = () => {
           <span className="absolute top-1 right-1 bg-red-500 rounded-full w-2 h-2"></span>
         </button>
 
-        {/* User profile */}
-        <div className="flex items-center ml-4">
-          <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium">
-            {user?.name?.charAt(0) || "U"}
-          </div>
-          <span className="ml-2 font-medium hidden md:block">
-            {user?.name || "Usuário"}
-          </span>
+        {/* User profile with dropdown */}
+        <div className="relative ml-4" ref={userDropdownRef}>
+          <button
+            onClick={toggleUserDropdown}
+            className={`flex items-center hover:bg-gray-100 rounded-lg p-2 transition-colors ${
+              isUserDropdownOpen ? 'user-button-active' : ''
+            }`}
+          >
+            <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium">
+              {user?.name?.charAt(0) || "U"}
+            </div>
+            <span className="ml-2 font-medium hidden md:block">
+              {user?.name || "Usuário"}
+            </span>
+            <ChevronDown size={16} className="ml-1 text-gray-500" />
+          </button>
+
+          {/* User dropdown menu */}
+          {isUserDropdownOpen && (
+            <div className="user-dropdown absolute right-0 mt-1 bg-white border border-gray-200 rounded shadow-lg w-48 py-1">
+              <div className="px-4 py-2 border-b border-gray-100">
+                <p className="text-sm font-medium text-gray-900">{user?.name}</p>
+                <p className="text-xs text-gray-500">{user?.email}</p>
+                <p className="text-xs text-gray-500 capitalize">
+                  {user?.role === "admin" ? "Administrador" : user?.sector}
+                </p>
+              </div>
+              
+              <div className="py-1">
+                <button
+                  onClick={handleChangePassword}
+                  className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                >
+                  <Key size={16} className="mr-3 text-gray-400" />
+                  Alterar Senha
+                </button>
+                
+                <button
+                  onClick={handleLogout}
+                  className="logout-button flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                >
+                  <LogOut size={16} className="mr-3 text-red-500" />
+                  Sair
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
