@@ -24,6 +24,19 @@ export const cadastrosComunMenu: MenuGroup = {
       path: "/cadastros/comum/logradouros",
       module: "comum",
     },
+    {
+      id: "cadastro-programa",
+      title: "Programas de Incentivo",
+      path: "/cadastros/agricultura/programas",
+      module: "comum",
+    },
+    {
+      id: "cadastro-regras-negocio",
+      title: "Regras de Negócio",
+      path: "/cadastros/comum/regrasNegocio",
+      module: "comum",
+    },
+    
   ],
 };
 
@@ -34,21 +47,21 @@ export const movimentosComunMenu: MenuGroup = {
   module: "comum",
   items: [
     {
-      id: "movimento-comum-1",
-      title: "Movimento 1",
-      path: "/movimentos/comum/movimento1",
+      id: "solicitacao-beneficio",
+      title: "Solicitações de Benefício",
+      path: "/movimentos/comum/solicitacoesBeneficios",
       module: "comum",
     },
     {
-      id: "movimento-comum-2",
-      title: "Movimento 2",
-      path: "/movimentos/comum/movimento2",
+      id: "avaliacao-beneficio",
+      title: "Avaliação de Benefícios",
+      path: "/movimentos/comum/avaliacoesBeneficios",
       module: "comum",
     },
     {
-      id: "movimento-comum-3",
-      title: "Movimento 3",
-      path: "/movimentos/comum/movimento3",
+      id: "relatorio-beneficios",
+      title: "Relatório de Benefícios",
+      path: "/movimentos/comum/relatoriosBeneficios",
       module: "comum",
     },
   ],

@@ -1,3 +1,4 @@
+// frontend/src/config/menus/agricultura/menu.ts - ARQUIVO ATUALIZADO
 import { MenuGroup } from "../../../types";
 
 // Menus de cadastro de agricultura
@@ -6,10 +7,11 @@ export const cadastrosAgriculturaMenu: MenuGroup = {
   title: "Agricultura",
   module: "agricultura",
   items: [
+    
     {
       id: "cadastro-grupo-produto",
-      title: "Cadastro de Grupo de Produto",
-      path: "/cadastros/agricultura/produto/grupoProduto",
+      title: "Grupos de Produto",
+      path: "/cadastros/agricultura/grupoProdutos",
       module: "agricultura",
     },
   ],
@@ -21,11 +23,6 @@ export const movimentosAgriculturaMenu: MenuGroup = {
   title: "Agricultura",
   module: "agricultura",
   items: [
-    {
-      id: "movimento-agricultura-1",
-      title: "Movimento 1",
-      path: "/movimentos/agricultura/movimento1",
-      module: "agricultura",
-    },
+    
   ],
 };
