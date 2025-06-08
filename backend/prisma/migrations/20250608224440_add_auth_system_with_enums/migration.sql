@@ -19,6 +19,9 @@ CREATE TYPE "ModuloSistema" AS ENUM ('OBRAS', 'AGRICULTURA', 'COMUM', 'ADMIN');
 -- CreateEnum
 CREATE TYPE "AcaoPermissao" AS ENUM ('VIEW', 'CREATE', 'EDIT', 'DELETE');
 
+-- CreateEnum
+CREATE TYPE "TipoPrograma" AS ENUM ('SUBSIDIO', 'MATERIAL', 'SERVICO', 'CREDITO', 'ASSISTENCIA');
+
 -- CreateTable
 CREATE TABLE "Bairro" (
     "id" SERIAL NOT NULL,
@@ -211,7 +214,7 @@ CREATE TABLE "Programa" (
     "nome" TEXT NOT NULL,
     "descricao" TEXT,
     "leiNumero" TEXT,
-    "tipoPrograma" TEXT NOT NULL,
+    "tipoPrograma" "TipoPrograma" NOT NULL,
     "ativo" BOOLEAN NOT NULL DEFAULT true,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,

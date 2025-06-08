@@ -59,6 +59,14 @@ enum AcaoPermissao {
   DELETE
 }
 
+enum TipoPrograma {
+  SUBSIDIO
+  MATERIAL
+  SERVICO
+  CREDITO
+  ASSISTENCIA
+}
+
 // Modelos existentes
 model Bairro {
   id          Int          @id @default(autoincrement())
@@ -262,7 +270,7 @@ model Programa {
   nome            String
   descricao       String?
   leiNumero       String?
-  tipoPrograma    String                // subsídio, material, serviço
+  tipoPrograma    TipoPrograma          
   ativo           Boolean               @default(true)
   createdAt       DateTime              @default(now())
   updatedAt       DateTime              @updatedAt

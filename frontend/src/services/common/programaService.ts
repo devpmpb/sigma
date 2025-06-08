@@ -2,10 +2,10 @@ import BaseApiService from "../baseApiService";
 
 export enum TipoPrograma {
   SUBSIDIO = "subsidio",
-  MATERIAL = "material", 
+  MATERIAL = "material",
   SERVICO = "servico",
   CREDITO = "credito",
-  ASSISTENCIA = "assistencia"
+  ASSISTENCIA = "assistencia",
 }
 
 export interface Programa {
@@ -13,7 +13,7 @@ export interface Programa {
   nome: string;
   descricao: string | null;
   leiNumero: string | null;
-  tipoPrograma: string;
+  tipoPrograma: TipoPrograma;
   ativo: boolean;
   createdAt: string;
   updatedAt: string;
@@ -29,7 +29,7 @@ export interface ProgramaDTO {
   nome: string;
   descricao?: string;
   leiNumero?: string;
-  tipoPrograma: string;
+  tipoPrograma: TipoPrograma;
   ativo?: boolean;
 }
 
@@ -56,7 +56,7 @@ export interface EstatisticasPrograma {
   totalProgramas: number;
   programasAtivos: number;
   porTipo: Array<{
-    tipoPrograma: string;
+    tipoPrograma: TipoPrograma;
     _count: { id: number };
   }>;
   comMaisRegras: Array<{
@@ -90,8 +90,14 @@ class ProgramaService extends BaseApiService<Programa, ProgramaDTO> {
   /**
    * Duplica um programa
    */
-  async duplicarPrograma(id: number | string, dados: DuplicarProgramaDTO): Promise<Programa> {
-    const response = await this.api.post(`${this.baseUrl}/${id}/duplicar`, dados);
+  async duplicarPrograma(
+    id: number | string,
+    dados: DuplicarProgramaDTO
+  ): Promise<Programa> {
+    const response = await this.api.post(
+      `${this.baseUrl}/${id}/duplicar`,
+      dados
+    );
     return response.data.programa;
   }
 
@@ -112,7 +118,7 @@ class ProgramaService extends BaseApiService<Programa, ProgramaDTO> {
       { value: TipoPrograma.MATERIAL, label: "Fornecimento de Material" },
       { value: TipoPrograma.SERVICO, label: "Prestação de Serviço" },
       { value: TipoPrograma.CREDITO, label: "Crédito Rural" },
-      { value: TipoPrograma.ASSISTENCIA, label: "Assistência Técnica" }
+      { value: TipoPrograma.ASSISTENCIA, label: "Assistência Técnica" },
     ];
   }
 
@@ -125,7 +131,7 @@ class ProgramaService extends BaseApiService<Programa, ProgramaDTO> {
     }
 
     const response = await this.api.get(`${this.baseUrl}`, {
-      params: { search: termo }
+      params: { search: termo },
     });
     return response.data;
   }
@@ -144,8 +150,11 @@ class ProgramaService extends BaseApiService<Programa, ProgramaDTO> {
       errors.push("Tipo de programa é obrigatório");
     }
 
-    if (data.leiNumero && data.leiNumero.trim() && 
-        !/^(LEI\s+)?N[°º]?\s*\d+/.test(data.leiNumero.toUpperCase())) {
+    if (
+      data.leiNumero &&
+      data.leiNumero.trim() &&
+      !/^(LEI\s+)?N[°º]?\s*\d+/.test(data.leiNumero.toUpperCase())
+    ) {
       errors.push("Formato da lei inválido. Ex: LEI Nº 1234/2023");
     }
 

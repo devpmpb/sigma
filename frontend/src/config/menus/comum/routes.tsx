@@ -1,5 +1,4 @@
 import { lazy } from "react";
-import Programas, { ProgramaForm } from "../../../pages/cadastros/comum/programa";
 import RegrasNegocioPage from "../../../pages/cadastros/comum/regrasNegocio";
 
 // Usando lazy loading para componentes
@@ -15,6 +14,12 @@ const Pessoa = lazy(
 );
 const PessoaForm = lazy(
   () => import("../../../pages/cadastros/comum/pessoa/PessoaForm")
+);
+const Programas = lazy(
+  () => import("../../../pages/cadastros/comum/programa/Programas")
+);
+const ProgramaForm = lazy(
+  () => import("../../../pages/cadastros/comum/programa/ProgramaForm")
 );
 const AvaliacoesBeneficio = lazy(
   () => import("../../../pages/movimentos/comum/AvaliacoesBeneficio")
@@ -33,6 +38,8 @@ export const comunComponents = {
   Bairro,
   Logradouros,
   LogradouroForm,
+  Programas,
+  ProgramaForm,
   AvaliacoesBeneficio,
   RelatoriosBeneficio,
   SolicitacoesBeneficio,
