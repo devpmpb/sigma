@@ -55,7 +55,7 @@ const Login: React.FC = () => {
       <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
         <div className="text-center mb-6">
           <h1 className="text-3xl font-bold text-gray-800 mb-2">SIGMA</h1>
-          <p className="text-gray-600">Sistema Integrado de Gestão Municipal</p>
+          <p className="text-gray-600">Sistema Integrado de Gestão Municipal de Atividades</p>
         </div>
 
         {error && (

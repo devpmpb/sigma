@@ -1,4 +1,5 @@
 import { lazy } from "react";
+import RegrasNegocioPage from "../../../pages/cadastros/comum/regrasNegocio";
 
 // Usando lazy loading para componentes
 const Bairro = lazy(() => import("../../../pages/cadastros/comum/Bairro"));
@@ -14,14 +15,20 @@ const Pessoa = lazy(
 const PessoaForm = lazy(
   () => import("../../../pages/cadastros/comum/pessoa/PessoaForm")
 );
-const MovimentoComum1 = lazy(
-  () => import("../../../pages/movimentos/comum/Comum")
+const Programas = lazy(
+  () => import("../../../pages/cadastros/comum/programa/Programas")
 );
-const MovimentoComum2 = lazy(
-  () => import("../../../pages/movimentos/comum/Comum2")
+const ProgramaForm = lazy(
+  () => import("../../../pages/cadastros/comum/programa/ProgramaForm")
 );
-const MovimentoComum3 = lazy(
-  () => import("../../../pages/movimentos/comum/Comum3")
+const AvaliacoesBeneficio = lazy(
+  () => import("../../../pages/movimentos/comum/AvaliacoesBeneficio")
+);
+const RelatoriosBeneficio = lazy(
+  () => import("../../../pages/movimentos/comum/RelatoriosBeneficio")
+);
+const SolicitacoesBeneficio = lazy(
+  () => import("../../../pages/movimentos/comum/SolicitacoesBeneficio")
 );
 
 // Exportamos os componentes para compatibilidade com código existente
@@ -31,9 +38,11 @@ export const comunComponents = {
   Bairro,
   Logradouros,
   LogradouroForm,
-  MovimentoComum1,
-  MovimentoComum2,
-  MovimentoComum3,
+  Programas,
+  ProgramaForm,
+  AvaliacoesBeneficio,
+  RelatoriosBeneficio,
+  SolicitacoesBeneficio,
 };
 
 // Exportamos as configurações das rotas para compatibilidade
@@ -57,6 +66,12 @@ export const comunRouteConfig = [
     action: "view",
   },
   {
+    path: "/cadastros/comum/bairros/:id",
+    component: Bairro,
+    module: "comum",
+    action: "view",
+  },
+  {
     path: "/cadastros/comum/logradouros",
     component: Logradouros,
     module: "comum",
@@ -64,25 +79,49 @@ export const comunRouteConfig = [
   },
   {
     path: "/cadastros/comum/logradouros/:id",
-    component: LogradouroForm,
+    component: Logradouros,
     module: "comum",
     action: "view",
   },
   {
-    path: "/movimentos/comum/movimento1",
-    component: MovimentoComum1,
+    path: "/cadastros/comum/programas",
+    component: Programas,
     module: "comum",
     action: "view",
   },
   {
-    path: "/movimentos/comum/movimento2",
-    component: MovimentoComum2,
+    path: "/cadastros/comum/programas/:id",
+    component: Programas,
     module: "comum",
     action: "view",
   },
   {
-    path: "/movimentos/comum/movimento3",
-    component: MovimentoComum3,
+    path: "/cadastros/comum/regrasNegocio",
+    component: RegrasNegocioPage,
+    module: "comum",
+    action: "view",
+  },
+  {
+    path: "/cadastros/comum/regrasNegocio:id",
+    component: RegrasNegocioPage,
+    module: "comum",
+    action: "view",
+  },
+  {
+    path: "/movimentos/comum/avaliacoesBeneficio",
+    component: AvaliacoesBeneficio,
+    module: "comum",
+    action: "view",
+  },
+  {
+    path: "/movimentos/comum/relatoriosBeneficio",
+    component: RelatoriosBeneficio,
+    module: "comum",
+    action: "view",
+  },
+  {
+    path: "/movimentos/comum/solicitacoesBeneficio",
+    component: SolicitacoesBeneficio,
     module: "comum",
     action: "view",
   },

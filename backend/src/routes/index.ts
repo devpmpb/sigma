@@ -1,10 +1,12 @@
-// backend/src/routes/index.ts - ARQUIVO COMPLETO
+// backend/src/routes/index.ts - ARQUIVO ATUALIZADO
 import { Router } from "express";
 import authRoutes from "./auth/authRoutes";
 import usuarioRoutes from "./admin/usuarioRoutes";
 import perfilRoutes from "./admin/perfilRoutes";
 import bairroRoutes from "./comum/bairroRoutes";
 import grupoProdutoRoutes from "./agricultura/grupoProdutoRoutes";
+import programaRoutes from "./comum/programaRoutes";
+import regrasNegocioRoutes from "./comum/regrasNegocioRoutes";
 import tipoVeiculoRoutes from "./obras/tipoVeiculoRoutes";
 import logradouroRoutes from "./comum/logradouroRoutes";
 import pessoaRoutes from "./comum/pessoaRoutes";
@@ -36,6 +38,8 @@ router.use("/propriedades", requireModuleAccess(ModuloSistema.COMUM), propriedad
 
 // AGRICULTURA (requer acesso ao módulo agricultura)
 router.use("/grupoProdutos", requireModuleAccess(ModuloSistema.AGRICULTURA), grupoProdutoRoutes);
+router.use("/programas", requireModuleAccess(ModuloSistema.AGRICULTURA), programaRoutes);
+router.use("/regrasNegocio", requireModuleAccess(ModuloSistema.AGRICULTURA), regrasNegocioRoutes);
 
 // OBRAS (requer acesso ao módulo obras)
 router.use("/tipoVeiculos", requireModuleAccess(ModuloSistema.OBRAS), tipoVeiculoRoutes);
