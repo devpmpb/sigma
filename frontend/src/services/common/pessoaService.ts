@@ -1,20 +1,19 @@
-import { AxiosResponse } from "axios";
 import apiClient from "../apiConfig";
 import BaseApiService from "../baseApiService";
 
-// Enum para o tipo de pessoa (Física ou Jurídica)
+// ENUMs do backend
 export enum TipoPessoa {
   FISICA = "FISICA",
   JURIDICA = "JURIDICA",
 }
 
-// Interface para dados específicos de Pessoa Física
+// Interface para PessoaFisica
 export interface PessoaFisicaData {
   rg?: string;
   dataNascimento?: string;
 }
 
-// Interface para dados específicos de Pessoa Jurídica
+// Interface para PessoaJuridica
 export interface PessoaJuridicaData {
   nomeFantasia?: string;
   inscricaoEstadual?: string;
@@ -23,36 +22,40 @@ export interface PessoaJuridicaData {
   representanteLegal?: string;
 }
 
-// Interface para o modelo de Pessoa vindo da API
+// Interface para a entidade Pessoa
 export interface Pessoa {
   id: number;
   tipoPessoa: TipoPessoa;
   nome: string;
   cpfCnpj: string;
-  email?: string;
   telefone?: string;
+  email?: string;
   ativo: boolean;
   createdAt: string;
   updatedAt: string;
-  // Dados específicos retornados pelo backend
+  // Relacionamentos opcionais
+  enderecos?: any[];
+  propriedades?: any[];
   pessoaFisica?: PessoaFisicaData;
   pessoaJuridica?: PessoaJuridicaData;
 }
 
-// DTO para criação/atualização de Pessoa
+// Interface para os dados de criação/atualização
 export interface PessoaDTO {
   tipoPessoa: TipoPessoa;
   nome: string;
   cpfCnpj: string;
-  email?: string;
   telefone?: string;
-  ativo: boolean;
-  // Dados específicos para cada tipo
+  email?: string;
+  ativo?: boolean;
   pessoaFisica?: PessoaFisicaData;
   pessoaJuridica?: PessoaJuridicaData;
 }
 
-// Classe do serviço de API para Pessoas
+/**
+ * Serviço para operações com a entidade Pessoa
+ * Módulo comum
+ */
 class PessoaService extends BaseApiService<Pessoa, PessoaDTO> {
   constructor() {
     super("/pessoas", "comum");
@@ -61,33 +64,56 @@ class PessoaService extends BaseApiService<Pessoa, PessoaDTO> {
   /**
    * Busca pessoa por CPF/CNPJ
    */
-  buscarPorCpfCnpj = async (cpfCnpj: string): Promise<Pessoa> => {
-    const response = await this.getById(`cpfCnpj/${cpfCnpj}`);
-    return response;
+  getPessoaByCpfCnpj = async (cpfCnpj: string): Promise<Pessoa> => {
+    const response = await apiClient.get(`${this.baseUrl}/cpfCnpj/${cpfCnpj}`);
+    return response.data;
   };
 
   /**
-   * Busca pessoas por tipo
+   * Busca pessoas por tipo (FISICA ou JURIDICA)
    */
-  buscarPorTipo = async (tipo: TipoPessoa): Promise<Pessoa[]> => {
-    const response = await this.getAll();
-    // Se precisar de uma rota específica, pode implementar aqui
-    return response.filter(pessoa => pessoa.tipoPessoa === tipo);
+  getPessoasByTipo = async (tipo: TipoPessoa): Promise<Pessoa[]> => {
+    const response = await apiClient.get(`${this.baseUrl}/tipo/${tipo}`);
+    return response.data;
   };
 
-
-
-  getByIdWithDetails = async (id: number | string): Promise<Pessoa> => {
-    const response: AxiosResponse<Pessoa> = await apiClient.get(
-      `${this.baseUrl}/${id}/detalhes`
-    );
+  /**
+   * Busca pessoa com todos os detalhes
+   */
+  getPessoaWithDetails = async (id: number): Promise<Pessoa> => {
+    const response = await apiClient.get(`${this.baseUrl}/${id}/detalhes`);
     return response.data;
+  };
+
+  /**
+   * Busca pessoas com endereços
+   */
+  getPessoasWithEnderecos = async (tipo?: TipoPessoa): Promise<Pessoa[]> => {
+    const params = tipo ? { tipo } : {};
+    const response = await apiClient.get(`${this.baseUrl}/enderecos`, {
+      params,
+    });
+    return response.data;
+  };
+
+  /**
+   * Altera status de uma pessoa
+   */
+  alterarStatusPessoa = async (id: number): Promise<Pessoa> => {
+    const response = await apiClient.patch(`${this.baseUrl}/${id}/status`);
+    return response.data;
+  };
+
+  /**
+   * Obtém tipos de pessoa disponíveis
+   */
+  getTiposPessoa = (): Array<{ value: TipoPessoa; label: string }> => {
+    return [
+      { value: TipoPessoa.FISICA, label: "Pessoa Física" },
+      { value: TipoPessoa.JURIDICA, label: "Pessoa Jurídica" },
+    ];
   };
 }
 
-// Exporta uma instância única do serviço
-const pessoaService = new PessoaService();
-export default pessoaService;
-
-// Exporta as interfaces e o serviço no mesmo arquivo para facilitar importações
-export { PessoaService };
+// Exporta uma instância singleton do serviço
+export default new PessoaService();

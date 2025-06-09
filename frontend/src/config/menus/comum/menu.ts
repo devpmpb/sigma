@@ -1,3 +1,4 @@
+// frontend/src/config/menus/comum/menu.ts - ARQUIVO ATUALIZADO
 import { MenuGroup } from "../../../types";
 
 // Menus de cadastro comum
@@ -7,15 +8,27 @@ export const cadastrosComunMenu: MenuGroup = {
   module: "comum",
   items: [
     {
-      id: "cadastro-pessoas",
+      id: "cadastro-bairro",
+      title: "Bairros",
+      path: "/cadastros/comum/bairros",
+      module: "comum",
+    },
+    {
+      id: "cadastro-logradouro",
+      title: "Logradouros",
+      path: "/cadastros/comum/logradouros",
+      module: "comum",
+    },
+    {
+      id: "cadastro-pessoa",
       title: "Pessoas",
       path: "/cadastros/comum/pessoas",
       module: "comum",
     },
     {
-      id: "cadastro-bairros",
-      title: "Bairros",
-      path: "/cadastros/comum/bairros",
+      id: "cadastro-propriedade",
+      title: "Propriedades",
+      path: "/cadastros/comum/propriedades",
       module: "comum",
     },
     {
@@ -26,8 +39,8 @@ export const cadastrosComunMenu: MenuGroup = {
     },
     {
       id: "cadastro-programa",
-      title: "Programas de Incentivo",
-      path: "/cadastros/agricultura/programas",
+      title: "Programas",
+      path: "/cadastros/comum/programas",
       module: "comum",
     },
     {
@@ -36,7 +49,6 @@ export const cadastrosComunMenu: MenuGroup = {
       path: "/cadastros/comum/regrasNegocio",
       module: "comum",
     },
-    
   ],
 };
 
@@ -47,21 +59,21 @@ export const movimentosComunMenu: MenuGroup = {
   module: "comum",
   items: [
     {
-      id: "solicitacao-beneficio",
+      id: "movimento-solicitacoes-beneficio",
       title: "Solicitações de Benefício",
       path: "/movimentos/comum/solicitacoesBeneficios",
       module: "comum",
     },
     {
-      id: "avaliacao-beneficio",
-      title: "Avaliação de Benefícios",
+      id: "movimento-avaliacoes-beneficio",
+      title: "Avaliações de Benefício",
       path: "/movimentos/comum/avaliacoesBeneficios",
       module: "comum",
     },
     {
-      id: "relatorio-beneficios",
-      title: "Relatório de Benefícios",
-      path: "/movimentos/comum/relatoriosBeneficios",
+      id: "movimento-relatorios-beneficio",
+      title: "Relatórios de Benefício",
+      path: "/movimentos/comum/relatorioBeneficios",
       module: "comum",
     },
   ],

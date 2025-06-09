@@ -1,13 +1,10 @@
+// frontend/src/config/menus/comum/routes.tsx - ARQUIVO ATUALIZADO
 import { lazy } from "react";
-import RegrasNegocioPage from "../../../pages/cadastros/comum/regrasNegocio";
 
 // Usando lazy loading para componentes
 const Bairro = lazy(() => import("../../../pages/cadastros/comum/Bairro"));
-const Logradouros = lazy(
+const Logradouro = lazy(
   () => import("../../../pages/cadastros/comum/logradouro/Logradouros")
-);
-const LogradouroForm = lazy(
-  () => import("../../../pages/cadastros/comum/Logradouro/LogradouroForm")
 );
 const Pessoa = lazy(
   () => import("../../../pages/cadastros/comum/pessoa/Pessoas")
@@ -15,11 +12,28 @@ const Pessoa = lazy(
 const PessoaForm = lazy(
   () => import("../../../pages/cadastros/comum/pessoa/PessoaForm")
 );
+const Propriedade = lazy(
+  () => import("../../../pages/cadastros/comum/propriedade/Propriedade")
+);
+const PropriedadeForm = lazy(
+  () => import("../../../pages/cadastros/comum/propriedade/PropriedadeForm")
+);
 const Programas = lazy(
   () => import("../../../pages/cadastros/comum/programa/Programas")
 );
 const ProgramaForm = lazy(
   () => import("../../../pages/cadastros/comum/programa/ProgramaForm")
+);
+const RegrasNegocio = lazy(
+  () => import("../../../pages/cadastros/comum/regrasNegocio/RegrasNegocio")
+);
+const RegrasNegocioForm = lazy(
+  () => import("../../../pages/cadastros/comum/regrasNegocio/RegrasNegocioForm")
+);
+
+// Componentes de movimentos (placeholder)
+const SolicitacoesBeneficio = lazy(
+  () => import("../../../pages/movimentos/comum/SolicitacoesBeneficio")
 );
 const AvaliacoesBeneficio = lazy(
   () => import("../../../pages/movimentos/comum/AvaliacoesBeneficio")
@@ -27,38 +41,27 @@ const AvaliacoesBeneficio = lazy(
 const RelatoriosBeneficio = lazy(
   () => import("../../../pages/movimentos/comum/RelatoriosBeneficio")
 );
-const SolicitacoesBeneficio = lazy(
-  () => import("../../../pages/movimentos/comum/SolicitacoesBeneficio")
-);
 
 // Exportamos os componentes para compatibilidade com código existente
 export const comunComponents = {
+  Bairro,
+  Logradouro,
   Pessoa,
   PessoaForm,
-  Bairro,
-  Logradouros,
-  LogradouroForm,
+  Propriedade,
+  PropriedadeForm,
   Programas,
   ProgramaForm,
+  RegrasNegocio,
+  RegrasNegocioForm,
+  SolicitacoesBeneficio,
   AvaliacoesBeneficio,
   RelatoriosBeneficio,
-  SolicitacoesBeneficio,
 };
 
 // Exportamos as configurações das rotas para compatibilidade
 export const comunRouteConfig = [
-  {
-    path: "/cadastros/comum/pessoas",
-    component: Pessoa,
-    module: "comum",
-    action: "view",
-  },
-  {
-    path: "/cadastros/comum/pessoas/:id",
-    component: Pessoa,
-    module: "comum",
-    action: "view",
-  },
+  // Cadastros básicos
   {
     path: "/cadastros/comum/bairros",
     component: Bairro,
@@ -73,13 +76,37 @@ export const comunRouteConfig = [
   },
   {
     path: "/cadastros/comum/logradouros",
-    component: Logradouros,
+    component: Logradouro,
     module: "comum",
     action: "view",
   },
   {
     path: "/cadastros/comum/logradouros/:id",
-    component: Logradouros,
+    component: Logradouro,
+    module: "comum",
+    action: "view",
+  },
+  {
+    path: "/cadastros/comum/pessoas",
+    component: Pessoa,
+    module: "comum",
+    action: "view",
+  },
+  {
+    path: "/cadastros/comum/pessoas/:id",
+    component: PessoaForm,
+    module: "comum",
+    action: "view",
+  },
+  {
+    path: "/cadastros/comum/propriedades",
+    component: Propriedade,
+    module: "comum",
+    action: "view",
+  },
+  {
+    path: "/cadastros/comum/propriedades/:id",
+    component: PropriedadeForm,
     module: "comum",
     action: "view",
   },
@@ -91,37 +118,38 @@ export const comunRouteConfig = [
   },
   {
     path: "/cadastros/comum/programas/:id",
-    component: Programas,
+    component: ProgramaForm,
     module: "comum",
     action: "view",
   },
   {
     path: "/cadastros/comum/regrasNegocio",
-    component: RegrasNegocioPage,
+    component: RegrasNegocio,
     module: "comum",
     action: "view",
   },
   {
-    path: "/cadastros/comum/regrasNegocio:id",
-    component: RegrasNegocioPage,
+    path: "/cadastros/comum/regrasNegocio/:id",
+    component: RegrasNegocioForm,
+    module: "comum",
+    action: "view",
+  },
+  // Movimentos
+  {
+    path: "/movimentos/comum/solicitacoes",
+    component: SolicitacoesBeneficio,
     module: "comum",
     action: "view",
   },
   {
-    path: "/movimentos/comum/avaliacoesBeneficio",
+    path: "/movimentos/comum/avaliacoes",
     component: AvaliacoesBeneficio,
     module: "comum",
     action: "view",
   },
   {
-    path: "/movimentos/comum/relatoriosBeneficio",
+    path: "/movimentos/comum/relatorios",
     component: RelatoriosBeneficio,
-    module: "comum",
-    action: "view",
-  },
-  {
-    path: "/movimentos/comum/solicitacoesBeneficio",
-    component: SolicitacoesBeneficio,
     module: "comum",
     action: "view",
   },

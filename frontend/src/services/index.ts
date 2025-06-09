@@ -4,7 +4,7 @@
 export { default as bairroService } from "./common/bairroService";
 export { default as logradouroService } from "./common/logradouroService";
 export { default as pessoaService } from "./common/pessoaService";
-//export { default as propriedadeService } from "./common/propriedadeService";
+export { default as propriedadeService } from "./common/propriedadeService";
 //export { default as enderecoService } from "./common/enderecoService";
 
 // Serviços de agricultura
@@ -17,30 +17,39 @@ export { default as tipoVeiculoService } from "./obras/tipoVeiculoService";
 
 // Exportar tipos também
 export type { Bairro, BairroDTO } from "./common/bairroService";
-export type { Logradouro, LogradouroDTO, TipoLogradouro } from "./common/logradouroService";
-export type { 
-  Pessoa, 
-  PessoaDTO, 
+export type {
+  Logradouro,
+  LogradouroDTO,
+  TipoLogradouro,
+} from "./common/logradouroService";
+export type {
+  Pessoa,
+  PessoaDTO,
   TipoPessoa,
-  //PessoaFisica,
-  //PessoaJuridica,
   PessoaFisicaData,
-  PessoaJuridicaData 
+  PessoaJuridicaData,
 } from "./common/pessoaService";
-//export type { Propriedade, PropriedadeDTO, TipoPropriedade } from "./common/propriedadeService";
+export type {
+  Propriedade,
+  PropriedadeDTO,
+  TipoPropriedade,
+} from "./common/propriedadeService";
 //export type { Endereco, EnderecoDTO, TipoEndereco } from "./common/enderecoService";
 
-export type { GrupoProduto, GrupoProdutoDTO } from "./agricultura/grupoProdutoService";
-export type { 
-  Programa, 
-  ProgramaDTO, 
+export type {
+  GrupoProduto,
+  GrupoProdutoDTO,
+} from "./agricultura/grupoProdutoService";
+export type {
+  Programa,
+  ProgramaDTO,
   TipoPrograma,
   RegrasNegocio as ProgramaRegras,
   ProgramaComRegras,
-  EstatisticasPrograma 
+  EstatisticasPrograma,
 } from "./common/programaService";
-export type { 
-  RegrasNegocio, 
+export type {
+  RegrasNegocio,
   RegrasNegocioDTO,
   TipoRegra,
   CondicaoRegra,
@@ -50,7 +59,7 @@ export type {
   TipoRegraOption,
   TemplateRegra,
   ValidacaoRegra,
-  ProdutorData 
+  ProdutorData,
 } from "./common/regrasNegocioService";
 
 export type { TipoVeiculo, TipoVeiculoDTO } from "./obras/tipoVeiculoService";
