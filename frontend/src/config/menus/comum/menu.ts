@@ -49,6 +49,12 @@ export const cadastrosComunMenu: MenuGroup = {
       path: "/cadastros/comum/regrasNegocio",
       module: "comum",
     },
+    {
+      id: "cadastro-produtor",
+      title: "Produtor",
+      path: "/cadastros/comum/produtores",
+      module: "comum",
+    },
   ],
 };
 

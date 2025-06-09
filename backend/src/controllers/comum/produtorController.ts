@@ -1,3 +1,4 @@
+// backend/src/controllers/agricultura/produtorController.ts - CORRIGIDO
 import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
 import { createGenericController } from "../GenericController";
@@ -74,8 +75,11 @@ export const produtorController = {
       const produtores = await prisma.produtor.findMany({
         include: {
           pessoa: {
-            include: {
-              pessoa: {
+            select: {  // ✅ CORRETO: select para campos escalares + relacionamentos
+              id: true,
+              rg: true,              // campo escalar
+              dataNascimento: true,  // campo escalar  
+              pessoa: {              // relacionamento
                 select: {
                   id: true,
                   nome: true,
@@ -83,9 +87,7 @@ export const produtorController = {
                   telefone: true,
                   email: true
                 }
-              },
-              rg: true,
-              dataNascimento: true
+              }
             }
           },
           areaEfetiva: true
@@ -130,8 +132,11 @@ export const produtorController = {
         where: { id: Number(id) },
         include: {
           pessoa: {
-            include: {
-              pessoa: {
+            select: {  // ✅ CORRETO: select para campos escalares + relacionamentos
+              id: true,
+              rg: true,              // campo escalar
+              dataNascimento: true,  // campo escalar  
+              pessoa: {              // relacionamento
                 select: {
                   id: true,
                   nome: true,
@@ -139,9 +144,7 @@ export const produtorController = {
                   telefone: true,
                   email: true
                 }
-              },
-              rg: true,
-              dataNascimento: true
+              }
             }
           },
           areaEfetiva: true
@@ -318,8 +321,11 @@ export const produtorController = {
         where: { tipoProdutor: tipo },
         include: {
           pessoa: {
-            include: {
-              pessoa: {
+            select: {  // ✅ CORRETO: select para campos escalares + relacionamentos
+              id: true,
+              rg: true,              // campo escalar
+              dataNascimento: true,  // campo escalar  
+              pessoa: {              // relacionamento
                 select: {
                   id: true,
                   nome: true,
@@ -359,8 +365,11 @@ export const produtorController = {
         },
         include: {
           pessoa: {
-            include: {
-              pessoa: {
+            select: {  // ✅ CORRETO: select para campos escalares + relacionamentos
+              id: true,
+              rg: true,              // campo escalar
+              dataNascimento: true,  // campo escalar  
+              pessoa: {              // relacionamento
                 select: {
                   id: true,
                   nome: true,
@@ -396,8 +405,11 @@ export const produtorController = {
         where: { contratoAssistencia: true },
         include: {
           pessoa: {
-            include: {
-              pessoa: {
+            select: {  // ✅ CORRETO: select para campos escalares + relacionamentos
+              id: true,
+              rg: true,              // campo escalar
+              dataNascimento: true,  // campo escalar  
+              pessoa: {              // relacionamento
                 select: {
                   id: true,
                   nome: true,
@@ -435,8 +447,11 @@ export const produtorController = {
         where: { id: Number(id) },
         include: {
           pessoa: {
-            include: {
-              pessoa: {
+            select: {  // ✅ CORRETO: select para campos escalares + relacionamentos
+              id: true,
+              rg: true,              // campo escalar
+              dataNascimento: true,  // campo escalar  
+              pessoa: {              // relacionamento
                 include: {
                   enderecos: {
                     include: {
@@ -447,9 +462,7 @@ export const produtorController = {
                   },
                   propriedades: true
                 }
-              },
-              rg: true,
-              dataNascimento: true
+              }
             }
           },
           areaEfetiva: true,
@@ -576,8 +589,11 @@ export const produtorController = {
         },
         include: {
           pessoa: {
-            include: {
-              pessoa: {
+            select: {  // ✅ CORRETO: select para campos escalares + relacionamentos
+              id: true,
+              rg: true,              // campo escalar
+              dataNascimento: true,  // campo escalar  
+              pessoa: {              // relacionamento
                 select: {
                   id: true,
                   nome: true,

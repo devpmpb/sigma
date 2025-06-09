@@ -140,15 +140,15 @@ export const comunRouteConfig = [
     action: "view",
   },
   {
-    path: "/cadastros/agricultura/produtores",
+    path: "/cadastros/comum/produtores",
     component: Produtor,
-    module: "agricultura",
+    module: "comum",
     action: "view"
   },
   {
-    path: "/cadastros/agricultura/produtores/:id",
+    path: "/cadastros/comum/produtores/:id",
     component: ProdutorForm,
-    module: "agricultura",
+    module: "comum",
     action: "view"
   },
   // Movimentos
