@@ -1,5 +1,4 @@
-// frontend/src/services/index.ts - ARQUIVO ATUALIZADO
-
+// frontend/src/services/index.ts 
 // Serviços comuns
 export { default as bairroService } from "./common/bairroService";
 export { default as logradouroService } from "./common/logradouroService";

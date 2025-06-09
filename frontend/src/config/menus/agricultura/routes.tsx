@@ -7,6 +7,9 @@ const Programas = lazy(() => import("../../../pages/cadastros/comum/programa/Pro
 const ProgramaForm = lazy(() => import("../../../pages/cadastros/comum/programa/ProgramaForm"));
 const RegrasNegocio = lazy(() => import("../../../pages/cadastros/comum/regrasNegocio/RegrasNegocio"));
 const RegrasNegocioForm = lazy(() => import("../../../pages/cadastros/comum/regrasNegocio/RegrasNegocioForm"));
+const Produtor = lazy(() => import("../../../pages/cadastros/agricultura/produtor/Produtor"));
+const ProdutorForm = lazy(() => import("../../../pages/cadastros/agricultura/produtor/ProdutorForm"));
+
 
 // Componentes de movimentos (placeholder)
 const SolicitacoesBeneficio = lazy(() => import("../../../pages/movimentos/comum/SolicitacoesBeneficio"));
@@ -20,6 +23,8 @@ export const agriculturaComponents = {
   ProgramaForm,
   RegrasNegocio,
   RegrasNegocioForm,
+  Produtor,
+  ProdutorForm,
   SolicitacoesBeneficio,
   AvaliacoesBeneficio,
   RelatoriosBeneficio,
@@ -68,6 +73,18 @@ export const agriculturaRouteConfig = [
     path: "/cadastros/agricultura/regrasNegocio/programa/:programaId/:id",
     component: RegrasNegocioForm,
     module: "agricultura",
+    action: "view"
+  },
+  {
+    path: "/cadastros/agricultura/produtores",
+    component: Produtor,
+    module: "comum",
+    action: "view"
+  },
+  {
+    path: "/cadastros/agricultura/produtores/:id",
+    component: ProdutorForm,
+    module: "comum",
     action: "view"
   },
   // Movimentos
