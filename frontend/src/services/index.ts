@@ -5,6 +5,7 @@ export { default as bairroService } from "./common/bairroService";
 export { default as logradouroService } from "./common/logradouroService";
 export { default as pessoaService } from "./common/pessoaService";
 export { default as propriedadeService } from "./common/propriedadeService";
+export { default as produtorService } from "./common/produtorService";
 //export { default as enderecoService } from "./common/enderecoService";
 
 // Serviços de agricultura
@@ -35,7 +36,12 @@ export type {
   TipoPropriedade,
 } from "./common/propriedadeService";
 //export type { Endereco, EnderecoDTO, TipoEndereco } from "./common/enderecoService";
-
+export type { 
+  Produtor, 
+  ProdutorDTO, 
+  AreaEfetiva, 
+  AreaEfetivaDTO 
+} from "./common/produtorService";
 export type {
   GrupoProduto,
   GrupoProdutoDTO,

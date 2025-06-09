@@ -1,16 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { FormBase } from "../../../components/cadastro";
-import { ModuleType } from "../../../types";
-import propriedadeService, {
-  PropriedadeDTO,
-  TipoPropriedade,
-} from "../../../services/common/propriedadeService";
-import pessoaService, { Pessoa } from "../../../services/common/pessoaService";
+import { FormBase } from "../../../../components/cadastro";
+import propriedadeService, { PropriedadeDTO, TipoPropriedade, Propriedade } from "../../../../services/common/propriedadeService";
+import pessoaService, { Pessoa } from "../../../../services/common/pessoaService";
 
 interface PropriedadeFormProps {
   id?: string | number;
   onSave: () => void;
-  module?: ModuleType;
 }
 
 /**
@@ -74,7 +69,7 @@ const PropriedadeForm: React.FC<PropriedadeFormProps> = ({ id, onSave }) => {
   const tiposPropriedade = propriedadeService.getTiposPropriedade();
 
   return (
-    <FormBase
+    <FormBase<Propriedade, PropriedadeDTO>
       title="Propriedade"
       service={propriedadeService}
       id={id}
@@ -83,21 +78,11 @@ const PropriedadeForm: React.FC<PropriedadeFormProps> = ({ id, onSave }) => {
       onSave={onSave}
       returnUrl="/cadastros/comum/propriedades"
     >
-      {({
-        values,
-        errors,
-        touched,
-        handleChange,
-        setValue,
-        setFieldTouched,
-      }) => (
+      {({ values, errors, touched, handleChange, setValue, setFieldTouched }) => (
         <>
           {/* Nome */}
           <div>
-            <label
-              htmlFor="nome"
-              className="block text-sm font-medium text-gray-700"
-            >
+            <label htmlFor="nome" className="block text-sm font-medium text-gray-700">
               Nome da Propriedade *
             </label>
             <input
@@ -117,73 +102,62 @@ const PropriedadeForm: React.FC<PropriedadeFormProps> = ({ id, onSave }) => {
             )}
           </div>
 
-          {/* Tipo de Propriedade */}
-          <div>
-            <label
-              htmlFor="tipoPropriedade"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Tipo de Propriedade *
-            </label>
-            <select
-              id="tipoPropriedade"
-              name="tipoPropriedade"
-              value={values.tipoPropriedade}
-              onChange={handleChange}
-              onBlur={() => setFieldTouched("tipoPropriedade")}
-              className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
-                errors.tipoPropriedade && touched.tipoPropriedade
-                  ? "border-red-500"
-                  : ""
-              }`}
-            >
-              <option value="">Selecione o tipo</option>
-              {tiposPropriedade.map((tipo) => (
-                <option key={tipo.value} value={tipo.value}>
-                  {tipo.label}
-                </option>
-              ))}
-            </select>
-            {errors.tipoPropriedade && touched.tipoPropriedade && (
-              <p className="mt-1 text-sm text-red-600">
-                {errors.tipoPropriedade}
-              </p>
-            )}
-          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Tipo de Propriedade */}
+            <div>
+              <label htmlFor="tipoPropriedade" className="block text-sm font-medium text-gray-700">
+                Tipo de Propriedade *
+              </label>
+              <select
+                id="tipoPropriedade"
+                name="tipoPropriedade"
+                value={values.tipoPropriedade}
+                onChange={handleChange}
+                onBlur={() => setFieldTouched("tipoPropriedade")}
+                className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
+                  errors.tipoPropriedade && touched.tipoPropriedade ? "border-red-500" : ""
+                }`}
+              >
+                <option value="">Selecione o tipo</option>
+                {tiposPropriedade.map((tipo) => (
+                  <option key={tipo.value} value={tipo.value}>
+                    {tipo.label}
+                  </option>
+                ))}
+              </select>
+              {errors.tipoPropriedade && touched.tipoPropriedade && (
+                <p className="mt-1 text-sm text-red-600">{errors.tipoPropriedade}</p>
+              )}
+            </div>
 
-          {/* Área Total */}
-          <div>
-            <label
-              htmlFor="areaTotal"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Área Total (alqueires) *
-            </label>
-            <input
-              type="number"
-              step="0.01"
-              min="0"
-              id="areaTotal"
-              name="areaTotal"
-              value={values.areaTotal}
-              onChange={handleChange}
-              onBlur={() => setFieldTouched("areaTotal")}
-              className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
-                errors.areaTotal && touched.areaTotal ? "border-red-500" : ""
-              }`}
-              placeholder="0,00"
-            />
-            {errors.areaTotal && touched.areaTotal && (
-              <p className="mt-1 text-sm text-red-600">{errors.areaTotal}</p>
-            )}
+            {/* Área Total */}
+            <div>
+              <label htmlFor="areaTotal" className="block text-sm font-medium text-gray-700">
+                Área Total (alqueires) *
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                id="areaTotal"
+                name="areaTotal"
+                value={values.areaTotal}
+                onChange={handleChange}
+                onBlur={() => setFieldTouched("areaTotal")}
+                className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
+                  errors.areaTotal && touched.areaTotal ? "border-red-500" : ""
+                }`}
+                placeholder="0,00"
+              />
+              {errors.areaTotal && touched.areaTotal && (
+                <p className="mt-1 text-sm text-red-600">{errors.areaTotal}</p>
+              )}
+            </div>
           </div>
 
           {/* Proprietário */}
           <div>
-            <label
-              htmlFor="proprietarioId"
-              className="block text-sm font-medium text-gray-700"
-            >
+            <label htmlFor="proprietarioId" className="block text-sm font-medium text-gray-700">
               Proprietário *
             </label>
             <select
@@ -194,9 +168,7 @@ const PropriedadeForm: React.FC<PropriedadeFormProps> = ({ id, onSave }) => {
               onBlur={() => setFieldTouched("proprietarioId")}
               disabled={loadingPessoas}
               className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
-                errors.proprietarioId && touched.proprietarioId
-                  ? "border-red-500"
-                  : ""
+                errors.proprietarioId && touched.proprietarioId ? "border-red-500" : ""
               }`}
             >
               <option value="0">
@@ -209,41 +181,37 @@ const PropriedadeForm: React.FC<PropriedadeFormProps> = ({ id, onSave }) => {
               ))}
             </select>
             {errors.proprietarioId && touched.proprietarioId && (
-              <p className="mt-1 text-sm text-red-600">
-                {errors.proprietarioId}
-              </p>
+              <p className="mt-1 text-sm text-red-600">{errors.proprietarioId}</p>
             )}
           </div>
 
-          {/* Matrícula */}
-          <div>
-            <label
-              htmlFor="matricula"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Matrícula do Imóvel
-            </label>
-            <input
-              type="text"
-              id="matricula"
-              name="matricula"
-              value={values.matricula || ""}
-              onChange={handleChange}
-              onBlur={() => setFieldTouched("matricula")}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              placeholder="Digite a matrícula do imóvel"
-            />
-            <p className="mt-1 text-sm text-gray-500">
-              Número da matrícula no cartório de registro de imóveis
-            </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Matrícula */}
+            <div>
+              <label htmlFor="matricula" className="block text-sm font-medium text-gray-700">
+                Matrícula do Imóvel
+              </label>
+              <input
+                type="text"
+                id="matricula"
+                name="matricula"
+                value={values.matricula || ""}
+                onChange={handleChange}
+                onBlur={() => setFieldTouched("matricula")}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                placeholder="Digite a matrícula do imóvel"
+              />
+              <p className="mt-1 text-sm text-gray-500">
+                Número da matrícula no cartório de registro de imóveis
+              </p>
+            </div>
+
+            <div></div> {/* Espaço vazio para alinhamento */}
           </div>
 
           {/* Localização */}
           <div>
-            <label
-              htmlFor="localizacao"
-              className="block text-sm font-medium text-gray-700"
-            >
+            <label htmlFor="localizacao" className="block text-sm font-medium text-gray-700">
               Localização/Descrição
             </label>
             <textarea

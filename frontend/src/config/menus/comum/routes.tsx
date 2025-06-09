@@ -30,6 +30,9 @@ const RegrasNegocio = lazy(
 const RegrasNegocioForm = lazy(
   () => import("../../../pages/cadastros/comum/regrasNegocio/RegrasNegocioForm")
 );
+const Produtor = lazy(() => import("../../../pages/cadastros/comum/produtor/Produtor"));
+const ProdutorForm = lazy(() => import("../../../pages/cadastros/comum/produtor/ProdutorForm"));
+
 
 // Componentes de movimentos (placeholder)
 const SolicitacoesBeneficio = lazy(
@@ -54,6 +57,8 @@ export const comunComponents = {
   ProgramaForm,
   RegrasNegocio,
   RegrasNegocioForm,
+  Produtor,
+  ProdutorForm,
   SolicitacoesBeneficio,
   AvaliacoesBeneficio,
   RelatoriosBeneficio,
@@ -133,6 +138,18 @@ export const comunRouteConfig = [
     component: RegrasNegocioForm,
     module: "comum",
     action: "view",
+  },
+  {
+    path: "/cadastros/agricultura/produtores",
+    component: Produtor,
+    module: "agricultura",
+    action: "view"
+  },
+  {
+    path: "/cadastros/agricultura/produtores/:id",
+    component: ProdutorForm,
+    module: "agricultura",
+    action: "view"
   },
   // Movimentos
   {
