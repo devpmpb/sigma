@@ -16,8 +16,9 @@ export const cadastrosAgriculturaMenu: MenuGroup = {
       id: "cadastro-produtor",
       title: "Produtor",
       path: "/cadastros/agricultura/produtores",
-      module: "comum",
+      module: "agricultura",
     },
+    
   ],
 };
 
@@ -27,6 +28,11 @@ export const movimentosAgriculturaMenu: MenuGroup = {
   title: "Agricultura",
   module: "agricultura",
   items: [
-    
+    {
+      id: "movimento-arrendamentos", 
+      title: "Arrendamentos",
+      path: "/movimentos/agricultura/arrendamentos",
+      module: "agricultura",
+    },
   ],
 };

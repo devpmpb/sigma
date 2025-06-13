@@ -1,5 +1,5 @@
 import React from "react";
-import MovimentoTemplate from "../../../components/MovimentoTemplate";
+import MovimentoTemplate from "../../../components/movimento/MovimentoTemplate";
 
 const MovimentoObras1: React.FC = () => {
   return (

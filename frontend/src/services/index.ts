@@ -1,4 +1,3 @@
-// frontend/src/services/index.ts 
 // Serviços comuns
 export { default as bairroService } from "./common/bairroService";
 export { default as logradouroService } from "./common/logradouroService";
@@ -11,6 +10,7 @@ export { default as produtorService } from "./common/produtorService";
 export { default as grupoProdutoService } from "./agricultura/grupoProdutoService";
 export { default as programaService } from "./common/programaService";
 export { default as regrasNegocioService } from "./common/regrasNegocioService";
+export { default as arrendamentoService } from "./agricultura/arrendamentoService";
 
 // Serviços de obras
 export { default as tipoVeiculoService } from "./obras/tipoVeiculoService";
@@ -22,12 +22,12 @@ export type {
   LogradouroDTO,
   TipoLogradouro,
 } from "./common/logradouroService";
-export type {
-  Pessoa,
-  PessoaDTO,
+export {
+  type Pessoa,
+  type PessoaDTO,
   TipoPessoa,
-  PessoaFisicaData,
-  PessoaJuridicaData,
+  type PessoaFisicaData,
+  type PessoaJuridicaData,
 } from "./common/pessoaService";
 export type {
   Propriedade,
@@ -68,3 +68,10 @@ export type {
 } from "./common/regrasNegocioService";
 
 export type { TipoVeiculo, TipoVeiculoDTO } from "./obras/tipoVeiculoService";
+
+export type {
+  Arrendamento,
+  ArrendamentoDTO,
+  StatusArrendamentoType,
+} from "./agricultura/arrendamentoService";
+export { StatusArrendamento } from "./agricultura/arrendamentoService";

@@ -13,6 +13,7 @@ import pessoaRoutes from "./comum/pessoaRoutes";
 import propriedadeRoutes from "./comum/propriedadeRoutes";
 import enderecoRoutes from "./comum/enderecoRoutes";
 import produtorRoutes from "./comum/produtorRoutes";
+import arrendamentosRoutes from "./agricultura/arrendamentoRoutes";
 
 // Importar middleware de autenticação
 import { authenticateToken, requireModuleAccess } from "../middleware/authMiddleware";
@@ -42,6 +43,7 @@ router.use("/grupoProdutos", requireModuleAccess(ModuloSistema.AGRICULTURA), gru
 router.use("/programas", requireModuleAccess(ModuloSistema.AGRICULTURA), programaRoutes);
 router.use("/regrasNegocio", requireModuleAccess(ModuloSistema.AGRICULTURA), regrasNegocioRoutes);
 router.use("/produtores", requireModuleAccess(ModuloSistema.AGRICULTURA), produtorRoutes);
+router.use("/arrendamentos", requireModuleAccess(ModuloSistema.AGRICULTURA), arrendamentosRoutes);
 
 // OBRAS (requer acesso ao módulo obras)
 router.use("/tipoVeiculos", requireModuleAccess(ModuloSistema.OBRAS), tipoVeiculoRoutes);

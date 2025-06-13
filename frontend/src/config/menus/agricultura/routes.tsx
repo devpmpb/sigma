@@ -16,6 +16,13 @@ const SolicitacoesBeneficio = lazy(() => import("../../../pages/movimentos/comum
 const AvaliacoesBeneficio = lazy(() => import("../../../pages/movimentos/comum/AvaliacoesBeneficio"));
 const RelatoriosBeneficio = lazy(() => import("../../../pages/movimentos/comum/RelatoriosBeneficio"));
 
+const ArrendamentosPage = lazy(
+  () => import("../../../pages/movimentos/agricultura/arrendamento/ArrendamentosPage")
+);
+const ArrendamentoForm = lazy(
+  () => import("../../../pages/movimentos/agricultura/arrendamento/ArrendamentoForm")
+);
+
 // Exportamos os componentes para compatibilidade com código existente
 export const agriculturaComponents = {
   GrupoProduto,
@@ -28,6 +35,8 @@ export const agriculturaComponents = {
   SolicitacoesBeneficio,
   AvaliacoesBeneficio,
   RelatoriosBeneficio,
+  ArrendamentosPage,
+  ArrendamentoForm
 };
 
 // Exportamos as configurações das rotas para compatibilidade
@@ -105,5 +114,17 @@ export const agriculturaRouteConfig = [
     component: RelatoriosBeneficio,
     module: "agricultura",
     action: "view"
-  }
+  },
+   {
+    path: "/movimentos/agricultura/arrendamentos",
+    component: ArrendamentosPage,
+    module: "agricultura",
+    action: "view",
+  },
+  {
+    path: "/movimentos/agricultura/arrendamentos/:id",
+    component: ArrendamentoForm,
+    module: "agricultura",
+    action: "view",
+  },
 ];

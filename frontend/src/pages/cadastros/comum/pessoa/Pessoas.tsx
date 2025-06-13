@@ -4,8 +4,8 @@ import { Column } from "../../../../components/common/DataTable";
 import {
   Pessoa,
   PessoaDTO,
-  TipoPessoa,
   pessoaService,
+  TipoPessoa,
 } from "../../../../services";
 import { CadastroBase } from "../../../../components/cadastro";
 import PessoaForm from "./PessoaForm";
