@@ -68,13 +68,9 @@ export const StatusArrendamento = {
 
 export type StatusArrendamentoType = typeof StatusArrendamento[keyof typeof StatusArrendamento];
 
-/**
- * Serviço para operações com a entidade Arrendamento
- * Módulo comum
- */
 class ArrendamentoService extends BaseApiService<Arrendamento, ArrendamentoDTO> {
   constructor() {
-    super("/arrendamentos", "comum");
+    super("/arrendamentos", "agricultura");
   }
 
   /**
@@ -89,9 +85,6 @@ class ArrendamentoService extends BaseApiService<Arrendamento, ArrendamentoDTO> 
     return response.data;
   };
 
-  /**
-   * Busca arrendamentos por arrendatário
-   */
   getArrendamentosByArrendatario = async (
     arrendatarioId: number
   ): Promise<Arrendamento[]> => {

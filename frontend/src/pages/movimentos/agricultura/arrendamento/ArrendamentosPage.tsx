@@ -1,4 +1,3 @@
-// frontend/src/pages/movimentos/comum/arrendamentos/ArrendamentosPage.tsx
 import React from "react";
 import { useNavigate } from "@tanstack/react-router";
 import arrendamentoService, { 
@@ -245,8 +244,8 @@ const ArrendamentosPage: React.FC = () => {
       service={arrendamentoService}
       columns={columns}
       rowKey="id"
-      baseUrl="/movimentos/arrendamentos"
-      module="comum" as ModuleType
+      baseUrl="/agricultura/arrendamentos"
+      module="agricultura" as ModuleType
       FormComponent={ArrendamentoForm}
       DashboardComponent={ArrendamentoDashboard}
       showDashboard={true}
