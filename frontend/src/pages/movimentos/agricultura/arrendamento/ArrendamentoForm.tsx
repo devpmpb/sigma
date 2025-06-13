@@ -392,7 +392,7 @@ const ArrendamentoForm: React.FC<ArrendamentoFormProps> = ({ id, onSave }) => {
       initialValues={initialValues}
       validate={validate}
       onSave={onSave}
-      returnUrl="/movimentos/arrendamentos"
+      returnUrl="/movimentos/agricultura/arrendamentos"
       sections={sections}
       alerts={alerts}
       customActions={customActions}

@@ -244,7 +244,7 @@ const ArrendamentosPage: React.FC = () => {
       service={arrendamentoService}
       columns={columns}
       rowKey="id"
-      baseUrl="/agricultura/arrendamentos"
+      baseUrl="/movimentos/agricultura/arrendamentos" 
       module="agricultura" as ModuleType
       FormComponent={ArrendamentoForm}
       DashboardComponent={ArrendamentoDashboard}
