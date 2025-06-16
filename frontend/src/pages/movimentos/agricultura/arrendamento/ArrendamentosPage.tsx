@@ -1,23 +1,23 @@
+// frontend/src/pages/movimentos/agricultura/arrendamentos/ArrendamentosPage.tsx
 import React from "react";
 import { useNavigate } from "@tanstack/react-router";
-import arrendamentoService, { 
-  Arrendamento, 
-  StatusArrendamento 
+import { CadastroBase } from "../../../../components/cadastro";
+import arrendamentoService, {
+  Arrendamento,
+  StatusArrendamento,
 } from "../../../../services/agricultura/arrendamentoService";
 import ArrendamentoForm from "./ArrendamentoForm";
 import ArrendamentoDashboard from "./ArrendamentoDashboard";
 import { Column } from "../../../../components/common/DataTable";
-import { ModuleType } from "../../../../types";
-import { MovimentoBase } from "../../../../components/movimento";
 
 /**
  * Página principal de movimentos de arrendamento
- * Usa MovimentoBase para funcionalidades avançadas
+ * USA CadastroBase ESTENDIDO ao invés de criar novo template
  */
 const ArrendamentosPage: React.FC = () => {
   const navigate = useNavigate();
 
-  // Definição das colunas da tabela
+  // Definição das colunas da tabela (mesmo código de antes)
   const columns: Column<Arrendamento>[] = [
     {
       title: "Propriedade",
@@ -25,7 +25,8 @@ const ArrendamentosPage: React.FC = () => {
       render: (arrendamento) => (
         <div>
           <div className="font-medium text-gray-900">
-            {arrendamento.propriedade?.nome || `Propriedade ${arrendamento.propriedadeId}`}
+            {arrendamento.propriedade?.nome ||
+              `Propriedade ${arrendamento.propriedadeId}`}
           </div>
           {arrendamento.propriedade?.localizacao && (
             <div className="text-sm text-gray-500">
@@ -42,7 +43,8 @@ const ArrendamentosPage: React.FC = () => {
       render: (arrendamento) => (
         <div>
           <div className="font-medium text-gray-900">
-            {arrendamento.proprietario?.pessoa?.nome || `ID: ${arrendamento.proprietarioId}`}
+            {arrendamento.proprietario?.pessoa?.nome ||
+              `ID: ${arrendamento.proprietarioId}`}
           </div>
           {arrendamento.proprietario?.pessoa?.cpfCnpj && (
             <div className="text-sm text-gray-500">
@@ -55,11 +57,12 @@ const ArrendamentosPage: React.FC = () => {
     },
     {
       title: "Arrendatário",
-      key: "arrendatario", 
+      key: "arrendatario",
       render: (arrendamento) => (
         <div>
           <div className="font-medium text-gray-900">
-            {arrendamento.arrendatario?.pessoa?.nome || `ID: ${arrendamento.arrendatarioId}`}
+            {arrendamento.arrendatario?.pessoa?.nome ||
+              `ID: ${arrendamento.arrendatarioId}`}
           </div>
           {arrendamento.arrendatario?.pessoa?.cpfCnpj && (
             <div className="text-sm text-gray-500">
@@ -89,11 +92,12 @@ const ArrendamentosPage: React.FC = () => {
       render: (arrendamento) => (
         <div className="text-sm">
           <div className="font-medium">
-            Início: {new Date(arrendamento.dataInicio).toLocaleDateString('pt-BR')}
+            Início:{" "}
+            {new Date(arrendamento.dataInicio).toLocaleDateString("pt-BR")}
           </div>
           {arrendamento.dataFim ? (
             <div>
-              Fim: {new Date(arrendamento.dataFim).toLocaleDateString('pt-BR')}
+              Fim: {new Date(arrendamento.dataFim).toLocaleDateString("pt-BR")}
             </div>
           ) : (
             <div className="text-gray-500 italic">Prazo indeterminado</div>
@@ -104,29 +108,19 @@ const ArrendamentosPage: React.FC = () => {
       width: "150px",
     },
     {
-      title: "Duração",
-      key: "duracao",
-      render: (arrendamento) => (
-        <div className="text-sm text-gray-600">
-          {arrendamentoService.calcularDuracao(arrendamento.dataInicio, arrendamento.dataFim)}
-        </div>
-      ),
-      sortable: false,
-      width: "120px",
-    },
-    {
       title: "Ações",
       key: "acoes",
       render: (arrendamento) => (
         <div className="flex items-center space-x-2">
-          {/* Botão para finalizar arrendamento (se ativo) */}
           {arrendamento.status === StatusArrendamento.ATIVO && (
             <button
               onClick={async (e) => {
                 e.stopPropagation();
                 if (window.confirm("Finalizar este arrendamento?")) {
                   try {
-                    await arrendamentoService.finalizarArrendamento(arrendamento.id);
+                    await arrendamentoService.finalizarArrendamento(
+                      arrendamento.id
+                    );
                     window.location.reload();
                   } catch (error) {
                     alert("Erro ao finalizar arrendamento");
@@ -140,9 +134,8 @@ const ArrendamentosPage: React.FC = () => {
             </button>
           )}
 
-          {/* Link para documento (se existir) 
-          </div>{arrendamento.documentoUrl && (
-            
+          {arrendamento.documentoUrl && (
+            <a
               href={arrendamento.documentoUrl}
               target="_blank"
               rel="noopener noreferrer"
@@ -152,7 +145,7 @@ const ArrendamentosPage: React.FC = () => {
             >
               📄
             </a>
-          )}*/}
+          )}
         </div>
       ),
       sortable: false,
@@ -160,42 +153,52 @@ const ArrendamentosPage: React.FC = () => {
     },
   ];
 
-  // Configuração de status
+  // 🔥 Configurações para CadastroBase estendido
   const statusConfig = {
     field: "status",
     options: arrendamentoService.getStatusOptions(),
   };
 
-  // Filtros rápidos
   const quickFilters = [
     {
       label: "Ativos",
-      filter: (items: Arrendamento[]) => items.filter(item => item.status === StatusArrendamento.ATIVO),
+      filter: (items: Arrendamento[]) =>
+        items.filter((item) => item.status === StatusArrendamento.ATIVO),
       color: "green",
     },
     {
-      label: "Vencidos", 
-      filter: (items: Arrendamento[]) => items.filter(item => arrendamentoService.isVencido(item)),
+      label: "Vencidos",
+      filter: (items: Arrendamento[]) =>
+        items.filter((item) => arrendamentoService.isVencido(item)),
       color: "red",
     },
     {
       label: "Próximos Vencimento",
-      filter: (items: Arrendamento[]) => items.filter(item => arrendamentoService.isProximoVencimento(item)),
+      filter: (items: Arrendamento[]) =>
+        items.filter((item) => arrendamentoService.isProximoVencimento(item)),
       color: "yellow",
     },
     {
       label: "Indeterminado",
-      filter: (items: Arrendamento[]) => items.filter(item => !item.dataFim),
+      filter: (items: Arrendamento[]) => items.filter((item) => !item.dataFim),
       color: "blue",
     },
   ];
 
-  // Função para calcular métricas
   const calculateMetrics = (items: Arrendamento[]) => {
-    const ativos = items.filter(item => item.status === StatusArrendamento.ATIVO);
-    const vencidos = items.filter(item => arrendamentoService.isVencido(item));
-    const proximosVencimento = items.filter(item => arrendamentoService.isProximoVencimento(item));
-    const areaTotal = ativos.reduce((sum, item) => sum + Number(item.areaArrendada), 0);
+    const ativos = items.filter(
+      (item) => item.status === StatusArrendamento.ATIVO
+    );
+    const vencidos = items.filter((item) =>
+      arrendamentoService.isVencido(item)
+    );
+    const proximosVencimento = items.filter((item) =>
+      arrendamentoService.isProximoVencimento(item)
+    );
+    const areaTotal = ativos.reduce(
+      (sum, item) => sum + Number(item.areaArrendada),
+      0
+    );
 
     return {
       total: items.length,
@@ -206,56 +209,58 @@ const ArrendamentosPage: React.FC = () => {
     };
   };
 
-  // Botões adicionais na barra de ações
   const actionButtons = (
     <div className="flex space-x-2">
       <button
         onClick={() => navigate({ to: "/relatorios/arrendamentos" })}
         className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm"
-        title="Gerar relatórios"
       >
         📊 Relatórios
       </button>
-      
+
       <button
         onClick={async () => {
           try {
-            const vencidos = await arrendamentoService.getArrendamentosVencidos();
-            if (vencidos.length > 0) {
-              alert(`Há ${vencidos.length} arrendamento(s) vencido(s)`);
-            } else {
-              alert("Nenhum arrendamento vencido encontrado");
-            }
+            const vencidos =
+              await arrendamentoService.getArrendamentosVencidos();
+            alert(
+              `${
+                vencidos.length > 0 ? vencidos.length : "Nenhum"
+              } arrendamento(s) vencido(s)`
+            );
           } catch (error) {
-            alert("Erro ao verificar arrendamentos vencidos");
+            alert("Erro ao verificar vencimentos");
           }
         }}
         className="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 text-sm"
-        title="Verificar vencimentos"
       >
         ⚠️ Vencidos
       </button>
     </div>
   );
 
+  // 🔥 USANDO CadastroBase ESTENDIDO
   return (
-    <MovimentoBase<Arrendamento, any>
+    <CadastroBase<Arrendamento, any>
       title="Arrendamentos"
       service={arrendamentoService}
       columns={columns}
       rowKey="id"
-      baseUrl="/movimentos/agricultura/arrendamentos" 
-      module="agricultura" as ModuleType
+      baseUrl="/movimentos/agricultura/arrendamentos"
+      module="agricultura"
+      as
+      ModuleType
       FormComponent={ArrendamentoForm}
-      DashboardComponent={ArrendamentoDashboard}
-      showDashboard={true}
       showSearch={true}
       searchPlaceholder="Buscar por propriedade, proprietário ou arrendatário..."
       actionButtons={actionButtons}
-      statusConfig={statusConfig}
+      // 🆕 NOVAS PROPS PARA FUNCIONALIDADES DE MOVIMENTO
+      showDashboard={true}
+      DashboardComponent={ArrendamentoDashboard}
       quickFilters={quickFilters}
       showMetrics={true}
       calculateMetrics={calculateMetrics}
+      statusConfig={statusConfig}
     />
   );
 };
