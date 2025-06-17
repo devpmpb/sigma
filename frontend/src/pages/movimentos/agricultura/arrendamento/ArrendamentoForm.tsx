@@ -330,7 +330,6 @@ const ArrendamentoForm: React.FC<ArrendamentoFormProps> = ({ id, onSave }) => {
             </div>
           </FormSection>
 
-          {/* 🆕 SEÇÃO 3 - Período */}
           <FormSection
             title="Período do Arrendamento"
             description="Configure as datas de início e término do contrato"
@@ -396,7 +395,6 @@ const ArrendamentoForm: React.FC<ArrendamentoFormProps> = ({ id, onSave }) => {
                 </FormField>
               </div>
 
-              {/* Duração calculada */}
               {values.dataInicio && values.dataFim && (
                 <div className="p-3 bg-green-50 border border-green-200 rounded">
                   <p className="text-sm text-green-800">
@@ -411,7 +409,6 @@ const ArrendamentoForm: React.FC<ArrendamentoFormProps> = ({ id, onSave }) => {
             </div>
           </FormSection>
 
-          {/* 🆕 SEÇÃO 4 - Documentos */}
           <FormSection
             title="Documentação"
             description="Anexe documentos relacionados ao arrendamento"

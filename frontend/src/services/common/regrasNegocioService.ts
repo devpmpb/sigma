@@ -113,7 +113,7 @@ export interface ProdutorData {
 
 class RegrasNegocioService extends BaseApiService<RegrasNegocio, RegrasNegocioDTO> {
   constructor() {
-    super("/regrasNegocio");
+    super("/regrasNegocio", "comum");
   }
 
   /**

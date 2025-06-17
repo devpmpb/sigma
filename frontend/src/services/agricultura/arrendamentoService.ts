@@ -1,7 +1,6 @@
 import apiClient from "../apiConfig";
 import BaseApiService from "../baseApiService";
 
-// Interface para a entidade Arrendamento
 export interface Arrendamento {
   id: number;
   propriedadeId: number;
@@ -15,7 +14,6 @@ export interface Arrendamento {
   createdAt: string;
   updatedAt: string;
   
-  // Relacionamentos (quando incluídos)
   propriedade?: {
     id: number;
     nome: string;
@@ -46,7 +44,6 @@ export interface Arrendamento {
   };
 }
 
-// Interface para os dados de criação/atualização
 export interface ArrendamentoDTO {
   propriedadeId: number;
   proprietarioId: number;
@@ -58,7 +55,6 @@ export interface ArrendamentoDTO {
   documentoUrl?: string;
 }
 
-// Status disponíveis para arrendamento
 export const StatusArrendamento = {
   ATIVO: "ativo",
   INATIVO: "inativo",
@@ -73,9 +69,6 @@ class ArrendamentoService extends BaseApiService<Arrendamento, ArrendamentoDTO> 
     super("/arrendamentos", "agricultura");
   }
 
-  /**
-   * Busca arrendamentos por proprietário
-   */
   getArrendamentosByProprietario = async (
     proprietarioId: number
   ): Promise<Arrendamento[]> => {
@@ -94,9 +87,6 @@ class ArrendamentoService extends BaseApiService<Arrendamento, ArrendamentoDTO> 
     return response.data;
   };
 
-  /**
-   * Busca arrendamentos por propriedade
-   */
   getArrendamentosByPropriedade = async (
     propriedadeId: number
   ): Promise<Arrendamento[]> => {
@@ -106,9 +96,6 @@ class ArrendamentoService extends BaseApiService<Arrendamento, ArrendamentoDTO> 
     return response.data;
   };
 
-  /**
-   * Busca arrendamentos por status
-   */
   getArrendamentosByStatus = async (
     status: StatusArrendamentoType
   ): Promise<Arrendamento[]> => {
@@ -116,31 +103,19 @@ class ArrendamentoService extends BaseApiService<Arrendamento, ArrendamentoDTO> 
     return response.data;
   };
 
-  /**
-   * Busca arrendamentos ativos
-   */
   getArrendamentosAtivos = async (): Promise<Arrendamento[]> => {
     return this.getArrendamentosByStatus(StatusArrendamento.ATIVO);
   };
 
-  /**
-   * Busca arrendamentos vencidos
-   */
   getArrendamentosVencidos = async (): Promise<Arrendamento[]> => {
     return this.getArrendamentosByStatus(StatusArrendamento.VENCIDO);
   };
 
-  /**
-   * Busca arrendamento com todos os detalhes (propriedade, pessoas)
-   */
   getArrendamentoWithDetails = async (id: number): Promise<Arrendamento> => {
     const response = await apiClient.get(`${this.baseUrl}/${id}/detalhes`);
     return response.data;
   };
 
-  /**
-   * Atualiza status do arrendamento
-   */
   updateStatus = async (
     id: number,
     novoStatus: StatusArrendamentoType
@@ -151,9 +126,6 @@ class ArrendamentoService extends BaseApiService<Arrendamento, ArrendamentoDTO> 
     return response.data;
   };
 
-  /**
-   * Finaliza arrendamento (define data fim e status inativo)
-   */
   finalizarArrendamento = async (
     id: number,
     dataFim?: string
@@ -164,10 +136,6 @@ class ArrendamentoService extends BaseApiService<Arrendamento, ArrendamentoDTO> 
     return response.data;
   };
 
-  /**
-   * Valida se há conflitos de arrendamento
-   * Verifica se a área e período não conflitam com outros arrendamentos
-   */
   validarConflito = async (arrendamentoData: {
     propriedadeId: number;
     areaArrendada: number;
@@ -185,9 +153,6 @@ class ArrendamentoService extends BaseApiService<Arrendamento, ArrendamentoDTO> 
     return response.data;
   };
 
-  /**
-   * Busca estatísticas para dashboard
-   */
   getEstatisticas = async (): Promise<{
     total: number;
     ativos: number;
@@ -199,9 +164,6 @@ class ArrendamentoService extends BaseApiService<Arrendamento, ArrendamentoDTO> 
     return response.data;
   };
 
-  /**
-   * Retorna opções de status disponíveis
-   */
   getStatusOptions = (): Array<{
     value: StatusArrendamentoType;
     label: string;
@@ -215,9 +177,6 @@ class ArrendamentoService extends BaseApiService<Arrendamento, ArrendamentoDTO> 
     ];
   };
 
-  /**
-   * Formata área para exibição
-   */
   formatarArea = (area: string | number): string => {
     const areaNum = typeof area === "string" ? parseFloat(area) : area;
     return `${areaNum.toLocaleString('pt-BR', { 
@@ -226,9 +185,6 @@ class ArrendamentoService extends BaseApiService<Arrendamento, ArrendamentoDTO> 
     })} ha`;
   };
 
-  /**
-   * Calcula duração do arrendamento em meses
-   */
   calcularDuracao = (dataInicio: string, dataFim?: string): string => {
     const inicio = new Date(dataInicio);
     const fim = dataFim ? new Date(dataFim) : new Date();
@@ -250,17 +206,11 @@ class ArrendamentoService extends BaseApiService<Arrendamento, ArrendamentoDTO> 
     }
   };
 
-  /**
-   * Verifica se o arrendamento está vencido
-   */
   isVencido = (arrendamento: Arrendamento): boolean => {
     if (!arrendamento.dataFim) return false;
     return new Date(arrendamento.dataFim) < new Date();
   };
 
-  /**
-   * Verifica se o arrendamento está próximo do vencimento (30 dias)
-   */
   isProximoVencimento = (arrendamento: Arrendamento): boolean => {
     if (!arrendamento.dataFim) return false;
     
@@ -271,20 +221,12 @@ class ArrendamentoService extends BaseApiService<Arrendamento, ArrendamentoDTO> 
     return diasRestantes <= 30 && diasRestantes > 0;
   };
 
-  /**
-   * Valida DAP (se necessário para alguma integração futura)
-   */
   validarDAP = (dap: string): boolean => {
-    // Remove caracteres não numéricos
     const dapNumerico = dap.replace(/\D/g, '');
     
-    // DAP deve ter 11 dígitos
     return dapNumerico.length === 11;
   };
 
-  /**
-   * Formata valor monetário
-   */
   formatarValor = (valor: number): string => {
     return valor.toLocaleString('pt-BR', {
       style: 'currency',
@@ -292,18 +234,12 @@ class ArrendamentoService extends BaseApiService<Arrendamento, ArrendamentoDTO> 
     });
   };
 
-  /**
-   * Calcula valor por hectare
-   */
   calcularValorPorHectare = (valorTotal: number, area: number): string => {
     if (area === 0) return "R$ 0,00";
     const valorPorHa = valorTotal / area;
     return this.formatarValor(valorPorHa);
   };
 
-  /**
-   * Gera resumo textual do arrendamento
-   */
   gerarResumo = (arrendamento: Arrendamento): string => {
     const propriedade = arrendamento.propriedade?.nome || `Propriedade ${arrendamento.propriedadeId}`;
     const proprietario = arrendamento.proprietario?.pessoa?.nome || `Proprietário ${arrendamento.proprietarioId}`;
@@ -316,5 +252,4 @@ class ArrendamentoService extends BaseApiService<Arrendamento, ArrendamentoDTO> 
   };
 }
 
-// Exporta uma instância singleton do serviço
 export default new ArrendamentoService();
