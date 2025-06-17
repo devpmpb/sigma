@@ -15,6 +15,7 @@ import pessoaService, {
   Pessoa,
   TipoPessoa,
 } from "../../../../services/common/pessoaService";
+import { formatDateForInput } from "../../../../utils/formatters";
 
 interface ArrendamentoFormProps {
   id?: string | number;
@@ -276,7 +277,9 @@ const ArrendamentoForm: React.FC<ArrendamentoFormProps> = ({ id, onSave }) => {
                   id="proprietarioId"
                   name="proprietarioId"
                   value={values.proprietarioId}
-                  onChange={handleChange}
+                  onChange={(e) =>
+                    setValue("proprietarioId", Number(e.target.value))
+                  }
                   onBlur={() => setFieldTouched("proprietarioId", true)}
                   disabled={loadingPessoas}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -305,7 +308,9 @@ const ArrendamentoForm: React.FC<ArrendamentoFormProps> = ({ id, onSave }) => {
                   id="arrendatarioId"
                   name="arrendatarioId"
                   value={values.arrendatarioId}
-                  onChange={handleChange}
+                  onChange={(e) =>
+                    setValue("arrendatarioId", Number(e.target.value))
+                  }
                   onBlur={() => setFieldTouched("arrendatarioId", true)}
                   disabled={loadingPessoas}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"

@@ -1,7 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { FormBase } from "../../../../components/cadastro";
-import propriedadeService, { PropriedadeDTO, TipoPropriedade, Propriedade } from "../../../../services/common/propriedadeService";
-import pessoaService, { Pessoa } from "../../../../services/common/pessoaService";
+import propriedadeService, {
+  PropriedadeDTO,
+  TipoPropriedade,
+  Propriedade,
+} from "../../../../services/common/propriedadeService";
+import pessoaService, {
+  Pessoa,
+} from "../../../../services/common/pessoaService";
 
 interface PropriedadeFormProps {
   id?: string | number;
@@ -78,11 +84,21 @@ const PropriedadeForm: React.FC<PropriedadeFormProps> = ({ id, onSave }) => {
       onSave={onSave}
       returnUrl="/cadastros/comum/propriedades"
     >
-      {({ values, errors, touched, handleChange, setValue, setFieldTouched }) => (
+      {({
+        values,
+        errors,
+        touched,
+        handleChange,
+        setValue,
+        setFieldTouched,
+      }) => (
         <>
           {/* Nome */}
           <div>
-            <label htmlFor="nome" className="block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="nome"
+              className="block text-sm font-medium text-gray-700"
+            >
               Nome da Propriedade *
             </label>
             <input
@@ -105,7 +121,10 @@ const PropriedadeForm: React.FC<PropriedadeFormProps> = ({ id, onSave }) => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Tipo de Propriedade */}
             <div>
-              <label htmlFor="tipoPropriedade" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="tipoPropriedade"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Tipo de Propriedade *
               </label>
               <select
@@ -115,7 +134,9 @@ const PropriedadeForm: React.FC<PropriedadeFormProps> = ({ id, onSave }) => {
                 onChange={handleChange}
                 onBlur={() => setFieldTouched("tipoPropriedade")}
                 className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
-                  errors.tipoPropriedade && touched.tipoPropriedade ? "border-red-500" : ""
+                  errors.tipoPropriedade && touched.tipoPropriedade
+                    ? "border-red-500"
+                    : ""
                 }`}
               >
                 <option value="">Selecione o tipo</option>
@@ -126,13 +147,18 @@ const PropriedadeForm: React.FC<PropriedadeFormProps> = ({ id, onSave }) => {
                 ))}
               </select>
               {errors.tipoPropriedade && touched.tipoPropriedade && (
-                <p className="mt-1 text-sm text-red-600">{errors.tipoPropriedade}</p>
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.tipoPropriedade}
+                </p>
               )}
             </div>
 
             {/* Área Total */}
             <div>
-              <label htmlFor="areaTotal" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="areaTotal"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Área Total (alqueires) *
               </label>
               <input
@@ -157,18 +183,25 @@ const PropriedadeForm: React.FC<PropriedadeFormProps> = ({ id, onSave }) => {
 
           {/* Proprietário */}
           <div>
-            <label htmlFor="proprietarioId" className="block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="proprietarioId"
+              className="block text-sm font-medium text-gray-700"
+            >
               Proprietário *
             </label>
             <select
               id="proprietarioId"
               name="proprietarioId"
               value={values.proprietarioId}
-              onChange={handleChange}
+              onChange={(e) =>
+                setValue("proprietarioId", Number(e.target.value))
+              }
               onBlur={() => setFieldTouched("proprietarioId")}
               disabled={loadingPessoas}
               className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
-                errors.proprietarioId && touched.proprietarioId ? "border-red-500" : ""
+                errors.proprietarioId && touched.proprietarioId
+                  ? "border-red-500"
+                  : ""
               }`}
             >
               <option value="0">
@@ -181,14 +214,19 @@ const PropriedadeForm: React.FC<PropriedadeFormProps> = ({ id, onSave }) => {
               ))}
             </select>
             {errors.proprietarioId && touched.proprietarioId && (
-              <p className="mt-1 text-sm text-red-600">{errors.proprietarioId}</p>
+              <p className="mt-1 text-sm text-red-600">
+                {errors.proprietarioId}
+              </p>
             )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Matrícula */}
             <div>
-              <label htmlFor="matricula" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="matricula"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Matrícula do Imóvel
               </label>
               <input
@@ -205,13 +243,15 @@ const PropriedadeForm: React.FC<PropriedadeFormProps> = ({ id, onSave }) => {
                 Número da matrícula no cartório de registro de imóveis
               </p>
             </div>
-
             <div></div> {/* Espaço vazio para alinhamento */}
           </div>
 
           {/* Localização */}
           <div>
-            <label htmlFor="localizacao" className="block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="localizacao"
+              className="block text-sm font-medium text-gray-700"
+            >
               Localização/Descrição
             </label>
             <textarea
