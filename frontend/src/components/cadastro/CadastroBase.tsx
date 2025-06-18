@@ -1,3 +1,4 @@
+// frontend/src/components/cadastro/CadastroBase.tsx - VERSÃO ESTENDIDA
 import React, { useEffect, useState, ReactNode } from "react";
 import { useNavigate, useParams } from "@tanstack/react-router";
 import SearchBar from "../common/SearchBar";
@@ -77,11 +78,54 @@ interface CadastroBaseProps<T, R> {
     activeText?: string;
     inactiveText?: string;
   };
+
+  // 🆕 NOVAS PROPS PARA MOVIMENTOS
+  /**
+   * Mostrar dashboard na parte superior
+   */
+  showDashboard?: boolean;
+
+  /**
+   * Componente de dashboard
+   */
+  DashboardComponent?: React.ComponentType;
+
+  /**
+   * Filtros rápidos por status/categoria
+   */
+  quickFilters?: Array<{
+    label: string;
+    filter: (items: T[]) => T[];
+    color?: string;
+  }>;
+
+  /**
+   * Exibir métricas resumidas
+   */
+  showMetrics?: boolean;
+
+  /**
+   * Função para calcular métricas
+   */
+  calculateMetrics?: (items: T[]) => Record<string, any>;
+
+  /**
+   * Configuração de status personalizada para movimentos
+   */
+  statusConfig?: {
+    field: string;
+    options: Array<{
+      value: string;
+      label: string;
+      color: "green" | "red" | "yellow" | "blue" | "gray";
+    }>;
+  };
 }
 
 /**
  * Base component for registration screens
  * Manages listing and navigation to the form
+ * AGORA SUPORTA MOVIMENTOS TAMBÉM!
  */
 function CadastroBase<T extends Record<string, any>, R>({
   title,
@@ -96,8 +140,17 @@ function CadastroBase<T extends Record<string, any>, R>({
   actionButtons,
   enableStatusToggle = false,
   statusColumn = {},
+  // 🆕 NOVAS PROPS
+  showDashboard = false,
+  DashboardComponent,
+  quickFilters = [],
+  showMetrics = false,
+  calculateMetrics,
+  statusConfig,
 }: CadastroBaseProps<T, R>) {
   const [termoBusca, setTermoBusca] = useState("");
+  const [filtroAtivo, setFiltroAtivo] = useState<string | null>(null);
+  const [metrics, setMetrics] = useState<Record<string, any>>({});
   const navigate = useNavigate();
   const params = useParams({ strict: false });
 
@@ -108,14 +161,21 @@ function CadastroBase<T extends Record<string, any>, R>({
   const canDelete = hasPermission(module, "delete");
 
   // API hook
-  const { data, loading, error, fetchAll, searchByTerm, toggleStatus } = useApiService<T, R>(
-    service
-  );
+  const { data, loading, error, fetchAll, searchByTerm, toggleStatus } =
+    useApiService<T, R>(service);
 
   // Load initial data
   useEffect(() => {
     fetchAll();
   }, [fetchAll]);
+
+  // 🆕 Calcular métricas quando dados mudarem
+  useEffect(() => {
+    if (showMetrics && calculateMetrics && data) {
+      const calculatedMetrics = calculateMetrics(data);
+      setMetrics(calculatedMetrics);
+    }
+  }, [data, showMetrics, calculateMetrics]);
 
   // Check if in form view mode
   const isFormView = params && params.id !== undefined;
@@ -123,7 +183,21 @@ function CadastroBase<T extends Record<string, any>, R>({
   // Function to handle search
   const handleSearch = (termo: string) => {
     setTermoBusca(termo);
+    setFiltroAtivo(null); // Limpar filtro ativo
     searchByTerm(termo);
+  };
+
+  // 🆕 Função para aplicar filtro rápido
+  const handleQuickFilter = (filterLabel: string) => {
+    if (filtroAtivo === filterLabel) {
+      // Se já está ativo, desativar
+      setFiltroAtivo(null);
+      fetchAll();
+    } else {
+      setFiltroAtivo(filterLabel);
+      // Em produção, isso seria feito no backend
+      fetchAll();
+    }
   };
 
   // Function to create new record
@@ -161,210 +235,198 @@ function CadastroBase<T extends Record<string, any>, R>({
     if (event) {
       event.stopPropagation();
     }
-    
+
     try {
       const isAtivo = item.ativo === true;
       const statusText = isAtivo ? "inativar" : "ativar";
-      
-      if (!window.confirm(`Tem certeza que deseja ${statusText} este registro?`)) {
-        return;
-      }
 
-      const result = await toggleStatus(item.id, !isAtivo);
-      
-      if (result) {
+      if (
+        window.confirm(`Tem certeza que deseja ${statusText} este registro?`)
+      ) {
+        await toggleStatus(item.id, !isAtivo);
         fetchAll();
       }
     } catch (error) {
       console.error("Erro ao alterar status:", error);
-      alert("Erro ao alterar status. Tente novamente.");
+      alert("Erro ao alterar status do registro.");
     }
   };
 
-  // Build final columns array
-  const finalColumns = [...columns];
+  // 🆕 Renderizar status badge customizado para movimentos
+  const renderCustomStatusBadge = (item: T) => {
+    if (!statusConfig) return null;
 
-  // Add status column if enabled
-  if (enableStatusToggle) {
-    const statusCol: Column<T> = {
-      title: statusColumn.title || "Status",
-      align: "center",
-      render: (item) => (
-        <StatusBadge 
-          ativo={item.ativo} 
-          textoAtivo={statusColumn.activeText}
-          textoInativo={statusColumn.inactiveText}
-          showToggle={true}
-          onToggle={(event) => handleToggleStatus(item, event)}
-        />
-      ),
-    };
+    const status = item[statusConfig.field];
+    const statusOption = statusConfig.options.find(
+      (opt) => opt.value === status
+    );
 
-    finalColumns.push(statusCol);
-  }
+    if (!statusOption) return status;
 
-  // Add action column if user has permission
-  if (canEdit || canDelete) {
-    const actionsColumn: Column<T> = {
-      title: "Ações",
-      align: "right",
-      render: (item) => (
-        <div className="flex justify-end space-x-2">
-          {canEdit && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation(); // Prevent click from propagating to row
-                handleEdit(item);
-              }}
-              className="text-blue-600 hover:text-blue-900"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                />
-              </svg>
-            </button>
-          )}
-
-          {canDelete && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation(); // Prevent click from propagating to row
-                handleDelete(item);
-              }}
-              className="text-red-600 hover:text-red-900"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                />
-              </svg>
-            </button>
-          )}
-        </div>
-      ),
-    };
-
-    finalColumns.push(actionsColumn);
-  }
-
-  // Return FormComponent if in form view mode
-  if (isFormView && FormComponent) {
     return (
-      <FormComponent
-        id={params.id !== "novo" ? params.id : undefined}
-        onSave={() => {
-          console.log("baseUrl:", baseUrl);
-          navigate({ to: baseUrl });
-          fetchAll();
-        }}
-        module={module}
+      <StatusBadge
+        status={status}
+        activeText={statusOption.label}
+        color={statusOption.color}
       />
+    );
+  };
+
+  // 🆕 Adicionar coluna de status customizada se configurada
+  const enhancedColumns = statusConfig
+    ? [
+        ...columns,
+        {
+          title: "Status",
+          key: statusConfig.field,
+          render: renderCustomStatusBadge,
+          sortable: true,
+          width: "120px",
+        },
+      ]
+    : columns;
+
+  // Add standard status column if enabled
+  const finalColumns = enableStatusToggle
+    ? [
+        ...enhancedColumns,
+        {
+          title: statusColumn.title || "Status",
+          key: "status",
+          render: (item: T) => (
+            <div
+              onClick={(e) => canEdit && handleToggleStatus(item, e)}
+              className={canEdit ? "cursor-pointer" : ""}
+            >
+              <StatusBadge
+                status={item.ativo}
+                activeText={statusColumn.activeText || "Ativo"}
+                inactiveText={statusColumn.inactiveText || "Inativo"}
+              />
+            </div>
+          ),
+          sortable: true,
+          width: "100px",
+        },
+      ]
+    : enhancedColumns;
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
+          <div className="space-y-3">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="h-16 bg-gray-200 rounded"></div>
+            ))}
+          </div>
+        </div>
+      </div>
     );
   }
 
-  // Otherwise, show the listing
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <p className="text-red-800">Erro ao carregar dados: {error}</p>
+          <button
+            onClick={fetchAll}
+            className="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+          >
+            Tentar Novamente
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="bg-white shadow-md rounded-lg p-6">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold">{title}</h1>
-          <div className="text-sm breadcrumbs">
-            <ul className="flex">
-              <li className="text-gray-500">Início</li>
-              <li className="before:content-['>'] before:mx-2 text-gray-500">
-                Cadastros
-              </li>
-              <li className="before:content-['>'] before:mx-2 text-gray-500">
-                {module === "comum"
-                  ? "Comum"
-                  : module === "obras"
-                  ? "Obras"
-                  : module === "agricultura"
-                  ? "Agricultura"
-                  : "Outro"}
-              </li>
-              <li className="before:content-['>'] before:mx-2 text-gray-700">
-                {title}
-              </li>
-            </ul>
-          </div>
-        </div>
+      {/* Cabeçalho */}
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">{title}</h1>
+      </div>
 
-        {/* Error message */}
-        {error && (
-          <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6">
-            <p>{error}</p>
+      {/* 🆕 Dashboard */}
+      {showDashboard && DashboardComponent && (
+        <div className="mb-8">
+          <DashboardComponent />
+        </div>
+      )}
+
+      {/* 🆕 Métricas */}
+      {showMetrics && Object.keys(metrics).length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          {Object.entries(metrics).map(([key, value]) => (
+            <div key={key} className="bg-white rounded-lg shadow p-4">
+              <div className="text-sm font-medium text-gray-500 capitalize">
+                {key.replace(/([A-Z])/g, " $1").trim()}
+              </div>
+              <div className="text-2xl font-bold text-gray-900">{value}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* 🆕 Filtros Rápidos */}
+      {quickFilters.length > 0 && (
+        <div className="mb-4 flex flex-wrap gap-2">
+          {quickFilters.map((filter) => (
+            <button
+              key={filter.label}
+              onClick={() => handleQuickFilter(filter.label)}
+              className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                filtroAtivo === filter.label
+                  ? `bg-${filter.color || "blue"}-600 text-white`
+                  : `bg-${filter.color || "blue"}-100 text-${
+                      filter.color || "blue"
+                    }-800 hover:bg-${filter.color || "blue"}-200`
+              }`}
+            >
+              {filter.label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Action bar */}
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        {/* Search */}
+        {showSearch && (
+          <div className="flex-1 max-w-md">
+            <SearchBar
+              placeholder={searchPlaceholder}
+              onSearch={handleSearch}
+              initialValue={termoBusca}
+            />
           </div>
         )}
 
-        {/* Action bar */}
-        <div className="flex justify-between items-center mb-6">
-          <div className="flex-1">
-            {showSearch && (
-              <SearchBar
-                placeholder={searchPlaceholder}
-                initialValue={termoBusca}
-                onSearch={handleSearch}
-                loading={loading}
-              />
-            )}
-          </div>
+        {/* Action buttons */}
+        <div className="flex items-center space-x-3">
+          {actionButtons}
 
-          <div className="flex space-x-2 ml-4">
-            {actionButtons}
-
-            {canCreate && (
-              <button
-                onClick={handleCreate}
-                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 mr-2"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 4v16m8-8H4"
-                  />
-                </svg>
-                Novo
-              </button>
-            )}
-          </div>
+          {canCreate && (
+            <button
+              onClick={handleCreate}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium"
+            >
+              + Novo
+            </button>
+          )}
         </div>
+      </div>
 
-        {/* Data table */}
-        <DataTable
+      {/* Data table */}
+      <div className="bg-white rounded-lg shadow overflow-hidden">
+        <DataTable<T>
+          data={data || []}
           columns={finalColumns}
-          data={data}
-          rowKey={rowKey}
-          loading={loading}
           onRowClick={canEdit ? handleEdit : undefined}
-          emptyText={`Nenhum registro encontrado.`}
+          emptyMessage="Nenhum registro encontrado"
+          loading={loading}
         />
       </div>
     </div>

@@ -1,4 +1,3 @@
-// backend/src/routes/admin/perfilRoutes.ts - ARQUIVO COMPLETO
 import { Router } from "express";
 import { perfilController } from "../../controllers/admin/perfilController";
 import { requirePermission } from "../../middleware/authMiddleware";

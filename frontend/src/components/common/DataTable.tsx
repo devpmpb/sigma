@@ -87,16 +87,24 @@ function DataTable<T>({
   // Função para obter o valor de uma propriedade aninhada
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const getNestedValue = (obj: any, path: string): any => {
+    if (!path || typeof path !== "string") {
+      return null;
+    }
     return path.split(".").reduce((prev, curr) => {
       return prev ? prev[curr] : null;
     }, obj);
   };
-
   // Função para obter a chave única de uma linha
   const getRowKey = (item: T, index: number): string | number => {
     if (typeof rowKey === "function") {
       return rowKey(item, index);
     }
+
+    if (!rowKey || typeof rowKey !== "string") {
+      console.warn("DataTable: rowKey inválido:", rowKey);
+      return index;
+    }
+
     return getNestedValue(item, rowKey) || index;
   };
 

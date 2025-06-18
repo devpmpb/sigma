@@ -7,11 +7,21 @@ const Programas = lazy(() => import("../../../pages/cadastros/comum/programa/Pro
 const ProgramaForm = lazy(() => import("../../../pages/cadastros/comum/programa/ProgramaForm"));
 const RegrasNegocio = lazy(() => import("../../../pages/cadastros/comum/regrasNegocio/RegrasNegocio"));
 const RegrasNegocioForm = lazy(() => import("../../../pages/cadastros/comum/regrasNegocio/RegrasNegocioForm"));
+const Produtor = lazy(() => import("../../../pages/cadastros/agricultura/produtor/Produtor"));
+const ProdutorForm = lazy(() => import("../../../pages/cadastros/agricultura/produtor/ProdutorForm"));
+
 
 // Componentes de movimentos (placeholder)
 const SolicitacoesBeneficio = lazy(() => import("../../../pages/movimentos/comum/SolicitacoesBeneficio"));
 const AvaliacoesBeneficio = lazy(() => import("../../../pages/movimentos/comum/AvaliacoesBeneficio"));
 const RelatoriosBeneficio = lazy(() => import("../../../pages/movimentos/comum/RelatoriosBeneficio"));
+
+const ArrendamentosPage = lazy(
+  () => import("../../../pages/movimentos/agricultura/arrendamento/ArrendamentosPage")
+);
+const ArrendamentoForm = lazy(
+  () => import("../../../pages/movimentos/agricultura/arrendamento/ArrendamentoForm")
+);
 
 // Exportamos os componentes para compatibilidade com código existente
 export const agriculturaComponents = {
@@ -20,9 +30,13 @@ export const agriculturaComponents = {
   ProgramaForm,
   RegrasNegocio,
   RegrasNegocioForm,
+  Produtor,
+  ProdutorForm,
   SolicitacoesBeneficio,
   AvaliacoesBeneficio,
   RelatoriosBeneficio,
+  ArrendamentosPage,
+  ArrendamentoForm
 };
 
 // Exportamos as configurações das rotas para compatibilidade
@@ -70,6 +84,18 @@ export const agriculturaRouteConfig = [
     module: "agricultura",
     action: "view"
   },
+  {
+    path: "/cadastros/agricultura/produtores",
+    component: Produtor,
+    module: "comum",
+    action: "view"
+  },
+  {
+    path: "/cadastros/agricultura/produtores/:id",
+    component: ProdutorForm,
+    module: "comum",
+    action: "view"
+  },
   // Movimentos
   {
     path: "/movimentos/agricultura/solicitacoes",
@@ -88,5 +114,17 @@ export const agriculturaRouteConfig = [
     component: RelatoriosBeneficio,
     module: "agricultura",
     action: "view"
-  }
+  },
+   {
+    path: "/movimentos/agricultura/arrendamentos",
+    component: ArrendamentosPage,
+    module: "agricultura",
+    action: "view",
+  },
+  {
+    path: "/movimentos/agricultura/arrendamentos/:id",
+    component: ArrendamentoForm,
+    module: "agricultura",
+    action: "view",
+  },
 ];

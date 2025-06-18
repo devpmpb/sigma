@@ -1,9 +1,7 @@
 import React from "react";
 import CadastroSimples from "../../../components/cadastro/CadastroSimples";
-import tipoVeiculoService, {
-  TipoVeiculo,
-  TipoVeiculoDTO,
-} from "../../../services/obras/tipoVeiculoService";
+import { TipoVeiculo, TipoVeiculoDTO, tipoVeiculoService } from "../../../services";
+
 
 /**
  * Componente de Cadastro de Tipos de Veículos

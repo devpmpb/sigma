@@ -160,30 +160,6 @@ class ProgramaService extends BaseApiService<Programa, ProgramaDTO> {
 
     return errors;
   }
-
-  /**
-   * Sobrescreve create para incluir validação
-   */
-  async create(data: ProgramaDTO): Promise<Programa> {
-    const errors = this.validateProgramaData(data);
-    if (errors.length > 0) {
-      throw new Error(errors.join(", "));
-    }
-
-    return super.create(data);
-  }
-
-  /**
-   * Sobrescreve update para incluir validação
-   */
-  async update(id: number | string, data: ProgramaDTO): Promise<Programa> {
-    const errors = this.validateProgramaData(data);
-    if (errors.length > 0) {
-      throw new Error(errors.join(", "));
-    }
-
-    return super.update(id, data);
-  }
 }
 
 export default new ProgramaService();
