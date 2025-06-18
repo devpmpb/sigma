@@ -1,5 +1,7 @@
+// frontend/src/services/common/pessoaService.ts
 import apiClient from "../apiConfig";
 import BaseApiService from "../baseApiService";
+import enderecoService, { Endereco, EnderecoDTO } from "./enderecoService";
 
 // ENUMs do backend
 export enum TipoPessoa {
@@ -22,7 +24,7 @@ export interface PessoaJuridicaData {
   representanteLegal?: string;
 }
 
-// Interface para a entidade Pessoa
+// Interface para a entidade Pessoa (ATUALIZADA)
 export interface Pessoa {
   id: number;
   tipoPessoa: TipoPessoa;
@@ -34,7 +36,7 @@ export interface Pessoa {
   createdAt: string;
   updatedAt: string;
   // Relacionamentos opcionais
-  enderecos?: any[];
+  enderecos?: Endereco[]; // ✅ TIPADO CORRETAMENTE
   propriedades?: any[];
   pessoaFisica?: PessoaFisicaData;
   pessoaJuridica?: PessoaJuridicaData;
@@ -50,6 +52,12 @@ export interface PessoaDTO {
   ativo?: boolean;
   pessoaFisica?: PessoaFisicaData;
   pessoaJuridica?: PessoaJuridicaData;
+}
+
+// Interface para criação completa (pessoa + endereço)
+export interface PessoaCompletaDTO {
+  pessoa: PessoaDTO;
+  endereco?: Omit<EnderecoDTO, 'pessoaId'>;
 }
 
 /**
@@ -94,6 +102,84 @@ class PessoaService extends BaseApiService<Pessoa, PessoaDTO> {
       params,
     });
     return response.data;
+  };
+
+  /**
+   * ✅ NOVO: Busca pessoa com endereços completos
+   */
+  getPessoaWithEnderecos = async (id: number): Promise<Pessoa> => {
+    const pessoa = await this.getPessoaWithDetails(id);
+    
+    if (pessoa) {
+      // Buscar endereços separadamente com dados completos
+      pessoa.enderecos = await enderecoService.getEnderecosByPessoa(id);
+    }
+    
+    return pessoa;
+  };
+
+  /**
+   * ✅ NOVO: Busca endereço principal de uma pessoa
+   */
+  getEnderecoPrincipal = async (pessoaId: number): Promise<Endereco | null> => {
+    const enderecos = await enderecoService.getEnderecosByPessoa(pessoaId);
+    return enderecos.find(e => e.principal) || null;
+  };
+
+  /**
+   * ✅ NOVO: Adiciona endereço a uma pessoa
+   */
+  adicionarEndereco = async (pessoaId: number, dadosEndereco: Omit<EnderecoDTO, 'pessoaId'>): Promise<Endereco> => {
+    const enderecoData: EnderecoDTO = {
+      ...dadosEndereco,
+      pessoaId
+    };
+    
+    return enderecoService.createWithValidation(enderecoData);
+  };
+
+  /**
+   * ✅ NOVO: Define endereço principal para uma pessoa
+   */
+  definirEnderecoPrincipal = async (enderecoId: number): Promise<void> => {
+    await enderecoService.setPrincipal(enderecoId);
+  };
+
+  /**
+   * ✅ NOVO: Formata endereço principal para exibição rápida
+   */
+  getEnderecoFormatado = async (pessoaId: number): Promise<string> => {
+    const enderecoPrincipal = await this.getEnderecoPrincipal(pessoaId);
+    
+    if (!enderecoPrincipal) {
+      return "Endereço não cadastrado";
+    }
+    
+    return enderecoService.formatarEnderecoCompleto(enderecoPrincipal);
+  };
+
+  /**
+   * ✅ NOVO: Valida se pessoa pode ter um novo endereço
+   */
+  podeAdicionarEndereco = async (pessoaId: number): Promise<{ pode: boolean; motivo?: string }> => {
+    try {
+      const enderecos = await enderecoService.getEnderecosByPessoa(pessoaId);
+      
+      // Limite de 5 endereços por pessoa (regra de negócio configurável)
+      if (enderecos.length >= 5) {
+        return {
+          pode: false,
+          motivo: "Pessoa já possui o máximo de 5 endereços cadastrados"
+        };
+      }
+      
+      return { pode: true };
+    } catch (error) {
+      return {
+        pode: false,
+        motivo: "Erro ao verificar endereços existentes"
+      };
+    }
   };
 
   /**

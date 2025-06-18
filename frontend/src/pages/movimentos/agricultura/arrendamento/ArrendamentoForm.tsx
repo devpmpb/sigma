@@ -15,7 +15,6 @@ import pessoaService, {
   Pessoa,
   TipoPessoa,
 } from "../../../../services/common/pessoaService";
-import { formatDateForInput } from "../../../../utils/formatters";
 
 interface ArrendamentoFormProps {
   id?: string | number;
@@ -81,9 +80,9 @@ const ArrendamentoForm: React.FC<ArrendamentoFormProps> = ({ id, onSave }) => {
   }, []);
 
   // Validação (mesmo código de antes)
-  const validate = async (
+  const validate = (
     values: ArrendamentoDTO
-  ): Promise<Record<string, string> | null> => {
+  ): Record<string, string> | null => {
     const errors: Record<string, string> = {};
 
     if (!values.propriedadeId || values.propriedadeId === 0) {
@@ -152,8 +151,8 @@ const ArrendamentoForm: React.FC<ArrendamentoFormProps> = ({ id, onSave }) => {
       id={id}
       initialValues={initialValues}
       validate={validate}
-      onSave={onSave}
       returnUrl="/movimentos/agricultura/arrendamentos"
+      //onSave={onSave}
     >
       {({
         values,
@@ -164,7 +163,6 @@ const ArrendamentoForm: React.FC<ArrendamentoFormProps> = ({ id, onSave }) => {
         setFieldTouched,
       }) => (
         <div className="space-y-6">
-          {/* 🆕 SEÇÃO 1 - Propriedade */}
           <FormSection
             title="Informações da Propriedade"
             description="Selecione a propriedade e defina a área a ser arrendada"
@@ -226,7 +224,6 @@ const ArrendamentoForm: React.FC<ArrendamentoFormProps> = ({ id, onSave }) => {
                 />
               </FormField>
 
-              {/* Info da propriedade */}
               {propriedadeSelecionada && (
                 <div className="md:col-span-2 mt-4 p-3 bg-blue-50 border border-blue-200 rounded">
                   <h4 className="font-medium text-blue-900">

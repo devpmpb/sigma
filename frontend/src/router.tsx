@@ -15,9 +15,9 @@ import Configuracoes from './pages/Configuracoes';
 import AlterarSenha from './pages/AlterarSenha';
 
 // Importar configurações de rotas dos módulos
-import { obrasRouteConfig, obrasComponents } from './config/menus/obras/routes';
-import { agriculturaRouteConfig, agriculturaComponents } from './config/menus/agricultura/routes';
-import { comunRouteConfig, comunComponents } from './config/menus/comum/routes';
+import { obrasRouteConfig } from './config/menus/obras/routes';
+import { agriculturaRouteConfig } from './config/menus/agricultura/routes';
+import { comunRouteConfig } from './config/menus/comum/routes';
 import React from 'react';
 
 // Define route context type

@@ -96,7 +96,7 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
       initialValues={initialValues}
       validate={validate}
       returnUrl="/cadastros/comum/pessoas"
-      onSave={onSave}
+      //onSave={onSave}
     >
       {({ values, errors, touched, handleChange, setValue, setFieldTouched }) => {
         
@@ -105,7 +105,7 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
           const transformBackendData = async () => {
             if (pessoaId && pessoaId !== "novo") {
               try {
-                const pessoaData = await pessoaService.getByIdWithDetails(pessoaId);
+                const pessoaData = await pessoaService.getPessoaWithDetails(pessoaId);
                 
                 // Transformar os dados para o formato do formulário
                 const formData: PessoaDTO = {
@@ -114,7 +114,7 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
                   cpfCnpj: pessoaData.cpfCnpj,
                   email: pessoaData.email || "",
                   telefone: pessoaData.telefone || "",
-                  status: pessoaData.status,
+                  ativo: pessoaData.ativo,
                   pessoaFisica: {
                     rg: pessoaData.pessoaFisica?.rg || "",
                     dataNascimento: formatDateForInput(pessoaData.pessoaFisica?.dataNascimento || ""),

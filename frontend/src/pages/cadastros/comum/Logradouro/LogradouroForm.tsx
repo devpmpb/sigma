@@ -21,7 +21,6 @@ const LogradouroForm: React.FC<LogradouroFormProps> = ({ id, onSave }) => {
   // Correção para o uso correto do useParams no TanStack Router
   // O params é extraído diretamente da rota agora
   const logradouroId = id || useParams({ strict: false }).id;
-
   // Valor inicial para o formulário
   const initialValues: LogradouroDTO = {
     tipo: TipoLogradouro.RUA,
@@ -55,7 +54,7 @@ const LogradouroForm: React.FC<LogradouroFormProps> = ({ id, onSave }) => {
       initialValues={initialValues}
       validate={validate}
       returnUrl="/cadastros/comum/logradouros"
-      onSave={onSave}
+      //onSave={onSave}
     >
       {({ values, errors, touched, handleChange, setValue }) => (
         <>
