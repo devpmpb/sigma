@@ -48,7 +48,6 @@ const PropriedadeForm: React.FC<PropriedadeFormProps> = ({ id, onSave }) => {
     fetchPessoas();
   }, []);
 
-  // Validação do formulário
   const validate = (values: PropriedadeDTO): Record<string, string> | null => {
     const errors: Record<string, string> = {};
 
@@ -81,7 +80,7 @@ const PropriedadeForm: React.FC<PropriedadeFormProps> = ({ id, onSave }) => {
       id={id}
       initialValues={initialValues}
       validate={validate}
-      onSave={onSave}
+      //onSave={onSave}
       returnUrl="/cadastros/comum/propriedades"
     >
       {({
@@ -93,7 +92,6 @@ const PropriedadeForm: React.FC<PropriedadeFormProps> = ({ id, onSave }) => {
         setFieldTouched,
       }) => (
         <>
-          {/* Nome */}
           <div>
             <label
               htmlFor="nome"

@@ -67,7 +67,6 @@ export interface UsuarioBackend {
   updatedAt: string;
 }
 
-// Novos tipos para usuários
 export interface Profile {
   id: number;
   nome: TipoPerfilBackend;
@@ -75,7 +74,6 @@ export interface Profile {
   ativo: boolean;
 }
 
-// DTO para usuários
 export interface UsuarioDTO {
   nome: string;
   email: string;
@@ -84,14 +82,12 @@ export interface UsuarioDTO {
   ativo?: boolean;
 }
 
-// DTO para mudança de senha
 export interface ChangePasswordDTO {
   senhaAtual: string;
   novaSenha: string;
   confirmarSenha: string;
 }
 
-// Interfaces relacionadas a menu e navegação
 export interface MenuItem {
   id: string;
   title: string;
@@ -100,7 +96,6 @@ export interface MenuItem {
   module?: ModuleType;
 }
 
-// Para o menu de navegação específico das funcionalidades
 export interface SubMenuItem {
   id: string;
   title: string;
@@ -108,7 +103,6 @@ export interface SubMenuItem {
   module: ModuleType;
 }
 
-// Interface para grupos de menu
 export interface MenuGroup {
   id: string;
   title: string;
@@ -116,7 +110,6 @@ export interface MenuGroup {
   items: SubMenuItem[];
 }
 
-// Interfaces para login
 export interface LoginRequest {
   email: string;
   password: string;
@@ -139,7 +132,6 @@ export interface RefreshTokenResponse {
   refreshToken: string;
 }
 
-// Funções utilitárias para conversão de tipos
 export const convertBackendUserToFrontend = (backendUser: UsuarioBackend): User => {
   return {
     id: backendUser.id.toString(),

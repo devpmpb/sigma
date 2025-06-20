@@ -247,9 +247,7 @@ const ArrendamentosPage: React.FC = () => {
       columns={columns}
       rowKey="id"
       baseUrl="/movimentos/agricultura/arrendamentos"
-      module="agricultura"
-      as
-      ModuleType
+      module="agricultura" as ModuleType
       FormComponent={ArrendamentoForm}
       showSearch={true}
       searchPlaceholder="Buscar por propriedade, proprietário ou arrendatário..."

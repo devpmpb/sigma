@@ -1,21 +1,20 @@
 // src/routes/comum/propriedadeRoutes.ts - ARQUIVO ATUALIZADO
 import { Router } from "express";
 import { propriedadeController } from "../../controllers/comum/propriedadeController";
+import { ModuloSistema, AcaoPermissao } from "@prisma/client";
+import { requirePermission } from "../../middleware/authMiddleware";
 
 const router = Router();
 
 // Rotas básicas
-router.get("/", propriedadeController.findAll);
-router.get("/busca", propriedadeController.buscarPorTermo); // Nova rota para busca
-router.get("/:id", propriedadeController.findById);
-router.get("/:id/detalhes", propriedadeController.findByIdWithDetails);
-router.get(
-  "/proprietario/:proprietarioId",
-  propriedadeController.findByProprietario
-);
-router.get("/tipo/:tipo", propriedadeController.findByTipo);
-router.post("/", propriedadeController.create);
-router.put("/:id", propriedadeController.update);
-router.delete("/:id", propriedadeController.delete);
+router.get("/", requirePermission(ModuloSistema.COMUM, AcaoPermissao.VIEW), propriedadeController.findAll);
+router.get("/busca", requirePermission(ModuloSistema.COMUM, AcaoPermissao.VIEW), propriedadeController.buscarPorTermo); // Nova rota para busca
+router.get("/:id", requirePermission(ModuloSistema.COMUM, AcaoPermissao.VIEW), propriedadeController.findById);
+router.get("/:id/detalhes", requirePermission(ModuloSistema.COMUM, AcaoPermissao.VIEW), propriedadeController.findByIdWithDetails);
+router.get(  "/proprietario/:proprietarioId", requirePermission(ModuloSistema.COMUM, AcaoPermissao.VIEW), propriedadeController.findByProprietario);
+router.get("/tipo/:tipo", requirePermission(ModuloSistema.COMUM, AcaoPermissao.VIEW), propriedadeController.findByTipo);
+router.post("/", requirePermission(ModuloSistema.COMUM, AcaoPermissao.CREATE), propriedadeController.create);
+router.put("/:id", requirePermission(ModuloSistema.COMUM, AcaoPermissao.EDIT), propriedadeController.update);
+router.delete("/:id", requirePermission(ModuloSistema.COMUM, AcaoPermissao.DELETE), propriedadeController.delete);
 
 export default router;
