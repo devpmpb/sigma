@@ -1,13 +1,10 @@
-// frontend/src/config/menus/comum/routes.tsx - ARQUIVO ATUALIZADO
+// frontend/src/config/menus/comum/routes.tsx
 import { lazy } from "react";
 
 // Usando lazy loading para componentes
 const Bairro = lazy(() => import("../../../pages/cadastros/comum/Bairro"));
 const Logradouro = lazy(
   () => import("../../../pages/cadastros/comum/logradouro/Logradouros")
-);
-const LogradouroForm = lazy(
-  () => import("../../../pages/cadastros/comum/logradouro/LogradouroForm")
 );
 const Pessoa = lazy(
   () => import("../../../pages/cadastros/comum/pessoa/Pessoas")
@@ -33,6 +30,15 @@ const RegrasNegocio = lazy(
 const RegrasNegocioForm = lazy(
   () => import("../../../pages/cadastros/comum/regrasNegocio/RegrasNegocioForm")
 );
+
+// NOVO: Componentes de usuários
+const Usuarios = lazy(
+  () => import("../../../pages/cadastros/comum/usuario/Usuarios")
+);
+const UsuarioForm = lazy(
+  () => import("../../../pages/cadastros/comum/usuario/UsuarioForm")
+);
+
 // Componentes de movimentos (placeholder)
 const SolicitacoesBeneficio = lazy(
   () => import("../../../pages/movimentos/comum/SolicitacoesBeneficio")
@@ -46,6 +52,8 @@ const RelatoriosBeneficio = lazy(
 
 // Exportamos os componentes para compatibilidade com código existente
 export const comunComponents = {
+  Usuarios, // NOVO
+  UsuarioForm, // NOVO
   Bairro,
   Logradouro,
   Pessoa,
@@ -63,7 +71,21 @@ export const comunComponents = {
 
 // Exportamos as configurações das rotas para compatibilidade
 export const comunRouteConfig = [
-  // Cadastros básicos
+  // NOVO: Rotas de usuários (apenas para admins)
+  {
+    path: "/cadastros/comum/usuarios",
+    component: Usuarios,
+    module: "admin", // Módulo admin para restringir acesso
+    action: "view",
+  },
+  {
+    path: "/cadastros/comum/usuarios/:id",
+    component: UsuarioForm,
+    module: "admin", // Módulo admin para restringir acesso
+    action: "view",
+  },
+
+  // Cadastros básicos existentes
   {
     path: "/cadastros/comum/bairros",
     component: Bairro,
@@ -84,7 +106,7 @@ export const comunRouteConfig = [
   },
   {
     path: "/cadastros/comum/logradouros/:id",
-    component: LogradouroForm,
+    component: Logradouro,
     module: "comum",
     action: "view",
   },
@@ -136,6 +158,7 @@ export const comunRouteConfig = [
     module: "comum",
     action: "view",
   },
+
   // Movimentos
   {
     path: "/movimentos/comum/solicitacoes",

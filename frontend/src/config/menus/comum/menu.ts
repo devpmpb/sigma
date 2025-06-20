@@ -1,4 +1,4 @@
-// frontend/src/config/menus/comum/menu.ts - ARQUIVO ATUALIZADO
+// frontend/src/config/menus/comum/menu.ts
 import { MenuGroup } from "../../../types";
 
 // Menus de cadastro comum
@@ -7,6 +7,12 @@ export const cadastrosComunMenu: MenuGroup = {
   title: "Comum",
   module: "comum",
   items: [
+    {
+      id: "cadastro-usuario", // NOVO: Item para usuários (apenas para admins)
+      title: "Usuários",
+      path: "/cadastros/comum/usuarios",
+      module: "admin", // Módulo admin para restringir acesso
+    },
     {
       id: "cadastro-bairro",
       title: "Bairros",
@@ -32,12 +38,6 @@ export const cadastrosComunMenu: MenuGroup = {
       module: "comum",
     },
     {
-      id: "cadastro-logradouros",
-      title: "Logradouros",
-      path: "/cadastros/comum/logradouros",
-      module: "comum",
-    },
-    {
       id: "cadastro-programa",
       title: "Programas",
       path: "/cadastros/comum/programas",
@@ -52,7 +52,7 @@ export const cadastrosComunMenu: MenuGroup = {
   ],
 };
 
-// Menus de movimentos comum
+// Menus de movimentos comum (sem alterações)
 export const movimentosComunMenu: MenuGroup = {
   id: "movimentos-comum",
   title: "Comum",
