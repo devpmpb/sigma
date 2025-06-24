@@ -1,4 +1,3 @@
-// backend/src/controllers/admin/usuarioController.ts - ARQUIVO COMPLETO
 import { Request, Response } from "express";
 import { PrismaClient, TipoPerfil } from "@prisma/client";
 import bcrypt from "bcryptjs";
@@ -34,7 +33,6 @@ const changePasswordSchema = z
   });
 
 export const usuarioController = {
-  // Listar todos os usuários
   findAll: async (req: Request, res: Response) => {
     try {
       const { ativo, perfilId } = req.query;

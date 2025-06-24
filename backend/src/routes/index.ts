@@ -37,11 +37,11 @@ router.use("/logradouros", requireModuleAccess(ModuloSistema.COMUM), logradouroR
 router.use("/pessoas", requireModuleAccess(ModuloSistema.COMUM), pessoaRoutes);
 router.use("/enderecos", requireModuleAccess(ModuloSistema.COMUM), enderecoRoutes);
 router.use("/propriedades", requireModuleAccess(ModuloSistema.COMUM), propriedadeRoutes);
+router.use("/programas", requireModuleAccess(ModuloSistema.COMUM), programaRoutes);
+router.use("/regrasNegocio", requireModuleAccess(ModuloSistema.COMUM), regrasNegocioRoutes);
 
 // AGRICULTURA (requer acesso ao módulo agricultura)
 router.use("/grupoProdutos", requireModuleAccess(ModuloSistema.AGRICULTURA), grupoProdutoRoutes);
-router.use("/programas", requireModuleAccess(ModuloSistema.AGRICULTURA), programaRoutes);
-router.use("/regrasNegocio", requireModuleAccess(ModuloSistema.AGRICULTURA), regrasNegocioRoutes);
 router.use("/produtores", requireModuleAccess(ModuloSistema.AGRICULTURA), produtorRoutes);
 router.use("/arrendamentos", requireModuleAccess(ModuloSistema.AGRICULTURA), arrendamentosRoutes);
 
