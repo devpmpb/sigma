@@ -132,7 +132,7 @@ const UsuarioForm: React.FC<UsuarioFormProps> = ({ id, onSave }) => {
       id={usuarioId}
       initialValues={initialValues}
       validate={validate}
-      onSave={onSave}
+      //onSave={onSave}
       returnUrl="/cadastros/comum/usuarios"
     >
       {({
