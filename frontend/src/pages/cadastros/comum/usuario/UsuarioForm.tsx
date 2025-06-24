@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "@tanstack/react-router";
 import { FormBase } from "../../../../components/cadastro";
-import { FormField } from "../../../../components/common";
 import userService, {
   UsuarioComPerfil,
 } from "../../../../services/admin/userService";
@@ -18,6 +17,7 @@ interface UsuarioFormProps {
 /**
  * Formulário para cadastro e edição de usuários
  * Restrito apenas para administradores
+ * Usando FormBase seguindo o padrão do projeto
  */
 const UsuarioForm: React.FC<UsuarioFormProps> = ({ id, onSave }) => {
   const params = useParams({ strict: false });
@@ -81,23 +81,15 @@ const UsuarioForm: React.FC<UsuarioFormProps> = ({ id, onSave }) => {
     }
 
     // Perfil obrigatório
-    if (!values.perfilId || values.perfilId === 0) {
+    if (
+      !values.perfilId ||
+      values.perfilId === 0 ||
+      isNaN(Number(values.perfilId))
+    ) {
       errors.perfilId = "Perfil é obrigatório";
     }
 
     return Object.keys(errors).length > 0 ? errors : null;
-  };
-
-  // Preparar dados antes de enviar
-  const prepareFormData = (values: UsuarioDTO): UsuarioDTO => {
-    const formData = { ...values };
-
-    // Para edição, remover senha se não foi preenchida
-    if (!isNewUser && !formData.senha?.trim()) {
-      delete formData.senha;
-    }
-
-    return formData;
   };
 
   // Verificar permissões
@@ -177,29 +169,49 @@ const UsuarioForm: React.FC<UsuarioFormProps> = ({ id, onSave }) => {
             </h4>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                label="Nome Completo"
-                name="nome"
-                type="text"
-                value={values.nome}
-                error={touched.nome ? errors.nome : undefined}
-                onChange={handleChange}
-                onBlur={() => setFieldTouched("nome", true)}
-                placeholder="Digite o nome completo"
-                required
-              />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Nome Completo <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="nome"
+                  value={values.nome || ""}
+                  onChange={handleChange}
+                  onBlur={() => setFieldTouched("nome", true)}
+                  placeholder="Digite o nome completo"
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    touched.nome && errors.nome
+                      ? "border-red-500"
+                      : "border-gray-300"
+                  }`}
+                />
+                {touched.nome && errors.nome && (
+                  <p className="text-red-500 text-sm mt-1">{errors.nome}</p>
+                )}
+              </div>
 
-              <FormField
-                label="Email"
-                name="email"
-                type="email"
-                value={values.email}
-                error={touched.email ? errors.email : undefined}
-                onChange={handleChange}
-                onBlur={() => setFieldTouched("email", true)}
-                placeholder="Digite o email"
-                required
-              />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Email <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  value={values.email || ""}
+                  onChange={handleChange}
+                  onBlur={() => setFieldTouched("email", true)}
+                  placeholder="Digite o email"
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    touched.email && errors.email
+                      ? "border-red-500"
+                      : "border-gray-300"
+                  }`}
+                />
+                {touched.email && errors.email && (
+                  <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+                )}
+              </div>
             </div>
           </div>
 
@@ -211,28 +223,37 @@ const UsuarioForm: React.FC<UsuarioFormProps> = ({ id, onSave }) => {
             </h4>
 
             <div className="space-y-4">
-              <FormField
-                label={
-                  isNewUser
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  {isNewUser
                     ? "Senha"
-                    : "Nova Senha (deixe em branco para manter a atual)"
-                }
-                name="senha"
-                type="password"
-                value={values.senha || ""}
-                error={touched.senha ? errors.senha : undefined}
-                onChange={handleChange}
-                onBlur={() => setFieldTouched("senha", true)}
-                placeholder={
-                  isNewUser ? "Digite a senha" : "Digite uma nova senha"
-                }
-                required={isNewUser}
-                help={
-                  isNewUser
+                    : "Nova Senha (deixe em branco para manter a atual)"}
+                  {isNewUser && <span className="text-red-500">*</span>}
+                </label>
+                <input
+                  type="password"
+                  name="senha"
+                  value={values.senha || ""}
+                  onChange={handleChange}
+                  onBlur={() => setFieldTouched("senha", true)}
+                  placeholder={
+                    isNewUser ? "Digite a senha" : "Digite uma nova senha"
+                  }
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    touched.senha && errors.senha
+                      ? "border-red-500"
+                      : "border-gray-300"
+                  }`}
+                />
+                {touched.senha && errors.senha && (
+                  <p className="text-red-500 text-sm mt-1">{errors.senha}</p>
+                )}
+                <p className="text-gray-500 text-sm mt-1">
+                  {isNewUser
                     ? "Mínimo de 6 caracteres"
-                    : "Deixe em branco para manter a senha atual"
-                }
-              />
+                    : "Deixe em branco para manter a senha atual"}
+                </p>
+              </div>
 
               {isNewUser && (
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
@@ -263,8 +284,12 @@ const UsuarioForm: React.FC<UsuarioFormProps> = ({ id, onSave }) => {
                 ) : (
                   <select
                     name="perfilId"
-                    value={values.perfilId}
-                    onChange={handleChange}
+                    value={values.perfilId || 0}
+                    onChange={(e) => {
+                      // Converter string para number aqui
+                      const numericValue = parseInt(e.target.value, 10) || 0;
+                      setValue("perfilId", numericValue);
+                    }}
                     onBlur={() => setFieldTouched("perfilId", true)}
                     className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                       touched.perfilId && errors.perfilId
@@ -333,7 +358,7 @@ const UsuarioForm: React.FC<UsuarioFormProps> = ({ id, onSave }) => {
               <input
                 type="checkbox"
                 name="ativo"
-                checked={values.ativo}
+                checked={values.ativo || false}
                 onChange={handleChange}
                 className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
               />

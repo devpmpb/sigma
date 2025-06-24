@@ -22,27 +22,29 @@ const updateUserSchema = z.object({
   ativo: z.boolean().optional(),
 });
 
-const changePasswordSchema = z.object({
-  senhaAtual: z.string().min(1, "Senha atual é obrigatória"),
-  novaSenha: z.string().min(6, "Nova senha deve ter pelo menos 6 caracteres"),
-  confirmarSenha: z.string().min(1, "Confirmação de senha é obrigatória"),
-}).refine((data) => data.novaSenha === data.confirmarSenha, {
-  message: "Nova senha e confirmação devem ser iguais",
-  path: ["confirmarSenha"],
-});
+const changePasswordSchema = z
+  .object({
+    senhaAtual: z.string().min(1, "Senha atual é obrigatória"),
+    novaSenha: z.string().min(6, "Nova senha deve ter pelo menos 6 caracteres"),
+    confirmarSenha: z.string().min(1, "Confirmação de senha é obrigatória"),
+  })
+  .refine((data) => data.novaSenha === data.confirmarSenha, {
+    message: "Nova senha e confirmação devem ser iguais",
+    path: ["confirmarSenha"],
+  });
 
 export const usuarioController = {
   // Listar todos os usuários
   findAll: async (req: Request, res: Response) => {
     try {
       const { ativo, perfilId } = req.query;
-      
+
       const whereClause: any = {};
-      
+
       if (ativo !== undefined) {
         whereClause.ativo = ativo === "true";
       }
-      
+
       if (perfilId) {
         whereClause.perfilId = Number(perfilId);
       }
@@ -107,7 +109,7 @@ export const usuarioController = {
   findByProfile: async (req: Request, res: Response) => {
     try {
       const { perfilNome } = req.params;
-      
+
       // Validar se o perfil existe
       if (!Object.values(TipoPerfil).includes(perfilNome as TipoPerfil)) {
         return res.status(400).json({ erro: "Tipo de perfil inválido" });
@@ -116,8 +118,8 @@ export const usuarioController = {
       const usuarios = await prisma.usuario.findMany({
         where: {
           perfil: {
-            nome: perfilNome as TipoPerfil
-          }
+            nome: perfilNome as TipoPerfil,
+          },
         },
         include: {
           perfil: true,
@@ -184,6 +186,7 @@ export const usuarioController = {
       return res.status(201).json(usuarioSemSenha);
     } catch (error) {
       if (error instanceof z.ZodError) {
+        console.log(error);
         return res.status(400).json({
           erro: "Dados inválidos",
           detalhes: error.errors,
@@ -316,9 +319,7 @@ export const usuarioController = {
       // Verificar se é o próprio usuário ou admin
       if (Number(id) !== req.userId) {
         // Verificar se o usuário atual é admin
-        const isAdmin = req.userPermissions?.some(
-          (p) => p.modulo === "ADMIN"
-        );
+        const isAdmin = req.userPermissions?.some((p) => p.modulo === "ADMIN");
 
         if (!isAdmin) {
           return res.status(403).json({
@@ -329,7 +330,10 @@ export const usuarioController = {
 
       // Verificar senha atual (apenas se for o próprio usuário)
       if (Number(id) === req.userId) {
-        const senhaValida = await bcrypt.compare(data.senhaAtual, usuario.senha);
+        const senhaValida = await bcrypt.compare(
+          data.senhaAtual,
+          usuario.senha
+        );
         if (!senhaValida) {
           return res.status(400).json({
             erro: "Senha atual incorreta",
