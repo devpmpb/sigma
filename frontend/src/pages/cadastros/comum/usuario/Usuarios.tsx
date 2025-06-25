@@ -1,3 +1,4 @@
+// frontend/src/pages/cadastros/comum/usuario/Usuarios.tsx
 import React from "react";
 import { formatarData } from "../../../../utils/formatters";
 import StatusBadge from "../../../../components/comum/StatusBadge";
@@ -10,9 +11,19 @@ import { CadastroBase } from "../../../../components/cadastro";
 import UsuarioForm from "./UsuarioForm";
 import { Mail, Calendar, Shield } from "lucide-react";
 
+/**
+ * Componente de Listagem de Usuários
+ * Utiliza o CadastroBase para mostrar a listagem em uma página separada
+ * Restrito apenas para administradores
+ */
 const Usuarios: React.FC = () => {
   // Função para obter cor do perfil
   const getPerfilColor = (perfil: TipoPerfilBackend) => {
+    // Verificar se é perfil customizado
+    if (perfil.toString().startsWith("CUSTOM_")) {
+      return "bg-purple-100 text-purple-800";
+    }
+
     switch (perfil) {
       case TipoPerfilBackend.ADMIN:
         return "bg-red-100 text-red-800";
@@ -23,6 +34,14 @@ const Usuarios: React.FC = () => {
       default:
         return "bg-gray-100 text-gray-800";
     }
+  };
+
+  // Função para exibir nome do perfil de forma amigável
+  const getDisplayProfileName = (perfil: any) => {
+    if (perfil.nome.toString().startsWith("CUSTOM_")) {
+      return "Personalizado";
+    }
+    return perfil.nome;
   };
 
   // Definição das colunas da tabela
@@ -64,14 +83,22 @@ const Usuarios: React.FC = () => {
       title: "Perfil",
       key: "perfil",
       render: (usuario) => (
-        <span
-          className={`inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full ${getPerfilColor(
-            usuario.perfil.nome
-          )}`}
-        >
-          <Shield className="h-3 w-3 mr-1" />
-          {usuario.perfil.nome}
-        </span>
+        <div className="flex flex-col">
+          <span
+            className={`inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full ${getPerfilColor(
+              usuario.perfil.nome
+            )}`}
+          >
+            <Shield className="h-3 w-3 mr-1" />
+            {getDisplayProfileName(usuario.perfil)}
+          </span>
+          {usuario.perfil.nome.toString().startsWith("CUSTOM_") && (
+            <span className="text-xs text-gray-500 mt-1">
+              Baseado em:{" "}
+              {usuario.perfil.descricao || "Permissões customizadas"}
+            </span>
+          )}
+        </div>
       ),
     },
     {
@@ -115,6 +142,12 @@ const Usuarios: React.FC = () => {
       module="admin" // Restrito para admins
       FormComponent={UsuarioForm}
       searchPlaceholder="Buscar usuários por nome ou email..."
+      enableStatusToggle={true}
+      statusColumn={{
+        title: "Status",
+        activeText: "Ativo",
+        inactiveText: "Inativo",
+      }}
       // Filtros rápidos para usuários
       quickFilters={[
         {
@@ -138,6 +171,14 @@ const Usuarios: React.FC = () => {
           color: "green",
         },
         {
+          label: "Personalizados",
+          filter: (usuarios) =>
+            usuarios.filter((u) =>
+              u.perfil.nome.toString().startsWith("CUSTOM_")
+            ),
+          color: "purple",
+        },
+        {
           label: "Nunca logaram",
           filter: (usuarios) => usuarios.filter((u) => !u.ultimoLogin),
           color: "yellow",
@@ -156,6 +197,9 @@ const Usuarios: React.FC = () => {
           .length,
         agricultura: usuarios.filter(
           (u) => u.perfil.nome === TipoPerfilBackend.AGRICULTURA
+        ).length,
+        personalizados: usuarios.filter((u) =>
+          u.perfil.nome.toString().startsWith("CUSTOM_")
         ).length,
         semLogin: usuarios.filter((u) => !u.ultimoLogin).length,
       })}
