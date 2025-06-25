@@ -4,7 +4,7 @@ import {
   EnderecoDTO,
   TipoEndereco,
   Endereco,
-} from "../../services/common/enderecoService";
+} from "../../services/comum/enderecoService";
 import {
   logradouroService,
   bairroService,

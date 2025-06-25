@@ -1,8 +1,8 @@
 import React from "react";
 
 import { formatarData, formatarCEP } from "../../../../utils/formatters";
-import StatusBadge from "../../../../components/common/StatusBadge";
-import { Column } from "../../../../components/common/DataTable";
+import StatusBadge from "../../../../components/comum/StatusBadge";
+import { Column } from "../../../../components/comum/DataTable";
 import {
   Logradouro,
   LogradouroDTO,

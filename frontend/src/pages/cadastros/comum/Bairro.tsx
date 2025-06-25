@@ -1,7 +1,7 @@
 import React from "react";
 import CadastroSimples from "../../../components/cadastro/CadastroSimples";
 import { bairroService } from "../../../services";
-import { BairroDTO, Bairro } from "../../../services/common/bairroService";
+import { BairroDTO, Bairro } from "../../../services/comum/bairroService";
 
 /**
  * Componente de Cadastro de Bairros

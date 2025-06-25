@@ -1,7 +1,7 @@
 import React from "react";
 import { formatarData } from "../../../../utils/formatters";
-import StatusBadge from "../../../../components/common/StatusBadge";
-import { Column } from "../../../../components/common/DataTable";
+import StatusBadge from "../../../../components/comum/StatusBadge";
+import { Column } from "../../../../components/comum/DataTable";
 import userService, {
   UsuarioComPerfil,
 } from "../../../../services/admin/userService";

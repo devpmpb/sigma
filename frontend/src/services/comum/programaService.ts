@@ -68,7 +68,7 @@ export interface EstatisticasPrograma {
 
 class ProgramaService extends BaseApiService<Programa, ProgramaDTO> {
   constructor() {
-    super("/programas", "agricultura");
+    super("/programas", "comum");
   }
 
   /**

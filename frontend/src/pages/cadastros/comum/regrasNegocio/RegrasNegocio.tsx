@@ -1,13 +1,14 @@
-// frontend/src/pages/cadastros/agricultura/regrasNegocio/RegrasNegocio.tsx
 import React, { useState, useEffect } from "react";
 import { useParams } from "@tanstack/react-router";
 import { formatarData } from "../../../../utils/formatters";
-import { Column } from "../../../../components/common/DataTable";
+import { Column } from "../../../../components/comum/DataTable";
 import regrasNegocioService, {
   RegrasNegocio,
   RegrasNegocioDTO,
-} from "../../../../services/common/regrasNegocioService";
-import programaService, { Programa } from "../../../../services/common/programaService";
+} from "../../../../services/comum/regrasNegocioService";
+import programaService, {
+  Programa,
+} from "../../../../services/comum/programaService";
 import { CadastroBase } from "../../../../components/cadastro";
 import RegrasNegocioForm from "./RegrasNegocioForm";
 
@@ -28,7 +29,7 @@ const RegrasNegocioPage: React.FC = () => {
         try {
           const programaData = await programaService.getById(programaId);
           setPrograma(programaData);
-          
+
           // Criar serviço filtrado para este programa
           const serviceFiltered = {
             ...regrasNegocioService,
@@ -38,15 +39,20 @@ const RegrasNegocioPage: React.FC = () => {
                 return regrasNegocioService.getByPrograma(programaId);
               }
               // Implementar busca filtrada por programa
-              return regrasNegocioService.getByPrograma(programaId).then(regras =>
-                regras.filter(regra => 
-                  regra.tipoRegra.toLowerCase().includes(termo.toLowerCase()) ||
-                  regra.valorBeneficio.toString().includes(termo)
-                )
-              );
-            }
+              return regrasNegocioService
+                .getByPrograma(programaId)
+                .then((regras) =>
+                  regras.filter(
+                    (regra) =>
+                      regra.tipoRegra
+                        .toLowerCase()
+                        .includes(termo.toLowerCase()) ||
+                      regra.valorBeneficio.toString().includes(termo)
+                  )
+                );
+            },
           };
-          
+
           setFilteredService(serviceFiltered as any);
         } catch (error) {
           console.error("Erro ao carregar programa:", error);
@@ -59,34 +65,42 @@ const RegrasNegocioPage: React.FC = () => {
 
   // Definição das colunas da tabela
   const columns: Column<RegrasNegocio>[] = [
-    { 
-      title: "ID", 
-      key: "id", 
-      width: "80px" 
+    {
+      title: "ID",
+      key: "id",
+      width: "80px",
     },
     // Mostrar programa apenas se não estiver filtrado por um programa específico
-    ...(programaId ? [] : [{
-      title: "Programa",
-      key: "programa",
-      render: (regra: RegrasNegocio) => (
-        <div>
-          <div className="font-medium">{regra.programa?.nome}</div>
-          <div className="text-sm text-gray-500">
-            {regra.programa?.tipoPrograma}
-          </div>
-        </div>
-      ),
-    }]),
+    ...(programaId
+      ? []
+      : [
+          {
+            title: "Programa",
+            key: "programa",
+            render: (regra: RegrasNegocio) => (
+              <div>
+                <div className="font-medium">{regra.programa?.nome}</div>
+                <div className="text-sm text-gray-500">
+                  {regra.programa?.tipoPrograma}
+                </div>
+              </div>
+            ),
+          },
+        ]),
     {
       title: "Tipo de Regra",
       key: "tipoRegra",
       render: (regra) => {
         const formatLabel = (tipo: string) => {
-          return tipo.split('_').map(word => 
-            word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-          ).join(' ');
+          return tipo
+            .split("_")
+            .map(
+              (word) =>
+                word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+            )
+            .join(" ");
         };
-        
+
         return (
           <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
             {formatLabel(regra.tipoRegra)}
@@ -130,14 +144,13 @@ const RegrasNegocioPage: React.FC = () => {
   ];
 
   // Título da página baseado no contexto
-  const pageTitle = programaId && programa 
-    ? `Regras - ${programa.nome}`
-    : "Regras de Negócio";
+  const pageTitle =
+    programaId && programa ? `Regras - ${programa.nome}` : "Regras de Negócio";
 
   // URL base baseada no contexto
-  const baseUrl = programaId 
-    ? `/cadastros/agricultura/regrasNegocio/programa/${programaId}`
-    : "/cadastros/agricultura/regrasNegocio";
+  const baseUrl = programaId
+    ? `/cadastros/comum/regrasNegocio/programa/${programaId}`
+    : "/cadastros/comum/regrasNegocio";
 
   // Botões de ação adicionais
   const actionButtons = (
@@ -164,9 +177,9 @@ const RegrasNegocioPage: React.FC = () => {
           Voltar ao Programa
         </button>
       )}
-      
+
       <button
-        onClick={() => window.open('/relatorios/regras-negocio', '_blank')}
+        onClick={() => window.open("/relatorios/regras-negocio", "_blank")}
         className="inline-flex items-center px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
       >
         <svg
@@ -199,7 +212,8 @@ const RegrasNegocioPage: React.FC = () => {
                 {programa.nome}
               </h2>
               <p className="text-blue-700">
-                {programa.tipoPrograma} • {programa.leiNumero || "Sem lei definida"}
+                {programa.tipoPrograma} •{" "}
+                {programa.leiNumero || "Sem lei definida"}
               </p>
               {programa.descricao && (
                 <p className="text-blue-600 text-sm mt-1">
@@ -223,10 +237,10 @@ const RegrasNegocioPage: React.FC = () => {
         columns={columns}
         rowKey="id"
         baseUrl={baseUrl}
-        module="agricultura"
+        module="comum"
         FormComponent={(props) => (
-          <RegrasNegocioForm 
-            {...props} 
+          <RegrasNegocioForm
+            {...props}
             programaId={programaId ? Number(programaId) : undefined}
           />
         )}

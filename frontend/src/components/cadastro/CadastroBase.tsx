@@ -1,9 +1,9 @@
 // frontend/src/components/cadastro/CadastroBase.tsx - VERSÃO ESTENDIDA
 import React, { useEffect, useState, ReactNode } from "react";
 import { useNavigate, useParams } from "@tanstack/react-router";
-import SearchBar from "../common/SearchBar";
-import DataTable, { Column } from "../common/DataTable";
-import StatusBadge from "../common/StatusBadge";
+import SearchBar from "../comum/SearchBar";
+import DataTable, { Column } from "../comum/DataTable";
+import StatusBadge from "../comum/StatusBadge";
 import BaseApiService from "../../services/baseApiService";
 import useApiService from "../../hooks/useApiService";
 import usePermissions from "../../hooks/usePermissions";

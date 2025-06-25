@@ -1,7 +1,9 @@
 import React from "react";
 import { CadastroBase } from "../../../../components/cadastro";
-import { Column } from "../../../../components/common/DataTable";
-import produtorService, { Produtor } from "../../../../services/common/produtorService";
+import { Column } from "../../../../components/comum/DataTable";
+import produtorService, {
+  Produtor,
+} from "../../../../services/comum/produtorService";
 import ProdutorForm from "./ProdutorForm";
 
 /**
@@ -10,10 +12,10 @@ import ProdutorForm from "./ProdutorForm";
 const ProdutorPage: React.FC = () => {
   // Definição das colunas da tabela
   const columns: Column<Produtor>[] = [
-    { 
-      title: "ID", 
-      key: "id", 
-      width: "80px" 
+    {
+      title: "ID",
+      key: "id",
+      width: "80px",
     },
     {
       title: "Produtor",
@@ -22,10 +24,16 @@ const ProdutorPage: React.FC = () => {
         <div>
           {produtor.pessoa ? (
             <>
-              <div className="font-medium text-gray-900">{produtor.pessoa.nome}</div>
-              <div className="text-sm text-gray-500">{produtor.pessoa.cpfCnpj}</div>
+              <div className="font-medium text-gray-900">
+                {produtor.pessoa.nome}
+              </div>
+              <div className="text-sm text-gray-500">
+                {produtor.pessoa.cpfCnpj}
+              </div>
               {produtor.pessoa.telefone && (
-                <div className="text-xs text-gray-400">{produtor.pessoa.telefone}</div>
+                <div className="text-xs text-gray-400">
+                  {produtor.pessoa.telefone}
+                </div>
               )}
             </>
           ) : (
@@ -48,7 +56,9 @@ const ProdutorPage: React.FC = () => {
       key: "atividadePrincipal",
       render: (produtor) => (
         <div className="text-sm">
-          {produtorService.formatarAtividadePrincipal(produtor.atividadePrincipal)}
+          {produtorService.formatarAtividadePrincipal(
+            produtor.atividadePrincipal
+          )}
         </div>
       ),
     },
@@ -76,7 +86,8 @@ const ProdutorPage: React.FC = () => {
           {produtor.areaEfetiva ? (
             <>
               <div className="font-medium">
-                {produtorService.formatarArea(produtor.areaEfetiva.areaEfetiva)} alq
+                {produtorService.formatarArea(produtor.areaEfetiva.areaEfetiva)}{" "}
+                alq
               </div>
               <div className="text-xs text-gray-500">
                 Ano: {produtor.areaEfetiva.anoReferencia}
@@ -112,7 +123,7 @@ const ProdutorPage: React.FC = () => {
   const actionButtons = (
     <>
       <button
-        onClick={() => window.open('/relatorios/produtores', '_blank')}
+        onClick={() => window.open("/relatorios/produtores", "_blank")}
         className="inline-flex items-center px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
       >
         <svg
@@ -133,7 +144,7 @@ const ProdutorPage: React.FC = () => {
       </button>
 
       <button
-        onClick={() => window.open('/relatorios/areas-efetivas', '_blank')}
+        onClick={() => window.open("/relatorios/areas-efetivas", "_blank")}
         className="inline-flex items-center px-3 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500"
       >
         <svg

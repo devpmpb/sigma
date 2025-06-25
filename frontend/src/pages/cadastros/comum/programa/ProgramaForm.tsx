@@ -1,4 +1,3 @@
-// frontend/src/pages/cadastros/agricultura/programa/ProgramaForm.tsx
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "@tanstack/react-router";
 import programaService, {
@@ -6,9 +5,9 @@ import programaService, {
   ProgramaDTO,
   TipoPrograma,
   RegrasNegocio,
-} from "../../../../services/common/programaService";
+} from "../../../../services/comum/programaService";
 import { FormBase } from "../../../../components/cadastro";
-import { FormField } from "../../../../components/common";
+import { FormField } from "../../../../components/comum";
 
 interface ProgramaFormProps {
   id?: string | number;
@@ -41,7 +40,9 @@ const ProgramaForm: React.FC<ProgramaFormProps> = ({ id, onSave }) => {
     const loadRegras = async () => {
       if (programaId && programaId !== "novo") {
         try {
-          const programaComRegras = await programaService.getByIdWithRules(programaId);
+          const programaComRegras = await programaService.getByIdWithRules(
+            programaId
+          );
           setRegras(programaComRegras.regras || []);
         } catch (error) {
           console.error("Erro ao carregar regras:", error);
@@ -83,7 +84,9 @@ const ProgramaForm: React.FC<ProgramaFormProps> = ({ id, onSave }) => {
 
     setDuplicating(true);
     try {
-      await programaService.duplicarPrograma(programaId!, { novoNome: duplicateName });
+      await programaService.duplicarPrograma(programaId!, {
+        novoNome: duplicateName,
+      });
       alert("Programa duplicado com sucesso!");
       setShowDuplicateModal(false);
       setDuplicateName("");
@@ -98,8 +101,8 @@ const ProgramaForm: React.FC<ProgramaFormProps> = ({ id, onSave }) => {
 
   // Função para navegar para gerenciar regras
   const handleManageRules = () => {
-    navigate({ 
-      to: `/cadastros/agricultura/regrasNegocio/programa/${programaId}` 
+    navigate({
+      to: `/cadastros/comum/regrasNegocio/programa/${programaId}`,
     });
   };
 
@@ -111,7 +114,7 @@ const ProgramaForm: React.FC<ProgramaFormProps> = ({ id, onSave }) => {
         id={programaId}
         initialValues={initialValues}
         validate={validate}
-        returnUrl="/cadastros/agricultura/programas"
+        returnUrl="/cadastros/comum/programas"
         onSave={onSave}
       >
         {({ values, errors, touched, handleChange, setValue }) => (
@@ -278,9 +281,11 @@ const ProgramaForm: React.FC<ProgramaFormProps> = ({ id, onSave }) => {
                       </div>
                       <button
                         type="button"
-                        onClick={() => navigate({ 
-                          to: `/cadastros/agricultura/regrasNegocio/${regra.id}` 
-                        })}
+                        onClick={() =>
+                          navigate({
+                            to: `/cadastros/comum/regrasNegocio/${regra.id}`,
+                          })
+                        }
                         className="text-blue-600 hover:text-blue-900 text-sm"
                       >
                         Editar

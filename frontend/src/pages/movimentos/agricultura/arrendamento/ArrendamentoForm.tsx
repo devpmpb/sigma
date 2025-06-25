@@ -1,8 +1,8 @@
 // frontend/src/pages/movimentos/agricultura/arrendamentos/ArrendamentoForm.tsx
 import React, { useState, useEffect } from "react";
 import { FormBase } from "../../../../components/cadastro"; // 🔥 USANDO O EXISTENTE
-import FormField from "../../../../components/common/FormField";
-import FormSection from "../../../../components/common/FormSection"; //
+import FormField from "../../../../components/comum/FormField";
+import FormSection from "../../../../components/comum/FormSection"; //
 import arrendamentoService, {
   ArrendamentoDTO,
   Arrendamento,
@@ -10,11 +10,11 @@ import arrendamentoService, {
 } from "../../../../services/agricultura/arrendamentoService";
 import propriedadeService, {
   Propriedade,
-} from "../../../../services/common/propriedadeService";
+} from "../../../../services/comum/propriedadeService";
 import pessoaService, {
   Pessoa,
   TipoPessoa,
-} from "../../../../services/common/pessoaService";
+} from "../../../../services/comum/pessoaService";
 
 interface ArrendamentoFormProps {
   id?: string | number;
@@ -80,9 +80,7 @@ const ArrendamentoForm: React.FC<ArrendamentoFormProps> = ({ id, onSave }) => {
   }, []);
 
   // Validação (mesmo código de antes)
-  const validate = (
-    values: ArrendamentoDTO
-  ): Record<string, string> | null => {
+  const validate = (values: ArrendamentoDTO): Record<string, string> | null => {
     const errors: Record<string, string> = {};
 
     if (!values.propriedadeId || values.propriedadeId === 0) {

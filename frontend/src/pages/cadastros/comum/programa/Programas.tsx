@@ -1,12 +1,11 @@
-// frontend/src/pages/cadastros/agricultura/programa/Programas.tsx
 import React from "react";
 import { formatarData, formatarMoeda } from "../../../../utils/formatters";
-import StatusBadge from "../../../../components/common/StatusBadge";
-import { Column } from "../../../../components/common/DataTable";
+import StatusBadge from "../../../../components/comum/StatusBadge";
+import { Column } from "../../../../components/comum/DataTable";
 import programaService, {
   Programa,
-  ProgramaDTO
-} from "../../../../services/common/programaService";
+  ProgramaDTO,
+} from "../../../../services/comum/programaService";
 import { CadastroBase } from "../../../../components/cadastro";
 import ProgramaForm from "./ProgramaForm";
 
@@ -17,13 +16,13 @@ import ProgramaForm from "./ProgramaForm";
 const Programas: React.FC = () => {
   // Definição das colunas da tabela
   const columns: Column<Programa>[] = [
-    { 
-      title: "ID", 
-      key: "id", 
-      width: "80px" 
+    {
+      title: "ID",
+      key: "id",
+      width: "80px",
     },
-    { 
-      title: "Nome", 
+    {
+      title: "Nome",
       key: "nome",
       render: (programa) => (
         <div>
@@ -32,7 +31,7 @@ const Programas: React.FC = () => {
             <div className="text-sm text-gray-500">{programa.leiNumero}</div>
           )}
         </div>
-      )
+      ),
     },
     {
       title: "Tipo",
@@ -40,25 +39,28 @@ const Programas: React.FC = () => {
       render: (programa) => {
         const cores = {
           subsidio: "bg-green-100 text-green-800",
-          material: "bg-blue-100 text-blue-800", 
+          material: "bg-blue-100 text-blue-800",
           servico: "bg-purple-100 text-purple-800",
           credito: "bg-yellow-100 text-yellow-800",
-          assistencia: "bg-indigo-100 text-indigo-800"
+          assistencia: "bg-indigo-100 text-indigo-800",
         };
-        
-        const cor = cores[programa.tipoPrograma as keyof typeof cores] || "bg-gray-100 text-gray-800";
-        
+
+        const cor =
+          cores[programa.tipoPrograma as keyof typeof cores] ||
+          "bg-gray-100 text-gray-800";
+
         return (
           <span className={`px-2 py-1 rounded-full text-xs font-medium ${cor}`}>
-            {programa.tipoPrograma.charAt(0).toUpperCase() + programa.tipoPrograma.slice(1)}
+            {programa.tipoPrograma.charAt(0).toUpperCase() +
+              programa.tipoPrograma.slice(1)}
           </span>
         );
       },
     },
-    { 
-      title: "Descrição", 
+    {
+      title: "Descrição",
       key: "descricao",
-      render: (programa) => programa.descricao || "-"
+      render: (programa) => programa.descricao || "-",
     },
     {
       title: "Regras",
@@ -68,7 +70,8 @@ const Programas: React.FC = () => {
         <div className="text-center">
           {programa._count?.regras ? (
             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-              {programa._count.regras} regra{programa._count.regras !== 1 ? 's' : ''}
+              {programa._count.regras} regra
+              {programa._count.regras !== 1 ? "s" : ""}
             </span>
           ) : (
             <span className="text-gray-400">0 regras</span>
@@ -78,7 +81,7 @@ const Programas: React.FC = () => {
     },
     {
       title: "Solicitações",
-      key: "solicitacoes", 
+      key: "solicitacoes",
       align: "center",
       render: (programa) => (
         <div className="text-center">
@@ -106,7 +109,7 @@ const Programas: React.FC = () => {
   const actionButtons = (
     <>
       <button
-        onClick={() => window.open('/relatorios/programas', '_blank')}
+        onClick={() => window.open("/relatorios/programas", "_blank")}
         className="inline-flex items-center px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
       >
         <svg
@@ -125,9 +128,9 @@ const Programas: React.FC = () => {
         </svg>
         Relatório
       </button>
-      
+
       <button
-        onClick={() => window.open('/dashboards/programas', '_blank')}
+        onClick={() => window.open("/dashboards/programas", "_blank")}
         className="inline-flex items-center px-3 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
       >
         <svg
@@ -155,8 +158,8 @@ const Programas: React.FC = () => {
       service={programaService}
       columns={columns}
       rowKey="id"
-      baseUrl="/cadastros/agricultura/programas"
-      module="agricultura"
+      baseUrl="/cadastros/comum/programas"
+      module="comum"
       FormComponent={ProgramaForm}
       searchPlaceholder="Buscar programas por nome, lei ou descrição..."
       actionButtons={actionButtons}
@@ -164,7 +167,7 @@ const Programas: React.FC = () => {
       statusColumn={{
         title: "Status",
         activeText: "Ativo",
-        inactiveText: "Inativo"
+        inactiveText: "Inativo",
       }}
     />
   );

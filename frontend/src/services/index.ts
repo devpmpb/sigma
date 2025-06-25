@@ -1,46 +1,46 @@
 // Serviços comuns
-export { default as bairroService } from "./common/bairroService";
-export { default as logradouroService } from "./common/logradouroService";
-export { default as pessoaService } from "./common/pessoaService";
-export { default as propriedadeService } from "./common/propriedadeService";
-export { default as produtorService } from "./common/produtorService";
-export { default as enderecoService } from "./common/enderecoService";
+export { default as bairroService } from "./comum/bairroService";
+export { default as logradouroService } from "./comum/logradouroService";
+export { default as pessoaService } from "./comum/pessoaService";
+export { default as propriedadeService } from "./comum/propriedadeService";
+export { default as produtorService } from "./comum/produtorService";
+export { default as enderecoService } from "./comum/enderecoService";
 
 // Serviços de agricultura
 export { default as grupoProdutoService } from "./agricultura/grupoProdutoService";
-export { default as programaService } from "./common/programaService";
-export { default as regrasNegocioService } from "./common/regrasNegocioService";
+export { default as programaService } from "./comum/programaService";
+export { default as regrasNegocioService } from "./comum/regrasNegocioService";
 export { default as arrendamentoService } from "./agricultura/arrendamentoService";
 
 // Serviços de obras
 export { default as tipoVeiculoService } from "./obras/tipoVeiculoService";
 
 // Exportar tipos também
-export type { Bairro, BairroDTO } from "./common/bairroService";
+export type { Bairro, BairroDTO } from "./comum/bairroService";
 export type {
   Logradouro,
   LogradouroDTO,
   TipoLogradouro,
-} from "./common/logradouroService";
+} from "./comum/logradouroService";
 export {
   type Pessoa,
   type PessoaDTO,
   TipoPessoa,
   type PessoaFisicaData,
   type PessoaJuridicaData,
-} from "./common/pessoaService";
+} from "./comum/pessoaService";
 export type {
   Propriedade,
   PropriedadeDTO,
   TipoPropriedade,
-} from "./common/propriedadeService";
+} from "./comum/propriedadeService";
 //export type { Endereco, EnderecoDTO, TipoEndereco } from "./common/enderecoService";
 export type {
   Produtor,
   ProdutorDTO,
   AreaEfetiva,
   AreaEfetivaDTO,
-} from "./common/produtorService";
+} from "./comum/produtorService";
 export type {
   GrupoProduto,
   GrupoProdutoDTO,
@@ -52,7 +52,7 @@ export type {
   RegrasNegocio as ProgramaRegras,
   ProgramaComRegras,
   EstatisticasPrograma,
-} from "./common/programaService";
+} from "./comum/programaService";
 export type {
   RegrasNegocio,
   RegrasNegocioDTO,
@@ -65,7 +65,7 @@ export type {
   TemplateRegra,
   ValidacaoRegra,
   ProdutorData,
-} from "./common/regrasNegocioService";
+} from "./comum/regrasNegocioService";
 
 export type { TipoVeiculo, TipoVeiculoDTO } from "./obras/tipoVeiculoService";
 

@@ -7,9 +7,9 @@ import pessoaService, {
   TipoPessoa,
   PessoaFisicaData,
   PessoaJuridicaData,
-} from "../../../../services/common/pessoaService";
+} from "../../../../services/comum/pessoaService";
 import { FormBase } from "../../../../components/cadastro";
-import { FormField } from "../../../../components/common";
+import { FormField } from "../../../../components/comum";
 import {
   formatarCPF,
   formatarCNPJ,

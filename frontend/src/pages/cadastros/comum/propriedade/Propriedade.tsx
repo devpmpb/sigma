@@ -1,7 +1,9 @@
 import React from "react";
 import { CadastroBase } from "../../../../components/cadastro";
-import { Column } from "../../../../components/common/DataTable";
-import propriedadeService, { Propriedade } from "../../../../services/common/propriedadeService";
+import { Column } from "../../../../components/comum/DataTable";
+import propriedadeService, {
+  Propriedade,
+} from "../../../../services/comum/propriedadeService";
 import PropriedadeForm from "./PropriedadeForm";
 
 /**
@@ -10,10 +12,10 @@ import PropriedadeForm from "./PropriedadeForm";
 const PropriedadePage: React.FC = () => {
   // Definição das colunas da tabela
   const columns: Column<Propriedade>[] = [
-    { 
-      title: "ID", 
-      key: "id", 
-      width: "80px" 
+    {
+      title: "ID",
+      key: "id",
+      width: "80px",
     },
     {
       title: "Nome",
@@ -22,7 +24,9 @@ const PropriedadePage: React.FC = () => {
         <div>
           <div className="font-medium text-gray-900">{propriedade.nome}</div>
           {propriedade.matricula && (
-            <div className="text-sm text-gray-500">Matrícula: {propriedade.matricula}</div>
+            <div className="text-sm text-gray-500">
+              Matrícula: {propriedade.matricula}
+            </div>
           )}
         </div>
       ),
@@ -32,7 +36,9 @@ const PropriedadePage: React.FC = () => {
       key: "tipoPropriedade",
       render: (propriedade) => (
         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-          {propriedadeService.formatarTipoPropriedade(propriedade.tipoPropriedade)}
+          {propriedadeService.formatarTipoPropriedade(
+            propriedade.tipoPropriedade
+          )}
         </span>
       ),
     },
@@ -42,7 +48,9 @@ const PropriedadePage: React.FC = () => {
       align: "right",
       render: (propriedade) => (
         <div className="text-right">
-          <div className="font-medium">{propriedadeService.formatarArea(propriedade.areaTotal)} alq</div>
+          <div className="font-medium">
+            {propriedadeService.formatarArea(propriedade.areaTotal)} alq
+          </div>
         </div>
       ),
     },
@@ -53,8 +61,12 @@ const PropriedadePage: React.FC = () => {
         <div>
           {propriedade.proprietario ? (
             <>
-              <div className="font-medium text-gray-900">{propriedade.proprietario.nome}</div>
-              <div className="text-sm text-gray-500">{propriedade.proprietario.cpfCnpj}</div>
+              <div className="font-medium text-gray-900">
+                {propriedade.proprietario.nome}
+              </div>
+              <div className="text-sm text-gray-500">
+                {propriedade.proprietario.cpfCnpj}
+              </div>
             </>
           ) : (
             <span className="text-gray-400">Não informado</span>
@@ -67,7 +79,9 @@ const PropriedadePage: React.FC = () => {
       key: "localizacao",
       render: (propriedade) => (
         <div className="max-w-xs truncate" title={propriedade.localizacao}>
-          {propriedade.localizacao || <span className="text-gray-400">Não informada</span>}
+          {propriedade.localizacao || (
+            <span className="text-gray-400">Não informada</span>
+          )}
         </div>
       ),
     },
@@ -77,7 +91,7 @@ const PropriedadePage: React.FC = () => {
   const actionButtons = (
     <>
       <button
-        onClick={() => window.open('/relatorios/propriedades', '_blank')}
+        onClick={() => window.open("/relatorios/propriedades", "_blank")}
         className="inline-flex items-center px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
       >
         <svg

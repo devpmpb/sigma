@@ -4,10 +4,10 @@ import propriedadeService, {
   PropriedadeDTO,
   TipoPropriedade,
   Propriedade,
-} from "../../../../services/common/propriedadeService";
+} from "../../../../services/comum/propriedadeService";
 import pessoaService, {
   Pessoa,
-} from "../../../../services/common/pessoaService";
+} from "../../../../services/comum/pessoaService";
 
 interface PropriedadeFormProps {
   id?: string | number;

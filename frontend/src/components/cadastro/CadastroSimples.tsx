@@ -1,7 +1,7 @@
 import React, { useState, useEffect, ReactNode } from "react";
 import { formatarData } from "../../utils/formatters";
 import useApiService from "../../hooks/useApiService";
-import { ActionButtons, SearchBar, StatusBadge } from "../../components/common";
+import { ActionButtons, SearchBar, StatusBadge } from "../comum";
 
 interface CadastroSimplesProps<T, R> {
   /**

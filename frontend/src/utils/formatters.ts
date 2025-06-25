@@ -3,7 +3,7 @@
  */
 
 // Importação do enum TipoPessoa para uso no formatarCPFCNPJ
-import { TipoPessoa } from "../services/common/pessoaService";
+import { TipoPessoa } from "../services/comum/pessoaService";
 
 /**
  * Formata uma data para exibição no formato brasileiro

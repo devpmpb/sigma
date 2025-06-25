@@ -4,9 +4,9 @@ import logradouroService, {
   Logradouro,
   LogradouroDTO,
   TipoLogradouro,
-} from "../../../../services/common/logradouroService";
+} from "../../../../services/comum/logradouroService";
 import { FormBase } from "../../../../components/cadastro";
-import { FormField } from "../../../../components/common";
+import { FormField } from "../../../../components/comum";
 
 interface LogradouroFormProps {
   id?: string | number;

@@ -8,7 +8,7 @@ import arrendamentoService, {
 } from "../../../../services/agricultura/arrendamentoService";
 import ArrendamentoForm from "./ArrendamentoForm";
 import ArrendamentoDashboard from "./ArrendamentoDashboard";
-import { Column } from "../../../../components/common/DataTable";
+import { Column } from "../../../../components/comum/DataTable";
 
 /**
  * Página principal de movimentos de arrendamento
@@ -247,7 +247,9 @@ const ArrendamentosPage: React.FC = () => {
       columns={columns}
       rowKey="id"
       baseUrl="/movimentos/agricultura/arrendamentos"
-      module="agricultura" as ModuleType
+      module="agricultura"
+      as
+      ModuleType
       FormComponent={ArrendamentoForm}
       showSearch={true}
       searchPlaceholder="Buscar por propriedade, proprietário ou arrendatário..."

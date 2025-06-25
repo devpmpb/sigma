@@ -1,6 +1,6 @@
 // frontend/src/components/endereco/EnderecoLista.tsx
 import React, { useState } from "react";
-import { Endereco, TipoEndereco } from "../../services/common/enderecoService";
+import { Endereco, TipoEndereco } from "../../services/comum/enderecoService";
 import { enderecoService } from "../../services";
 
 interface EnderecoListaProps {
