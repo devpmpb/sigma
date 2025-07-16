@@ -11,6 +11,13 @@ export const usePermissions = () => {
     // Usuários com setor 'admin' têm acesso a tudo
     if (user.sector === "admin") return true;
 
+    if (
+      module === "comum" &&
+      (user.sector === "obras" || user.sector === "agricultura")
+    ) {
+      return true;
+    }
+
     // Verifica se o usuário tem a permissão específica
     return user.permissions.some(
       (permission) =>
@@ -24,6 +31,13 @@ export const usePermissions = () => {
 
     // Usuários admin têm acesso a tudo
     if (user.sector === "admin") return true;
+
+    if (
+      module === "comum" &&
+      (user.sector === "obras" || user.sector === "agricultura")
+    ) {
+      return true;
+    }
 
     // Verifica se o usuário tem pelo menos uma permissão para o módulo
     return user.permissions.some((permission) => permission.module === module);

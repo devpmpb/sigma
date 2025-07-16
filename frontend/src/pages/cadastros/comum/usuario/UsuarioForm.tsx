@@ -5,9 +5,9 @@ import { FormBase } from "../../../../components/cadastro";
 import userService, {
   UsuarioComPerfil,
 } from "../../../../services/admin/userService";
-import { UsuarioDTO, Profile, TipoPerfilBackend } from "../../../../types";
+import { UsuarioDTO, Profile } from "../../../../types";
 import { usePermissions } from "../../../../hooks/usePermissions";
-import { Shield, User, Mail, Lock, Users } from "lucide-react";
+import { Shield, User, Lock, Users } from "lucide-react";
 
 interface UsuarioFormProps {
   id?: string | number;

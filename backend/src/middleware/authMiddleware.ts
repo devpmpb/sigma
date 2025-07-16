@@ -1,4 +1,3 @@
-// backend/src/middleware/authMiddleware.ts - ARQUIVO COMPLETO
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { PrismaClient, ModuloSistema, AcaoPermissao } from "@prisma/client";
