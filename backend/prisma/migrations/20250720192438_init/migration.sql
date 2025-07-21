@@ -11,6 +11,9 @@ CREATE TYPE "TipoPropriedade" AS ENUM ('RURAL', 'LOTE_URBANO', 'COMERCIAL', 'IND
 CREATE TYPE "TipoPessoa" AS ENUM ('FISICA', 'JURIDICA');
 
 -- CreateEnum
+CREATE TYPE "SituacaoPropriedade" AS ENUM ('PROPRIA', 'CONDOMINIO', 'USUFRUTO');
+
+-- CreateEnum
 CREATE TYPE "TipoPerfil" AS ENUM ('ADMIN', 'OBRAS', 'AGRICULTURA');
 
 -- CreateEnum
@@ -50,7 +53,6 @@ CREATE TABLE "Logradouro" (
     "tipo" "TipoLogradouro" NOT NULL,
     "descricao" TEXT NOT NULL,
     "cep" TEXT,
-    "bairroId" INTEGER,
     "ativo" BOOLEAN NOT NULL DEFAULT true,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -167,7 +169,14 @@ CREATE TABLE "Propriedade" (
     "id" SERIAL NOT NULL,
     "nome" TEXT NOT NULL,
     "tipoPropriedade" "TipoPropriedade" NOT NULL DEFAULT 'RURAL',
+    "logradouroId" INTEGER,
+    "numero" TEXT,
     "areaTotal" DECIMAL(10,2) NOT NULL,
+    "unidadeArea" TEXT NOT NULL DEFAULT 'alqueires',
+    "itr" TEXT,
+    "incra" TEXT,
+    "situacao" "SituacaoPropriedade" NOT NULL,
+    "proprietarioResidente" BOOLEAN NOT NULL DEFAULT false,
     "localizacao" TEXT,
     "matricula" TEXT,
     "proprietarioId" INTEGER NOT NULL,
@@ -353,9 +362,6 @@ CREATE UNIQUE INDEX "UsuarioSessao_token_key" ON "UsuarioSessao"("token");
 CREATE UNIQUE INDEX "UsuarioSessao_refreshToken_key" ON "UsuarioSessao"("refreshToken");
 
 -- AddForeignKey
-ALTER TABLE "Logradouro" ADD CONSTRAINT "Logradouro_bairroId_fkey" FOREIGN KEY ("bairroId") REFERENCES "Bairro"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
 ALTER TABLE "PessoaFisica" ADD CONSTRAINT "PessoaFisica_id_fkey" FOREIGN KEY ("id") REFERENCES "Pessoa"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -381,6 +387,9 @@ ALTER TABLE "Produtor" ADD CONSTRAINT "Produtor_id_fkey" FOREIGN KEY ("id") REFE
 
 -- AddForeignKey
 ALTER TABLE "AreaEfetiva" ADD CONSTRAINT "AreaEfetiva_id_fkey" FOREIGN KEY ("id") REFERENCES "Produtor"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Propriedade" ADD CONSTRAINT "Propriedade_logradouroId_fkey" FOREIGN KEY ("logradouroId") REFERENCES "Logradouro"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Propriedade" ADD CONSTRAINT "Propriedade_proprietarioId_fkey" FOREIGN KEY ("proprietarioId") REFERENCES "Pessoa"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

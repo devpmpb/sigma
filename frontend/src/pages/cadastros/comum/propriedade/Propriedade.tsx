@@ -6,16 +6,12 @@ import propriedadeService, {
 } from "../../../../services/comum/propriedadeService";
 import PropriedadeForm from "./PropriedadeForm";
 
-/**
- * Página de listagem de propriedades
- */
 const PropriedadePage: React.FC = () => {
-  // Definição das colunas da tabela
   const columns: Column<Propriedade>[] = [
     {
       title: "ID",
       key: "id",
-      width: "80px",
+      width: "60px",
     },
     {
       title: "Nome",
@@ -26,6 +22,16 @@ const PropriedadePage: React.FC = () => {
           {propriedade.matricula && (
             <div className="text-sm text-gray-500">
               Matrícula: {propriedade.matricula}
+            </div>
+          )}
+          {/* NOVO: Mostrar logradouro e número */}
+          {(propriedade.logradouro || propriedade.numero) && (
+            <div className="text-sm text-gray-500">
+              {propriedade.logradouro && propriedade.numero
+                ? `${propriedade.logradouro.tipo} ${propriedade.logradouro.descricao}, ${propriedade.numero}`
+                : propriedade.logradouro
+                ? `${propriedade.logradouro.tipo} ${propriedade.logradouro.descricao}`
+                : propriedade.numero}
             </div>
           )}
         </div>
@@ -49,10 +55,36 @@ const PropriedadePage: React.FC = () => {
       render: (propriedade) => (
         <div className="text-right">
           <div className="font-medium">
-            {propriedadeService.formatarArea(propriedade.areaTotal)} alq
+            {propriedadeService.formatarArea(
+              propriedade.areaTotal,
+              propriedade.tipoPropriedade
+            )}
           </div>
         </div>
       ),
+    },
+    {
+      title: "Situação", // NOVA COLUNA
+      key: "situacao",
+      render: (propriedade) => {
+        const cores = {
+          PROPRIA: "bg-green-100 text-green-800",
+          CONDOMINIO: "bg-yellow-100 text-yellow-800",
+          USUFRUTO: "bg-purple-100 text-purple-800",
+        };
+
+        return (
+          <span
+            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+              cores[propriedade.situacao] || "bg-gray-100 text-gray-800"
+            }`}
+          >
+            {propriedadeService.formatarSituacaoPropriedade(
+              propriedade.situacao
+            )}
+          </span>
+        );
+      },
     },
     {
       title: "Proprietário",
@@ -67,6 +99,12 @@ const PropriedadePage: React.FC = () => {
               <div className="text-sm text-gray-500">
                 {propriedade.proprietario.cpfCnpj}
               </div>
+              {/* NOVO: Indicador se é residente */}
+              {propriedade.proprietarioResidente && (
+                <div className="text-xs text-green-600 font-medium">
+                  📍 Residente
+                </div>
+              )}
             </>
           ) : (
             <span className="text-gray-400">Não informado</span>
@@ -75,11 +113,38 @@ const PropriedadePage: React.FC = () => {
       ),
     },
     {
+      title: "Informações Rurais", // NOVA COLUNA
+      key: "informacoesRurais",
+      render: (propriedade) => {
+        if (!propriedadeService.isRural(propriedade.tipoPropriedade)) {
+          return <span className="text-gray-400">-</span>;
+        }
+
+        return (
+          <div className="text-sm">
+            {propriedade.itr && (
+              <div className="text-gray-700">ITR: {propriedade.itr}</div>
+            )}
+            {propriedade.incra && (
+              <div className="text-gray-700">INCRA: {propriedade.incra}</div>
+            )}
+            {!propriedade.itr && !propriedade.incra && (
+              <span className="text-gray-400">Não informado</span>
+            )}
+          </div>
+        );
+      },
+    },
+    {
       title: "Localização",
       key: "localizacao",
       render: (propriedade) => (
-        <div className="max-w-xs truncate" title={propriedade.localizacao}>
-          {propriedade.localizacao || (
+        <div className="max-w-xs">
+          {propriedade.localizacao ? (
+            <div className="truncate" title={propriedade.localizacao}>
+              {propriedade.localizacao}
+            </div>
+          ) : (
             <span className="text-gray-400">Não informada</span>
           )}
         </div>
@@ -110,6 +175,26 @@ const PropriedadePage: React.FC = () => {
         </svg>
         Relatório
       </button>
+
+      {/* NOVO: Botão para filtrar por tipo */}
+      <div className="relative inline-block">
+        <select
+          onChange={(e) => {
+            if (e.target.value) {
+              // Implementar filtro por tipo se necessário
+              console.log("Filtrar por tipo:", e.target.value);
+            }
+          }}
+          className="inline-flex items-center px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="">Filtrar por Tipo</option>
+          {propriedadeService.getTiposPropriedade().map((tipo) => (
+            <option key={tipo.value} value={tipo.value}>
+              {tipo.label}
+            </option>
+          ))}
+        </select>
+      </div>
     </>
   );
 
@@ -122,7 +207,7 @@ const PropriedadePage: React.FC = () => {
       baseUrl="/cadastros/comum/propriedades"
       module="comum"
       FormComponent={PropriedadeForm}
-      searchPlaceholder="Buscar por nome, matrícula ou proprietário..."
+      searchPlaceholder="Buscar por nome, matrícula, proprietário, logradouro..."
       actionButtons={actionButtons}
     />
   );
