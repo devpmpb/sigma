@@ -38,7 +38,14 @@ enum TipoPessoa {
   JURIDICA
 }
 
-// NOVOS ENUMs para Autenticação
+// NOVO ENUM ADICIONADO
+enum SituacaoPropriedade {
+  PROPRIA
+  CONDOMINIO
+  USUFRUTO
+}
+
+// ENUMs para Autenticação
 enum TipoPerfil {
   ADMIN
   OBRAS
@@ -74,7 +81,6 @@ model Bairro {
   ativo       Boolean      @default(true)
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
-  logradouros Logradouro[]
   enderecos   Endereco[]
 }
 
@@ -92,12 +98,11 @@ model Logradouro {
   tipo            TipoLogradouro
   descricao       String        
   cep             String?       @unique
-  bairroId        Int?
-  bairro          Bairro?       @relation(fields: [bairroId], references: [id])
   ativo           Boolean       @default(true)
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
   enderecos       Endereco[]
+  propriedades    Propriedade[] // NOVA RELAÇÃO
 }
 
 model GrupoProduto {
@@ -191,7 +196,7 @@ model Endereco {
 
 model Produtor {
   id                  Int                   @id
-  pessoa              PessoaFisica                @relation(fields: [id], references: [id])
+  pessoa              PessoaFisica          @relation(fields: [id], references: [id])
   inscricaoEstadual   String?
   dap                 String?
   tipoProdutor        String?
@@ -215,22 +220,41 @@ model AreaEfetiva {
   updatedAt             DateTime  @updatedAt
 }
 
+// MODELO PROPRIEDADE ATUALIZADO
 model Propriedade {
-  id               Int              @id @default(autoincrement())
+  id               Int                    @id @default(autoincrement())
   nome             String
-  tipoPropriedade  TipoPropriedade  @default(RURAL)
-  areaTotal        Decimal          @db.Decimal(10, 2)
-  localizacao      String?
+  tipoPropriedade  TipoPropriedade       @default(RURAL)
+  
+  // NOVOS CAMPOS ADICIONADOS
+  logradouroId     Int?                  // Referência à tabela Logradouro
+  logradouro       Logradouro?           @relation(fields: [logradouroId], references: [id])
+  numero           String?               // Número do lote/chácara
+  
+  // Área total - lógica será: rural = alqueires, outros = metros quadrados
+  areaTotal        Decimal               @db.Decimal(10, 2)
+  unidadeArea      String                @default("alqueires") // "alqueires" ou "metros_quadrados"
+  
+  // Campos específicos para propriedades RURAIS
+  itr              String?               // ITR (só para rural)
+  incra            String?               // INCRA (só para rural) 
+  
+  // NOVOS CAMPOS OBRIGATÓRIOS
+  situacao         SituacaoPropriedade   // própria/condomínio/usufruto
+  proprietarioResidente Boolean          @default(false) // Se o proprietário reside na propriedade
+  
+  // Campos existentes mantidos
+  localizacao      String?               // Descrição geral (mantido para compatibilidade)
   matricula        String?
   proprietarioId   Int
-  proprietario     Pessoa           @relation(fields: [proprietarioId], references: [id])
+  proprietario     Pessoa                @relation(fields: [proprietarioId], references: [id])
   
   // Relacionamentos
   arrendamentos    Arrendamento[]
-  enderecos        Endereco[]       // Um ou mais endereços podem estar associados a esta propriedade
+  enderecos        Endereco[]
   
-  createdAt        DateTime         @default(now())
-  updatedAt        DateTime         @updatedAt
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
 }
 
 model Arrendamento {
@@ -292,8 +316,7 @@ model RegrasNegocio {
   updatedAt       DateTime  @updatedAt
 }
 
-// NOVOS MODELOS DE AUTENTICAÇÃO COM ENUMs
-// Modelo de usuário do sistema
+// MODELOS DE AUTENTICAÇÃO
 model Usuario {
   id        Int      @id @default(autoincrement())
   nome      String
@@ -316,10 +339,10 @@ model Usuario {
   bloqueadoAte DateTime?
 }
 
-// Perfis de usuário (Admin, Obras, Agricultura, etc) - USANDO ENUM
+// Perfis de usuário (Admin, Obras, Agricultura, etc)
 model Perfil {
   id        Int         @id @default(autoincrement())
-  nome      TipoPerfil  @unique // ENUM em vez de String
+  nome      TipoPerfil  @unique
   descricao String?
   ativo     Boolean     @default(true)
   createdAt DateTime    @default(now())
@@ -330,11 +353,11 @@ model Perfil {
   permissoes PerfilPermissao[]
 }
 
-// Permissões disponíveis no sistema - USANDO ENUMs
+// Permissões disponíveis no sistema
 model Permissao {
   id        Int            @id @default(autoincrement())
-  modulo    ModuloSistema  // ENUM em vez de String
-  acao      AcaoPermissao  // ENUM em vez de String
+  modulo    ModuloSistema
+  acao      AcaoPermissao
   descricao String?
   ativo     Boolean        @default(true)
   createdAt DateTime       @default(now())
