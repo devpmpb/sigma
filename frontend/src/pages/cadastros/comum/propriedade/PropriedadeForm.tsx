@@ -1,12 +1,18 @@
-// frontend/src/pages/cadastros/comum/propriedade/PropriedadeForm.tsx - ETAPA 2
 import React, { useState, useEffect } from "react";
+import { FormBase } from "../../../../components/cadastro";
+import FormField from "../../../../components/comum/FormField";
 import propriedadeService, {
+  PropriedadeDTO,
   TipoPropriedade,
   SituacaoPropriedade,
+  Propriedade,
 } from "../../../../services/comum/propriedadeService";
 import pessoaService, {
   Pessoa,
 } from "../../../../services/comum/pessoaService";
+import logradouroService, {
+  Logradouro,
+} from "../../../../services/comum/logradouroService";
 
 interface PropriedadeFormProps {
   id?: string | number;
@@ -14,43 +20,39 @@ interface PropriedadeFormProps {
 }
 
 /**
- * ETAPA 2: Adicionando services e dados reais
+ * Formulário para cadastro e edição de propriedades
  */
 const PropriedadeForm: React.FC<PropriedadeFormProps> = ({ id, onSave }) => {
-  console.log("🔍 PropriedadeForm ETAPA 2 renderizando...", { id });
-
-  // Estados do formulário
-  const [nome, setNome] = useState("");
-  const [tipoPropriedade, setTipoPropriedade] = useState<TipoPropriedade>(
-    TipoPropriedade.RURAL
-  );
-  const [situacao, setSituacao] = useState<SituacaoPropriedade>(
-    SituacaoPropriedade.PROPRIA
-  );
-  const [areaTotal, setAreaTotal] = useState("");
-  const [proprietarioId, setProprietarioId] = useState(0);
-  const [proprietarioResidente, setProprietarioResidente] = useState(false);
-  const [itr, setItr] = useState("");
-  const [incra, setIncra] = useState("");
-  const [matricula, setMatricula] = useState("");
-  const [localizacao, setLocalizacao] = useState("");
-
-  // Estados para dados externos
   const [pessoas, setPessoas] = useState<Pessoa[]>([]);
+  const [logradouros, setLogradouros] = useState<Logradouro[]>([]);
   const [loadingPessoas, setLoadingPessoas] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [loadingLogradouros, setLoadingLogradouros] = useState(false);
 
-  // Carregar pessoas
+  // Valores iniciais do formulário
+  const initialValues: PropriedadeDTO = {
+    nome: "",
+    tipoPropriedade: TipoPropriedade.RURAL,
+    logradouroId: undefined,
+    numero: "",
+    areaTotal: "",
+    itr: "",
+    incra: "",
+    situacao: SituacaoPropriedade.PROPRIA,
+    proprietarioResidente: false,
+    localizacao: "",
+    matricula: "",
+    proprietarioId: 0,
+  };
+
+  // Carregar pessoas para seleção
   useEffect(() => {
     const fetchPessoas = async () => {
       setLoadingPessoas(true);
       try {
-        console.log("🔍 Carregando pessoas...");
         const data = await pessoaService.getAll();
-        console.log("✅ Pessoas carregadas:", data.length);
         setPessoas(data);
       } catch (error) {
-        console.error("❌ Erro ao carregar pessoas:", error);
+        console.error("Erro ao carregar pessoas:", error);
       } finally {
         setLoadingPessoas(false);
       }
@@ -59,151 +61,122 @@ const PropriedadeForm: React.FC<PropriedadeFormProps> = ({ id, onSave }) => {
     fetchPessoas();
   }, []);
 
-  // Carregar dados para edição
+  // Carregar logradouros para seleção
   useEffect(() => {
-    if (id && id !== "novo") {
-      const fetchPropriedade = async () => {
-        try {
-          console.log("🔍 Carregando propriedade para edição...", id);
-          const propriedade = await propriedadeService.getById(Number(id));
-          console.log("✅ Propriedade carregada:", propriedade);
+    const fetchLogradouros = async () => {
+      setLoadingLogradouros(true);
+      try {
+        const data = await logradouroService.getAll();
+        setLogradouros(data);
+      } catch (error) {
+        console.error("Erro ao carregar logradouros:", error);
+      } finally {
+        setLoadingLogradouros(false);
+      }
+    };
 
-          setNome(propriedade.nome);
-          setTipoPropriedade(propriedade.tipoPropriedade);
-          setSituacao(propriedade.situacao);
-          setAreaTotal(propriedade.areaTotal.toString());
-          setProprietarioId(propriedade.proprietarioId);
-          setProprietarioResidente(propriedade.proprietarioResidente);
-          setItr(propriedade.itr || "");
-          setIncra(propriedade.incra || "");
-          setMatricula(propriedade.matricula || "");
-          setLocalizacao(propriedade.localizacao || "");
-        } catch (error) {
-          console.error("❌ Erro ao carregar propriedade:", error);
-        }
-      };
+    fetchLogradouros();
+  }, []);
 
-      fetchPropriedade();
+  // Validação do formulário
+  const validate = (values: PropriedadeDTO): Record<string, string> | null => {
+    const errors: Record<string, string> = {};
+
+    if (!values.nome?.trim()) {
+      errors.nome = "Nome é obrigatório";
     }
-  }, [id]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
+    if (!values.tipoPropriedade) {
+      errors.tipoPropriedade = "Tipo de propriedade é obrigatório";
+    }
 
-    try {
-      const dados = {
-        nome,
-        tipoPropriedade,
-        situacao,
-        areaTotal: Number(areaTotal),
-        proprietarioId,
-        proprietarioResidente,
-        itr: tipoPropriedade === TipoPropriedade.RURAL ? itr : undefined,
-        incra: tipoPropriedade === TipoPropriedade.RURAL ? incra : undefined,
-        matricula,
-        localizacao,
-      };
+    if (!values.areaTotal || Number(values.areaTotal) <= 0) {
+      errors.areaTotal = "Área total deve ser maior que zero";
+    }
 
-      console.log("🚀 Salvando propriedade:", dados);
+    if (!values.proprietarioId || values.proprietarioId === 0) {
+      errors.proprietarioId = "Proprietário é obrigatório";
+    }
 
-      if (id && id !== "novo") {
-        await propriedadeService.update(Number(id), dados);
-        console.log("✅ Propriedade atualizada");
-      } else {
-        await propriedadeService.create(dados);
-        console.log("✅ Propriedade criada");
+    if (!values.situacao) {
+      errors.situacao = "Situação da propriedade é obrigatória";
+    }
+
+    // Validações específicas para propriedades rurais
+    if (propriedadeService.isRural(values.tipoPropriedade)) {
+      if (values.itr && values.itr.length > 0 && values.itr.length < 3) {
+        errors.itr = "ITR deve ter pelo menos 3 caracteres";
       }
 
-      alert("✅ Propriedade salva com sucesso!");
-      onSave();
-    } catch (error) {
-      console.error("❌ Erro ao salvar:", error);
-      alert("❌ Erro ao salvar propriedade: " + error.message);
-    } finally {
-      setLoading(false);
+      if (values.incra && values.incra.length > 0 && values.incra.length < 3) {
+        errors.incra = "INCRA deve ter pelo menos 3 caracteres";
+      }
     }
+
+    return Object.keys(errors).length > 0 ? errors : null;
   };
 
   return (
-    <div
-      style={{
-        padding: "20px",
-        maxWidth: "800px",
-        margin: "0 auto",
-        backgroundColor: "#fff",
-        borderRadius: "8px",
-        boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-      }}
+    <FormBase<Propriedade, PropriedadeDTO>
+      title="Propriedade"
+      service={propriedadeService}
+      id={id}
+      initialValues={initialValues}
+      validate={validate}
+      returnUrl="/cadastros/comum/propriedades"
     >
-      <h2
-        style={{
-          color: "#333",
-          marginBottom: "20px",
-          borderBottom: "2px solid #e0e0e0",
-          paddingBottom: "10px",
-        }}
-      >
-        {id && id !== "novo" ? "✏️ Editar Propriedade" : "➕ Nova Propriedade"}
-      </h2>
-
-      <form onSubmit={handleSubmit}>
-        <div style={{ display: "grid", gap: "20px" }}>
-          {/* Nome */}
-          <div>
-            <label
-              style={{
-                display: "block",
-                marginBottom: "5px",
-                fontWeight: "bold",
-              }}
-            >
-              Nome da Propriedade *
-            </label>
+      {({
+        values,
+        errors,
+        touched,
+        handleChange,
+        setValue,
+        setFieldTouched,
+      }) => (
+        <>
+          {/* Nome da Propriedade */}
+          <FormField
+            name="nome"
+            label="Nome da Propriedade"
+            error={errors.nome}
+            touched={touched.nome}
+            required
+          >
             <input
               type="text"
-              value={nome}
-              onChange={(e) => setNome(e.target.value)}
-              placeholder="Ex: Fazenda São João"
-              style={{
-                width: "100%",
-                padding: "8px",
-                border: "1px solid #ccc",
-                borderRadius: "4px",
-              }}
-              required
+              id="nome"
+              name="nome"
+              value={values.nome}
+              onChange={handleChange}
+              onBlur={() => setFieldTouched("nome")}
+              placeholder="Digite o nome da propriedade"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-          </div>
+          </FormField>
 
-          {/* Grid: Tipo e Situação */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: "15px",
-            }}
-          >
-            <div>
-              <label
-                style={{
-                  display: "block",
-                  marginBottom: "5px",
-                  fontWeight: "bold",
-                }}
-              >
-                Tipo de Propriedade *
-              </label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Tipo de Propriedade */}
+            <FormField
+              name="tipoPropriedade"
+              label="Tipo de Propriedade"
+              error={errors.tipoPropriedade}
+              touched={touched.tipoPropriedade}
+              required
+            >
               <select
-                value={tipoPropriedade}
-                onChange={(e) =>
-                  setTipoPropriedade(e.target.value as TipoPropriedade)
-                }
-                style={{
-                  width: "100%",
-                  padding: "8px",
-                  border: "1px solid #ccc",
-                  borderRadius: "4px",
+                id="tipoPropriedade"
+                name="tipoPropriedade"
+                value={values.tipoPropriedade}
+                onChange={(e) => {
+                  handleChange(e);
+                  // Limpar campos rurais quando mudar para não rural
+                  if (e.target.value !== TipoPropriedade.RURAL) {
+                    setValue("itr", "");
+                    setValue("incra", "");
+                  }
                 }}
+                onBlur={() => setFieldTouched("tipoPropriedade")}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 {propriedadeService.getTiposPropriedade().map((tipo) => (
                   <option key={tipo.value} value={tipo.value}>
@@ -211,168 +184,181 @@ const PropriedadeForm: React.FC<PropriedadeFormProps> = ({ id, onSave }) => {
                   </option>
                 ))}
               </select>
-            </div>
+            </FormField>
 
-            <div>
-              <label
-                style={{
-                  display: "block",
-                  marginBottom: "5px",
-                  fontWeight: "bold",
-                }}
-              >
-                Situação *
-              </label>
+            {/* Situação da Propriedade */}
+            <FormField
+              name="situacao"
+              label="Situação da Propriedade"
+              error={errors.situacao}
+              touched={touched.situacao}
+              required
+            >
               <select
-                value={situacao}
-                onChange={(e) =>
-                  setSituacao(e.target.value as SituacaoPropriedade)
-                }
-                style={{
-                  width: "100%",
-                  padding: "8px",
-                  border: "1px solid #ccc",
-                  borderRadius: "4px",
-                }}
+                id="situacao"
+                name="situacao"
+                value={values.situacao}
+                onChange={handleChange}
+                onBlur={() => setFieldTouched("situacao")}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                {propriedadeService.getSituacoesPropriedade().map((sit) => (
-                  <option key={sit.value} value={sit.value}>
-                    {sit.label}
+                {propriedadeService
+                  .getSituacoesPropriedade()
+                  .map((situacao) => (
+                    <option key={situacao.value} value={situacao.value}>
+                      {situacao.label}
+                    </option>
+                  ))}
+              </select>
+            </FormField>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Logradouro */}
+            <FormField
+              name="logradouroId"
+              label="Logradouro"
+              error={errors.logradouroId}
+              touched={touched.logradouroId}
+            >
+              <select
+                id="logradouroId"
+                name="logradouroId"
+                value={values.logradouroId || ""}
+                onChange={(e) =>
+                  setValue(
+                    "logradouroId",
+                    e.target.value ? Number(e.target.value) : undefined
+                  )
+                }
+                onBlur={() => setFieldTouched("logradouroId")}
+                disabled={loadingLogradouros}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">
+                  {loadingLogradouros
+                    ? "Carregando..."
+                    : "Selecione o logradouro"}
+                </option>
+                {logradouros.map((logradouro) => (
+                  <option key={logradouro.id} value={logradouro.id}>
+                    {logradouro.tipo} {logradouro.descricao}
+                    {logradouro.bairro && ` - ${logradouro.bairro.nome}`}
                   </option>
                 ))}
               </select>
-            </div>
-          </div>
+            </FormField>
 
-          {/* Área Total */}
-          <div>
-            <label
-              style={{
-                display: "block",
-                marginBottom: "5px",
-                fontWeight: "bold",
-              }}
+            {/* Número */}
+            <FormField
+              name="numero"
+              label="Número (Lote/Chácara)"
+              error={errors.numero}
+              touched={touched.numero}
             >
-              Área Total * (
-              {propriedadeService.getSufixoUnidade(tipoPropriedade)})
-            </label>
-            <input
-              type="number"
-              step="0.01"
-              value={areaTotal}
-              onChange={(e) => setAreaTotal(e.target.value)}
-              placeholder="Ex: 10.50"
-              style={{
-                width: "100%",
-                padding: "8px",
-                border: "1px solid #ccc",
-                borderRadius: "4px",
-              }}
+              <input
+                type="text"
+                id="numero"
+                name="numero"
+                value={values.numero || ""}
+                onChange={handleChange}
+                onBlur={() => setFieldTouched("numero")}
+                placeholder="Ex: 123, Lote 5"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </FormField>
+
+            {/* Área Total */}
+            <FormField
+              name="areaTotal"
+              label={`Área Total (${propriedadeService.getSufixoUnidade(
+                values.tipoPropriedade
+              )})`}
+              error={errors.areaTotal}
+              touched={touched.areaTotal}
               required
-            />
-            <small style={{ color: "#666" }}>
-              {tipoPropriedade === TipoPropriedade.RURAL
-                ? "Área em alqueires para propriedades rurais"
-                : "Área em metros quadrados"}
-            </small>
+            >
+              <input
+                type="number"
+                step="0.01"
+                id="areaTotal"
+                name="areaTotal"
+                value={values.areaTotal}
+                onChange={handleChange}
+                onBlur={() => setFieldTouched("areaTotal")}
+                placeholder="0,00"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </FormField>
           </div>
 
-          {/* Campos específicos para RURAL */}
-          {tipoPropriedade === TipoPropriedade.RURAL && (
-            <div
-              style={{
-                backgroundColor: "#f0f8f0",
-                padding: "15px",
-                borderRadius: "6px",
-                border: "1px solid #d4e6d4",
-              }}
-            >
-              <h4 style={{ color: "#2d5a2d", marginBottom: "15px" }}>
-                🌾 Informações Rurais
+          {/* Campos específicos para propriedades RURAIS */}
+          {propriedadeService.isRural(values.tipoPropriedade) && (
+            <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+              <h4 className="font-medium text-green-900 mb-3">
+                Informações Específicas para Propriedade Rural
               </h4>
 
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
-                  gap: "15px",
-                }}
-              >
-                <div>
-                  <label
-                    style={{
-                      display: "block",
-                      marginBottom: "5px",
-                      fontWeight: "bold",
-                    }}
-                  >
-                    ITR
-                  </label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* ITR */}
+                <FormField
+                  name="itr"
+                  label="ITR (Imposto Territorial Rural)"
+                  error={errors.itr}
+                  touched={touched.itr}
+                >
                   <input
                     type="text"
-                    value={itr}
-                    onChange={(e) => setItr(e.target.value)}
-                    placeholder="Código ITR"
-                    style={{
-                      width: "100%",
-                      padding: "8px",
-                      border: "1px solid #ccc",
-                      borderRadius: "4px",
-                    }}
+                    id="itr"
+                    name="itr"
+                    value={values.itr || ""}
+                    onChange={handleChange}
+                    onBlur={() => setFieldTouched("itr")}
+                    placeholder="Digite o código ITR"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
-                </div>
+                </FormField>
 
-                <div>
-                  <label
-                    style={{
-                      display: "block",
-                      marginBottom: "5px",
-                      fontWeight: "bold",
-                    }}
-                  >
-                    INCRA
-                  </label>
+                {/* INCRA */}
+                <FormField
+                  name="incra"
+                  label="INCRA"
+                  error={errors.incra}
+                  touched={touched.incra}
+                >
                   <input
                     type="text"
-                    value={incra}
-                    onChange={(e) => setIncra(e.target.value)}
-                    placeholder="Código INCRA"
-                    style={{
-                      width: "100%",
-                      padding: "8px",
-                      border: "1px solid #ccc",
-                      borderRadius: "4px",
-                    }}
+                    id="incra"
+                    name="incra"
+                    value={values.incra || ""}
+                    onChange={handleChange}
+                    onBlur={() => setFieldTouched("incra")}
+                    placeholder="Digite o código INCRA"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
-                </div>
+                </FormField>
               </div>
             </div>
           )}
 
           {/* Proprietário */}
-          <div>
-            <label
-              style={{
-                display: "block",
-                marginBottom: "5px",
-                fontWeight: "bold",
-              }}
-            >
-              Proprietário *
-            </label>
+          <FormField
+            name="proprietarioId"
+            label="Proprietário"
+            error={errors.proprietarioId}
+            touched={touched.proprietarioId}
+            required
+          >
             <select
-              value={proprietarioId}
-              onChange={(e) => setProprietarioId(Number(e.target.value))}
+              id="proprietarioId"
+              name="proprietarioId"
+              value={values.proprietarioId}
+              onChange={handleChange}
+              onBlur={() => setFieldTouched("proprietarioId")}
               disabled={loadingPessoas}
-              style={{
-                width: "100%",
-                padding: "8px",
-                border: "1px solid #ccc",
-                borderRadius: "4px",
-              }}
-              required
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value={0}>
+              <option value="0">
                 {loadingPessoas ? "Carregando..." : "Selecione o proprietário"}
               </option>
               {pessoas.map((pessoa) => (
@@ -381,135 +367,74 @@ const PropriedadeForm: React.FC<PropriedadeFormProps> = ({ id, onSave }) => {
                 </option>
               ))}
             </select>
-          </div>
+          </FormField>
 
           {/* Proprietário Residente */}
-          <div>
-            <label
-              style={{ display: "flex", alignItems: "center", gap: "8px" }}
-            >
+          <FormField
+            name="proprietarioResidente"
+            label="Proprietário Residente"
+            error={errors.proprietarioResidente}
+            touched={touched.proprietarioResidente}
+          >
+            <div className="flex items-center">
               <input
+                id="proprietarioResidente"
+                name="proprietarioResidente"
                 type="checkbox"
-                checked={proprietarioResidente}
-                onChange={(e) => setProprietarioResidente(e.target.checked)}
-                style={{ transform: "scale(1.2)" }}
+                checked={values.proprietarioResidente}
+                onChange={handleChange}
+                onBlur={() => setFieldTouched("proprietarioResidente")}
+                className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
               />
-              <span style={{ fontWeight: "bold" }}>
-                Proprietário residente na propriedade
-              </span>
-            </label>
-          </div>
+              <label
+                htmlFor="proprietarioResidente"
+                className="ml-2 text-sm text-gray-700"
+              >
+                Marque se o proprietário reside na propriedade
+              </label>
+            </div>
+          </FormField>
 
-          {/* Grid: Matrícula */}
-          <div>
-            <label
-              style={{
-                display: "block",
-                marginBottom: "5px",
-                fontWeight: "bold",
-              }}
-            >
-              Matrícula do Imóvel
-            </label>
+          {/* Matrícula */}
+          <FormField
+            name="matricula"
+            label="Matrícula do Imóvel"
+            error={errors.matricula}
+            touched={touched.matricula}
+          >
             <input
               type="text"
-              value={matricula}
-              onChange={(e) => setMatricula(e.target.value)}
-              placeholder="Número da matrícula"
-              style={{
-                width: "100%",
-                padding: "8px",
-                border: "1px solid #ccc",
-                borderRadius: "4px",
-              }}
+              id="matricula"
+              name="matricula"
+              value={values.matricula || ""}
+              onChange={handleChange}
+              onBlur={() => setFieldTouched("matricula")}
+              placeholder="Digite a matrícula do imóvel"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-          </div>
+          </FormField>
 
-          {/* Observações */}
-          <div>
-            <label
-              style={{
-                display: "block",
-                marginBottom: "5px",
-                fontWeight: "bold",
-              }}
-            >
-              Observações/Localização
-            </label>
+          {/* Localização/Descrição */}
+          <FormField
+            name="localizacao"
+            label="Descrição/Observações"
+            error={errors.localizacao}
+            touched={touched.localizacao}
+          >
             <textarea
-              value={localizacao}
-              onChange={(e) => setLocalizacao(e.target.value)}
-              placeholder="Descrição, pontos de referência, observações..."
+              id="localizacao"
+              name="localizacao"
               rows={3}
-              style={{
-                width: "100%",
-                padding: "8px",
-                border: "1px solid #ccc",
-                borderRadius: "4px",
-                resize: "vertical",
-              }}
+              value={values.localizacao || ""}
+              onChange={handleChange}
+              onBlur={() => setFieldTouched("localizacao")}
+              placeholder="Descrição adicional da propriedade, pontos de referência, observações, etc."
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-          </div>
-        </div>
-
-        {/* Botões */}
-        <div
-          style={{
-            marginTop: "30px",
-            display: "flex",
-            gap: "10px",
-            justifyContent: "flex-end",
-          }}
-        >
-          <button
-            type="button"
-            onClick={onSave}
-            disabled={loading}
-            style={{
-              backgroundColor: "#6c757d",
-              color: "white",
-              padding: "10px 20px",
-              border: "none",
-              borderRadius: "4px",
-              cursor: loading ? "not-allowed" : "pointer",
-            }}
-          >
-            ❌ Cancelar
-          </button>
-
-          <button
-            type="submit"
-            disabled={loading}
-            style={{
-              backgroundColor: loading ? "#ccc" : "#28a745",
-              color: "white",
-              padding: "10px 20px",
-              border: "none",
-              borderRadius: "4px",
-              cursor: loading ? "not-allowed" : "pointer",
-            }}
-          >
-            {loading ? "⏳ Salvando..." : "💾 Salvar"}
-          </button>
-        </div>
-      </form>
-
-      {/* Debug Info */}
-      <div
-        style={{
-          marginTop: "20px",
-          padding: "10px",
-          backgroundColor: "#e8f4fd",
-          border: "1px solid #bee5eb",
-          borderRadius: "4px",
-          fontSize: "12px",
-        }}
-      >
-        <strong>🔍 Debug:</strong> Services carregados ✅ | Pessoas:{" "}
-        {pessoas.length} | Tipo: {tipoPropriedade} | Loading:{" "}
-        {loading ? "Sim" : "Não"}
-      </div>
-    </div>
+          </FormField>
+        </>
+      )}
+    </FormBase>
   );
 };
 
