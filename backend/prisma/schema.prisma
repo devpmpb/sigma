@@ -135,6 +135,8 @@ model Pessoa {
   // Relacionamentos
   enderecos      Endereco[]
   propriedades   Propriedade[]
+  transferenciasComoAnterior TransferenciaPropriedade[] @relation("TransferenciaProprietarioAnterior")
+  transferenciasComoNovo     TransferenciaPropriedade[] @relation("TransferenciaProprietarioNovo")
   pessoaFisica   PessoaFisica?
   pessoaJuridica PessoaJuridica?
 }
@@ -220,7 +222,6 @@ model AreaEfetiva {
   updatedAt             DateTime  @updatedAt
 }
 
-// MODELO PROPRIEDADE ATUALIZADO
 model Propriedade {
   id               Int                    @id @default(autoincrement())
   nome             String
@@ -252,9 +253,30 @@ model Propriedade {
   // Relacionamentos
   arrendamentos    Arrendamento[]
   enderecos        Endereco[]
+  transferencias   TransferenciaPropriedade[]
   
   createdAt        DateTime              @default(now())
   updatedAt        DateTime              @updatedAt
+}
+
+model TransferenciaPropriedade {
+  id                     Int          @id @default(autoincrement())
+  propriedadeId          Int          @map("propriedade_id")
+  proprietarioAnteriorId Int          @map("proprietario_anterior_id") 
+  proprietarioNovoId     Int          @map("proprietario_novo_id")
+  dataTransferencia      DateTime     @map("data_transferencia") @db.Date
+  observacoes            String?      @db.Text
+  createdAt              DateTime     @default(now()) @map("created_at")
+  updatedAt              DateTime     @updatedAt @map("updated_at")
+
+  // Relacionamentos
+  propriedade           Propriedade @relation(fields: [propriedadeId], references: [id])
+  proprietarioAnterior  Pessoa      @relation("TransferenciaProprietarioAnterior", fields: [proprietarioAnteriorId], references: [id])
+  proprietarioNovo      Pessoa      @relation("TransferenciaProprietarioNovo", fields: [proprietarioNovoId], references: [id])
+
+  @@map("transferencias_propriedade")
+  @@index([propriedadeId])
+  @@index([dataTransferencia])
 }
 
 model Arrendamento {

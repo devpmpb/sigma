@@ -1,4 +1,3 @@
-// backend/src/routes/index.ts - ARQUIVO ATUALIZADO
 import { Router } from "express";
 import authRoutes from "./auth/authRoutes";
 import usuarioRoutes from "./admin/usuarioRoutes";
@@ -14,9 +13,13 @@ import propriedadeRoutes from "./comum/propriedadeRoutes";
 import enderecoRoutes from "./comum/enderecoRoutes";
 import produtorRoutes from "./comum/produtorRoutes";
 import arrendamentosRoutes from "./agricultura/arrendamentoRoutes";
+import transferenciaPropiedadeRoutes from "./comum/transferenciaPropiedadeRoutes";
 
 // Importar middleware de autenticação
-import { authenticateToken, requireModuleAccess } from "../middleware/authMiddleware";
+import {
+  authenticateToken,
+  requireModuleAccess,
+} from "../middleware/authMiddleware";
 import { ModuloSistema } from "@prisma/client";
 
 const router = Router();
@@ -33,19 +36,56 @@ router.use("/perfis", perfilRoutes);
 
 // COMUM (requer pelo menos acesso ao módulo comum)
 router.use("/bairros", requireModuleAccess(ModuloSistema.COMUM), bairroRoutes);
-router.use("/logradouros", requireModuleAccess(ModuloSistema.COMUM), logradouroRoutes);
+router.use(
+  "/logradouros",
+  requireModuleAccess(ModuloSistema.COMUM),
+  logradouroRoutes
+);
 router.use("/pessoas", requireModuleAccess(ModuloSistema.COMUM), pessoaRoutes);
-router.use("/enderecos", requireModuleAccess(ModuloSistema.COMUM), enderecoRoutes);
-router.use("/propriedades", requireModuleAccess(ModuloSistema.COMUM), propriedadeRoutes);
-router.use("/programas", requireModuleAccess(ModuloSistema.COMUM), programaRoutes);
-router.use("/regrasNegocio", requireModuleAccess(ModuloSistema.COMUM), regrasNegocioRoutes);
+router.use(
+  "/enderecos",
+  requireModuleAccess(ModuloSistema.COMUM),
+  enderecoRoutes
+);
+router.use(
+  "/propriedades",
+  requireModuleAccess(ModuloSistema.COMUM),
+  propriedadeRoutes
+);
+router.use(
+  "/programas",
+  requireModuleAccess(ModuloSistema.COMUM),
+  programaRoutes
+);
+router.use(
+  "/regrasNegocio",
+  requireModuleAccess(ModuloSistema.COMUM),
+  regrasNegocioRoutes
+);
+router.use("/comum/transferencias-propriedade", transferenciaPropiedadeRoutes);
 
 // AGRICULTURA (requer acesso ao módulo agricultura)
-router.use("/grupoProdutos", requireModuleAccess(ModuloSistema.AGRICULTURA), grupoProdutoRoutes);
-router.use("/produtores", requireModuleAccess(ModuloSistema.AGRICULTURA), produtorRoutes);
-router.use("/arrendamentos", requireModuleAccess(ModuloSistema.AGRICULTURA), arrendamentosRoutes);
+router.use(
+  "/grupoProdutos",
+  requireModuleAccess(ModuloSistema.AGRICULTURA),
+  grupoProdutoRoutes
+);
+router.use(
+  "/produtores",
+  requireModuleAccess(ModuloSistema.AGRICULTURA),
+  produtorRoutes
+);
+router.use(
+  "/arrendamentos",
+  requireModuleAccess(ModuloSistema.AGRICULTURA),
+  arrendamentosRoutes
+);
 
 // OBRAS (requer acesso ao módulo obras)
-router.use("/tipoVeiculos", requireModuleAccess(ModuloSistema.OBRAS), tipoVeiculoRoutes);
+router.use(
+  "/tipoVeiculos",
+  requireModuleAccess(ModuloSistema.OBRAS),
+  tipoVeiculoRoutes
+);
 
 export default router;

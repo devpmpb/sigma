@@ -5,6 +5,7 @@ export { default as pessoaService } from "./comum/pessoaService";
 export { default as propriedadeService } from "./comum/propriedadeService";
 export { default as produtorService } from "./comum/produtorService";
 export { default as enderecoService } from "./comum/enderecoService";
+export { default as transferenciaPropiedadeService } from "./comum/transferenciaPropiedadeService";
 
 // Serviços de agricultura
 export { default as grupoProdutoService } from "./agricultura/grupoProdutoService";
@@ -75,3 +76,8 @@ export type {
   StatusArrendamentoType,
 } from "./agricultura/arrendamentoService";
 export { StatusArrendamento } from "./agricultura/arrendamentoService";
+
+export type {
+  TransferenciaPropriedade,
+  TransferenciaPropiedadeDTO,
+} from "./comum/transferenciaPropiedadeService";
