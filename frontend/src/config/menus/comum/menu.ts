@@ -59,6 +59,12 @@ export const movimentosComunMenu: MenuGroup = {
   module: "comum",
   items: [
     {
+      id: "movimento-transferencia-propriedade",
+      title: "Transferência de Propriedade",
+      path: "/movimentos/comum/transferencia-propriedade",
+      module: "comum",
+    },
+    {
       id: "movimento-solicitacoes-beneficio",
       title: "Solicitações de Benefício",
       path: "/movimentos/comum/solicitacoesBeneficios",

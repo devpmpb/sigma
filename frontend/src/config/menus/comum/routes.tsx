@@ -40,6 +40,13 @@ const UsuarioForm = lazy(
 );
 
 // Componentes de movimentos (placeholder)
+const TransferenciaPropiedadeForm = lazy(
+  () =>
+    import(
+      "../../../pages/movimentos/comum/transferencia/TransferenciaPropiedadeForm"
+    )
+);
+
 const SolicitacoesBeneficio = lazy(
   () => import("../../../pages/movimentos/comum/SolicitacoesBeneficio")
 );
@@ -64,6 +71,7 @@ export const comunComponents = {
   ProgramaForm,
   RegrasNegocio,
   RegrasNegocioForm,
+  TransferenciaPropiedadeForm,
   SolicitacoesBeneficio,
   AvaliacoesBeneficio,
   RelatoriosBeneficio,
@@ -160,6 +168,12 @@ export const comunRouteConfig = [
   },
 
   // Movimentos
+  {
+    path: "/movimentos/comum/transferencia-propriedade",
+    component: TransferenciaPropiedadeForm,
+    module: "comum",
+    action: "create",
+  },
   {
     path: "/movimentos/comum/solicitacoes",
     component: SolicitacoesBeneficio,

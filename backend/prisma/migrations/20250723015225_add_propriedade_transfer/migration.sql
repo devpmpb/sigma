@@ -187,6 +187,20 @@ CREATE TABLE "Propriedade" (
 );
 
 -- CreateTable
+CREATE TABLE "transferencias_propriedade" (
+    "id" SERIAL NOT NULL,
+    "propriedade_id" INTEGER NOT NULL,
+    "proprietario_anterior_id" INTEGER NOT NULL,
+    "proprietario_novo_id" INTEGER NOT NULL,
+    "data_transferencia" DATE NOT NULL,
+    "observacoes" TEXT,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "transferencias_propriedade_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "Arrendamento" (
     "id" SERIAL NOT NULL,
     "propriedadeId" INTEGER NOT NULL,
@@ -344,6 +358,12 @@ CREATE UNIQUE INDEX "TipoVeiculo_descricao_key" ON "TipoVeiculo"("descricao");
 CREATE UNIQUE INDEX "Pessoa_cpfCnpj_key" ON "Pessoa"("cpfCnpj");
 
 -- CreateIndex
+CREATE INDEX "transferencias_propriedade_propriedade_id_idx" ON "transferencias_propriedade"("propriedade_id");
+
+-- CreateIndex
+CREATE INDEX "transferencias_propriedade_data_transferencia_idx" ON "transferencias_propriedade"("data_transferencia");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "Usuario_email_key" ON "Usuario"("email");
 
 -- CreateIndex
@@ -393,6 +413,15 @@ ALTER TABLE "Propriedade" ADD CONSTRAINT "Propriedade_logradouroId_fkey" FOREIGN
 
 -- AddForeignKey
 ALTER TABLE "Propriedade" ADD CONSTRAINT "Propriedade_proprietarioId_fkey" FOREIGN KEY ("proprietarioId") REFERENCES "Pessoa"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "transferencias_propriedade" ADD CONSTRAINT "transferencias_propriedade_propriedade_id_fkey" FOREIGN KEY ("propriedade_id") REFERENCES "Propriedade"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "transferencias_propriedade" ADD CONSTRAINT "transferencias_propriedade_proprietario_anterior_id_fkey" FOREIGN KEY ("proprietario_anterior_id") REFERENCES "Pessoa"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "transferencias_propriedade" ADD CONSTRAINT "transferencias_propriedade_proprietario_novo_id_fkey" FOREIGN KEY ("proprietario_novo_id") REFERENCES "Pessoa"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Arrendamento" ADD CONSTRAINT "Arrendamento_propriedadeId_fkey" FOREIGN KEY ("propriedadeId") REFERENCES "Propriedade"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
