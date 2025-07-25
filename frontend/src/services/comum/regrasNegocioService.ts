@@ -1,17 +1,16 @@
-// frontend/src/services/agricultura/regrasNegocioService.ts
 import BaseApiService from "../baseApiService";
 
 export enum TipoRegra {
   AREA_EFETIVA = "area_efetiva",
   AREA_CONSTRUCAO = "area_construcao",
-  TIPO_PRODUTOR = "tipo_produtor", 
+  TIPO_PRODUTOR = "tipo_produtor",
   RENDA_FAMILIAR = "renda_familiar",
   TEMPO_ATIVIDADE = "tempo_atividade",
   CULTIVO_ORGANICO = "cultivo_organico",
   POSSUI_DAP = "possui_dap",
   IDADE_PRODUTOR = "idade_produtor",
   LOCALIZACAO = "localizacao",
-  CUSTOM = "custom"
+  CUSTOM = "custom",
 }
 
 export enum CondicaoRegra {
@@ -20,14 +19,14 @@ export enum CondicaoRegra {
   IGUAL_A = "igual_a",
   ENTRE = "entre",
   CONTEM = "contem",
-  NAO_CONTEM = "nao_contem"
+  NAO_CONTEM = "nao_contem",
 }
 
 export enum TipoLimite {
   QUANTIDADE = "quantidade",
   VALOR = "valor",
   PERCENTUAL = "percentual",
-  AREA = "area"
+  AREA = "area",
 }
 
 export interface ParametroRegra {
@@ -111,7 +110,10 @@ export interface ProdutorData {
   [key: string]: any;
 }
 
-class RegrasNegocioService extends BaseApiService<RegrasNegocio, RegrasNegocioDTO> {
+class RegrasNegocioService extends BaseApiService<
+  RegrasNegocio,
+  RegrasNegocioDTO
+> {
   constructor() {
     super("/regrasNegocio", "comum");
   }
@@ -120,7 +122,9 @@ class RegrasNegocioService extends BaseApiService<RegrasNegocio, RegrasNegocioDT
    * Busca regras por programa
    */
   async getByPrograma(programaId: number | string): Promise<RegrasNegocio[]> {
-    const response = await this.api.get(`${this.baseUrl}/programa/${programaId}`);
+    const response = await this.api.get(
+      `${this.baseUrl}/programa/${programaId}`
+    );
     return response.data;
   }
 
@@ -151,9 +155,12 @@ class RegrasNegocioService extends BaseApiService<RegrasNegocio, RegrasNegocioDT
   /**
    * Valida se produtor atende uma regra
    */
-  async validarRegra(regraId: number | string, produtorData: ProdutorData): Promise<ValidacaoRegra> {
+  async validarRegra(
+    regraId: number | string,
+    produtorData: ProdutorData
+  ): Promise<ValidacaoRegra> {
     const response = await this.api.post(`${this.baseUrl}/${regraId}/validar`, {
-      produtorData
+      produtorData,
     });
     return response.data;
   }
@@ -168,7 +175,7 @@ class RegrasNegocioService extends BaseApiService<RegrasNegocio, RegrasNegocioDT
       { value: CondicaoRegra.IGUAL_A, label: "Igual a" },
       { value: CondicaoRegra.ENTRE, label: "Entre" },
       { value: CondicaoRegra.CONTEM, label: "Contém" },
-      { value: CondicaoRegra.NAO_CONTEM, label: "Não contém" }
+      { value: CondicaoRegra.NAO_CONTEM, label: "Não contém" },
     ];
   }
 
@@ -180,7 +187,7 @@ class RegrasNegocioService extends BaseApiService<RegrasNegocio, RegrasNegocioDT
       { value: TipoLimite.QUANTIDADE, label: "Quantidade" },
       { value: TipoLimite.VALOR, label: "Valor" },
       { value: TipoLimite.PERCENTUAL, label: "Percentual" },
-      { value: TipoLimite.AREA, label: "Por Área" }
+      { value: TipoLimite.AREA, label: "Por Área" },
     ];
   }
 
@@ -191,7 +198,7 @@ class RegrasNegocioService extends BaseApiService<RegrasNegocio, RegrasNegocioDT
     return [
       { value: "area", label: "Por Área" },
       { value: "renda", label: "Por Renda" },
-      { value: "fixo", label: "Valor Fixo" }
+      { value: "fixo", label: "Valor Fixo" },
     ];
   }
 
@@ -202,7 +209,7 @@ class RegrasNegocioService extends BaseApiService<RegrasNegocio, RegrasNegocioDT
     return [
       { value: "anual", label: "Anual" },
       { value: "bienal", label: "Bienal" },
-      { value: "mensal", label: "Mensal" }
+      { value: "mensal", label: "Mensal" },
     ];
   }
 
@@ -215,7 +222,7 @@ class RegrasNegocioService extends BaseApiService<RegrasNegocio, RegrasNegocioDT
     }
 
     const response = await this.api.get(`${this.baseUrl}`, {
-      params: { search: termo }
+      params: { search: termo },
     });
     return response.data;
   }
@@ -246,12 +253,23 @@ class RegrasNegocioService extends BaseApiService<RegrasNegocio, RegrasNegocioDT
       }
 
       if (data.parametro.condicao === CondicaoRegra.ENTRE) {
-        if (data.parametro.valorMinimo === undefined || data.parametro.valorMaximo === undefined) {
-          errors.push("Valor mínimo e máximo são obrigatórios para condição 'entre'");
+        if (
+          data.parametro.valorMinimo === undefined ||
+          data.parametro.valorMaximo === undefined
+        ) {
+          errors.push(
+            "Valor mínimo e máximo são obrigatórios para condição 'entre'"
+          );
         } else if (data.parametro.valorMinimo >= data.parametro.valorMaximo) {
           errors.push("Valor mínimo deve ser menor que o valor máximo");
         }
-      } else if ([CondicaoRegra.MENOR_QUE, CondicaoRegra.MAIOR_QUE, CondicaoRegra.IGUAL_A].includes(data.parametro.condicao)) {
+      } else if (
+        [
+          CondicaoRegra.MENOR_QUE,
+          CondicaoRegra.MAIOR_QUE,
+          CondicaoRegra.IGUAL_A,
+        ].includes(data.parametro.condicao)
+      ) {
         if (data.parametro.valor === undefined || data.parametro.valor === "") {
           errors.push("Valor é obrigatório para esta condição");
         }
@@ -276,7 +294,10 @@ class RegrasNegocioService extends BaseApiService<RegrasNegocio, RegrasNegocioDT
   /**
    * Sobrescreve update para incluir validação
    */
-  async update(id: number | string, data: RegrasNegocioDTO): Promise<RegrasNegocio> {
+  async update(
+    id: number | string,
+    data: RegrasNegocioDTO
+  ): Promise<RegrasNegocio> {
     const errors = this.validateRegraData(data);
     if (errors.length > 0) {
       throw new Error(errors.join(", "));
@@ -289,9 +310,9 @@ class RegrasNegocioService extends BaseApiService<RegrasNegocio, RegrasNegocioDT
    * Formatar valor de benefício para exibição
    */
   formatarValorBeneficio(valor: number, unidade?: string): string {
-    const valorFormatado = new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
+    const valorFormatado = new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
     }).format(valor);
 
     return unidade ? `${valorFormatado}/${unidade}` : valorFormatado;
@@ -302,17 +323,21 @@ class RegrasNegocioService extends BaseApiService<RegrasNegocio, RegrasNegocioDT
    */
   formatarParametro(parametro: ParametroRegra): string {
     const condicoes = this.getCondicoes();
-    const condicaoLabel = condicoes.find(c => c.value === parametro.condicao)?.label || parametro.condicao;
+    const condicaoLabel =
+      condicoes.find((c) => c.value === parametro.condicao)?.label ||
+      parametro.condicao;
 
     switch (parametro.condicao) {
       case CondicaoRegra.ENTRE:
-        return `${condicaoLabel} ${parametro.valorMinimo} e ${parametro.valorMaximo} ${parametro.unidade || ''}`;
+        return `${condicaoLabel} ${parametro.valorMinimo} e ${
+          parametro.valorMaximo
+        } ${parametro.unidade || ""}`;
       case CondicaoRegra.MENOR_QUE:
       case CondicaoRegra.MAIOR_QUE:
       case CondicaoRegra.IGUAL_A:
-        return `${condicaoLabel} ${parametro.valor} ${parametro.unidade || ''}`;
+        return `${condicaoLabel} ${parametro.valor} ${parametro.unidade || ""}`;
       default:
-        return `${condicaoLabel} ${parametro.valor || ''}`;
+        return `${condicaoLabel} ${parametro.valor || ""}`;
     }
   }
 
@@ -322,17 +347,21 @@ class RegrasNegocioService extends BaseApiService<RegrasNegocio, RegrasNegocioDT
   formatarLimite(limite: LimiteBeneficio | null): string {
     if (!limite) return "Sem limite";
 
-    let texto = `${limite.limite} ${limite.unidade || ''}`;
+    let texto = `${limite.limite} ${limite.unidade || ""}`;
 
     if (limite.multiplicador) {
       const bases = this.getBasesMultiplicador();
-      const baseLabel = bases.find(b => b.value === limite.multiplicador?.base)?.label || limite.multiplicador.base;
+      const baseLabel =
+        bases.find((b) => b.value === limite.multiplicador?.base)?.label ||
+        limite.multiplicador.base;
       texto += ` (${limite.multiplicador.fator}x ${baseLabel})`;
     }
 
     if (limite.limitePorPeriodo) {
       const periodos = this.getPeriodos();
-      const periodoLabel = periodos.find(p => p.value === limite.limitePorPeriodo?.periodo)?.label || limite.limitePorPeriodo.periodo;
+      const periodoLabel =
+        periodos.find((p) => p.value === limite.limitePorPeriodo?.periodo)
+          ?.label || limite.limitePorPeriodo.periodo;
       texto += ` - Max ${limite.limitePorPeriodo.quantidade} por ${periodoLabel}`;
     }
 

@@ -166,7 +166,18 @@ export const comunRouteConfig = [
     module: "comum",
     action: "view",
   },
-
+  {
+    path: "/cadastros/comum/regrasNegocio/programa/:programaId",
+    component: RegrasNegocio,
+    module: "comum",
+    action: "view",
+  },
+  {
+    path: "/cadastros/comum/regrasNegocio/programa/:programaId/novo",
+    component: RegrasNegocioForm,
+    module: "comum",
+    action: "create",
+  },
   // Movimentos
   {
     path: "/movimentos/comum/transferencia-propriedade",

@@ -1,6 +1,5 @@
 import React from "react";
-import { formatarData, formatarMoeda } from "../../../../utils/formatters";
-import StatusBadge from "../../../../components/comum/StatusBadge";
+import { formatarData } from "../../../../utils/formatters";
 import { Column } from "../../../../components/comum/DataTable";
 import programaService, {
   Programa,
@@ -38,11 +37,11 @@ const Programas: React.FC = () => {
       key: "tipoPrograma",
       render: (programa) => {
         const cores = {
-          subsidio: "bg-green-100 text-green-800",
-          material: "bg-blue-100 text-blue-800",
-          servico: "bg-purple-100 text-purple-800",
-          credito: "bg-yellow-100 text-yellow-800",
-          assistencia: "bg-indigo-100 text-indigo-800",
+          SUBSIDIO: "bg-green-100 text-green-800",
+          MATERIAL: "bg-blue-100 text-blue-800",
+          SERVICO: "bg-purple-100 text-purple-800",
+          CREDITO: "bg-yellow-100 text-yellow-800",
+          ASSISTENCIA: "bg-indigo-100 text-indigo-800",
         };
 
         const cor =
@@ -52,7 +51,7 @@ const Programas: React.FC = () => {
         return (
           <span className={`px-2 py-1 rounded-full text-xs font-medium ${cor}`}>
             {programa.tipoPrograma.charAt(0).toUpperCase() +
-              programa.tipoPrograma.slice(1)}
+              programa.tipoPrograma.slice(1).toLowerCase()}
           </span>
         );
       },
@@ -74,28 +73,11 @@ const Programas: React.FC = () => {
               {programa._count.regras !== 1 ? "s" : ""}
             </span>
           ) : (
-            <span className="text-gray-400">0 regras</span>
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+              0 regras
+            </span>
           )}
         </div>
-      ),
-    },
-    {
-      title: "Solicitações",
-      key: "solicitacoes",
-      align: "center",
-      render: (programa) => (
-        <div className="text-center">
-          <span className="text-sm text-gray-600">
-            {programa._count?.solicitacoes || 0}
-          </span>
-        </div>
-      ),
-    },
-    {
-      title: "Status",
-      key: "ativo",
-      render: (programa) => (
-        <StatusBadge ativo={programa.ativo} showToggle={false} />
       ),
     },
     {
@@ -103,6 +85,8 @@ const Programas: React.FC = () => {
       key: "createdAt",
       render: (programa) => formatarData(programa.createdAt, false),
     },
+    // ❌ REMOVIDO: Não incluir coluna de Status manual aqui
+    // O CadastroBase já adiciona automaticamente com enableStatusToggle={true}
   ];
 
   // Botões de ação adicionais
@@ -130,7 +114,7 @@ const Programas: React.FC = () => {
       </button>
 
       <button
-        onClick={() => window.open("/dashboards/programas", "_blank")}
+        onClick={() => console.log("Dashboard de programas")}
         className="inline-flex items-center px-3 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
       >
         <svg
