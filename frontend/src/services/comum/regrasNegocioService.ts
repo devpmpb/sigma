@@ -1,4 +1,5 @@
 import BaseApiService from "../baseApiService";
+import apiClient from "../apiConfig";
 
 export enum TipoRegra {
   AREA_EFETIVA = "area_efetiva",
@@ -55,7 +56,7 @@ export interface LimiteBeneficio {
 export interface RegrasNegocio {
   id: number;
   programaId: number;
-  tipoRegra: string;
+  tipoRegra: TipoRegra;
   parametro: ParametroRegra;
   valorBeneficio: number;
   limiteBeneficio: LimiteBeneficio | null;
@@ -72,7 +73,7 @@ export interface RegrasNegocio {
 
 export interface RegrasNegocioDTO {
   programaId: number;
-  tipoRegra: string;
+  tipoRegra: TipoRegra;
   parametro: ParametroRegra;
   valorBeneficio: number;
   limiteBeneficio?: LimiteBeneficio;
@@ -122,7 +123,7 @@ class RegrasNegocioService extends BaseApiService<
    * Busca regras por programa
    */
   async getByPrograma(programaId: number | string): Promise<RegrasNegocio[]> {
-    const response = await this.api.get(
+    const response = await apiClient.get(
       `${this.baseUrl}/programa/${programaId}`
     );
     return response.data;
@@ -132,7 +133,7 @@ class RegrasNegocioService extends BaseApiService<
    * Busca regras por tipo
    */
   async getByTipo(tipo: string): Promise<RegrasNegocio[]> {
-    const response = await this.api.get(`${this.baseUrl}/tipo/${tipo}`);
+    const response = await apiClient.get(`${this.baseUrl}/tipo/${tipo}`);
     return response.data;
   }
 
@@ -140,7 +141,7 @@ class RegrasNegocioService extends BaseApiService<
    * Busca tipos de regra disponíveis
    */
   async getTiposRegra(): Promise<TipoRegraOption[]> {
-    const response = await this.api.get(`${this.baseUrl}/tipos`);
+    const response = await apiClient.get(`${this.baseUrl}/tipos`);
     return response.data;
   }
 
@@ -148,7 +149,7 @@ class RegrasNegocioService extends BaseApiService<
    * Busca template de regra por tipo
    */
   async getTemplateRegra(tipo: string): Promise<TemplateRegra> {
-    const response = await this.api.get(`${this.baseUrl}/template/${tipo}`);
+    const response = await apiClient.get(`${this.baseUrl}/template/${tipo}`);
     return response.data;
   }
 
@@ -159,7 +160,7 @@ class RegrasNegocioService extends BaseApiService<
     regraId: number | string,
     produtorData: ProdutorData
   ): Promise<ValidacaoRegra> {
-    const response = await this.api.post(`${this.baseUrl}/${regraId}/validar`, {
+    const response = await apiClient.post(`${this.baseUrl}/${regraId}/validar`, {
       produtorData,
     });
     return response.data;
@@ -221,7 +222,7 @@ class RegrasNegocioService extends BaseApiService<
       return this.getAll();
     }
 
-    const response = await this.api.get(`${this.baseUrl}`, {
+    const response = await apiClient.get(`${this.baseUrl}`, {
       params: { search: termo },
     });
     return response.data;

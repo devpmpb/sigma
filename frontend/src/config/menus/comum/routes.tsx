@@ -173,6 +173,12 @@ export const comunRouteConfig = [
     action: "view",
   },
   {
+    path: "/cadastros/comum/regrasNegocio/programa/:programaId/:id",
+    component: RegrasNegocioForm,
+    module: "comum",
+    action: "view",
+  },
+  {
     path: "/cadastros/comum/regrasNegocio/programa/:programaId/novo",
     component: RegrasNegocioForm,
     module: "comum",

@@ -9,6 +9,7 @@ import regrasNegocioService, {
   TipoLimite,
   TipoRegraOption,
   TemplateRegra,
+  TipoRegra,
 } from "../../../../services/comum/regrasNegocioService";
 import programaService, {
   Programa,
@@ -72,7 +73,7 @@ const RegrasNegocioForm: React.FC<RegrasNegocioFormProps> = ({
   // Valor inicial para o formulário
   const initialValues: RegrasNegocioDTO = {
     programaId: finalProgramaId || 0,
-    tipoRegra: "",
+    tipoRegra: TipoRegra.AREA_CONSTRUCAO,
     parametro: parametro,
     valorBeneficio: 0,
     limiteBeneficio: undefined,
