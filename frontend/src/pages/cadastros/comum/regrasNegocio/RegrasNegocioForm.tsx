@@ -140,7 +140,6 @@ const RegrasNegocioForm: React.FC<RegrasNegocioFormProps> = ({
     loadTemplate();
   }, [selectedTipoRegra]);
 
-  // Função para determinar URL de retorno - NOVO
   const getReturnUrl = () => {
     if (finalProgramaId) {
       return `/cadastros/comum/regrasNegocio/programa/${finalProgramaId}`;

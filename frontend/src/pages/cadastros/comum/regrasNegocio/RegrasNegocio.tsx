@@ -12,10 +12,6 @@ import programaService, {
 import { CadastroBase } from "../../../../components/cadastro";
 import RegrasNegocioForm from "./RegrasNegocioForm";
 
-/**
- * Componente de Listagem de Regras de Negócio
- * Pode ser filtrado por programa específico
- */
 const RegrasNegocioPage: React.FC = () => {
   const params = useParams({ strict: false });
   const navigate = useNavigate();
@@ -31,9 +27,7 @@ const RegrasNegocioPage: React.FC = () => {
           const programaData = await programaService.getById(programaId);
           setPrograma(programaData);
 
-          // ✅ CORRIGIDO: Criar serviço filtrado preservando o contexto
           const serviceFiltered = {
-            // Preservar todos os métodos originais com bind
             ...regrasNegocioService,
 
             // Sobrescrever apenas os métodos específicos

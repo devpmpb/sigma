@@ -1,7 +1,5 @@
-// frontend/src/config/menus/comum/routes.tsx
 import { lazy } from "react";
 
-// Usando lazy loading para componentes
 const Bairro = lazy(() => import("../../../pages/cadastros/comum/Bairro"));
 const Logradouro = lazy(
   () => import("../../../pages/cadastros/comum/logradouro/Logradouros")
@@ -30,8 +28,6 @@ const RegrasNegocio = lazy(
 const RegrasNegocioForm = lazy(
   () => import("../../../pages/cadastros/comum/regrasNegocio/RegrasNegocioForm")
 );
-
-// NOVO: Componentes de usuários
 const Usuarios = lazy(
   () => import("../../../pages/cadastros/comum/usuario/Usuarios")
 );
@@ -39,7 +35,7 @@ const UsuarioForm = lazy(
   () => import("../../../pages/cadastros/comum/usuario/UsuarioForm")
 );
 
-// Componentes de movimentos (placeholder)
+// Componentes de movimentos
 const TransferenciaPropiedadeForm = lazy(
   () =>
     import(
@@ -57,10 +53,9 @@ const RelatoriosBeneficio = lazy(
   () => import("../../../pages/movimentos/comum/RelatoriosBeneficio")
 );
 
-// Exportamos os componentes para compatibilidade com código existente
 export const comunComponents = {
-  Usuarios, // NOVO
-  UsuarioForm, // NOVO
+  Usuarios,
+  UsuarioForm,
   Bairro,
   Logradouro,
   Pessoa,
@@ -77,19 +72,18 @@ export const comunComponents = {
   RelatoriosBeneficio,
 };
 
-// Exportamos as configurações das rotas para compatibilidade
 export const comunRouteConfig = [
-  // NOVO: Rotas de usuários (apenas para admins)
+  //Rotas de usuários (apenas para admins)
   {
     path: "/cadastros/comum/usuarios",
     component: Usuarios,
-    module: "admin", // Módulo admin para restringir acesso
+    module: "admin",
     action: "view",
   },
   {
     path: "/cadastros/comum/usuarios/:id",
     component: UsuarioForm,
-    module: "admin", // Módulo admin para restringir acesso
+    module: "admin",
     action: "view",
   },
 
