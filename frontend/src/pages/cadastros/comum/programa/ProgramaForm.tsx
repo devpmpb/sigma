@@ -4,8 +4,8 @@ import programaService, {
   Programa,
   ProgramaDTO,
   TipoPrograma,
-  RegrasNegocio,
 } from "../../../../services/comum/programaService";
+import regrasNegocioService from "../../../../services/comum/regrasNegocioService";
 import { FormBase } from "../../../../components/cadastro";
 import { FormField } from "../../../../components/comum";
 
@@ -21,7 +21,7 @@ interface ProgramaFormProps {
 const ProgramaForm: React.FC<ProgramaFormProps> = ({ id, onSave }) => {
   const navigate = useNavigate();
   const programaId = id || useParams({ strict: false }).id;
-  const [regras, setRegras] = useState<RegrasNegocio[]>([]);
+  const [quantidadeRegras, setQuantidadeRegras] = useState<number>(0);
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
   const [duplicateName, setDuplicateName] = useState("");
   const [duplicating, setDuplicating] = useState(false);
@@ -35,22 +35,20 @@ const ProgramaForm: React.FC<ProgramaFormProps> = ({ id, onSave }) => {
     ativo: true,
   };
 
-  // Carregar regras se estiver editando
+  // Carregar quantidade de regras se estiver editando
   useEffect(() => {
-    const loadRegras = async () => {
+    const loadQuantidadeRegras = async () => {
       if (programaId && programaId !== "novo") {
         try {
-          const programaComRegras = await programaService.getByIdWithRules(
-            programaId
-          );
-          setRegras(programaComRegras.regras || []);
+          const regras = await regrasNegocioService.getByPrograma(programaId);
+          setQuantidadeRegras(regras.length);
         } catch (error) {
           console.error("Erro ao carregar regras:", error);
         }
       }
     };
 
-    loadRegras();
+    loadQuantidadeRegras();
   }, [programaId]);
 
   // Validação do formulário
@@ -119,53 +117,73 @@ const ProgramaForm: React.FC<ProgramaFormProps> = ({ id, onSave }) => {
       >
         {({ values, errors, touched, handleChange, setValue }) => (
           <>
-            {/* Botões de ação extras */}
+            {/* Seção de Regras de Negócio - NOVA */}
             {programaId && programaId !== "novo" && (
-              <div className="bg-gray-50 p-4 rounded-lg mb-6">
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={handleManageRules}
-                    className="inline-flex items-center px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-4 w-4 mr-2"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold text-blue-900 mb-2">
+                      Regras de Negócio
+                    </h3>
+                    <p className="text-blue-700">
+                      {quantidadeRegras === 0
+                        ? "⚠️ Nenhuma regra configurada - programa não pode ser ativado"
+                        : quantidadeRegras === 1
+                        ? "✅ 1 regra configurada"
+                        : `✅ ${quantidadeRegras} regras configuradas`}
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={handleManageRules}
+                      className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                      />
-                    </svg>
-                    Gerenciar Regras ({regras.length})
-                  </button>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-4 w-4 mr-2"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                        />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                        />
+                      </svg>
+                      Gerenciar Regras
+                    </button>
 
-                  <button
-                    type="button"
-                    onClick={() => setShowDuplicateModal(true)}
-                    className="inline-flex items-center px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-4 w-4 mr-2"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
+                    <button
+                      type="button"
+                      onClick={() => setShowDuplicateModal(true)}
+                      className="inline-flex items-center px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-                      />
-                    </svg>
-                    Duplicar Programa
-                  </button>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-4 w-4 mr-2"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                        />
+                      </svg>
+                      Duplicar Programa
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
@@ -199,7 +217,6 @@ const ProgramaForm: React.FC<ProgramaFormProps> = ({ id, onSave }) => {
                 label="Número da Lei"
                 error={errors.leiNumero}
                 touched={touched.leiNumero}
-                helpText="Formato: LEI Nº 1234/2023"
               >
                 <input
                   type="text"
@@ -208,7 +225,7 @@ const ProgramaForm: React.FC<ProgramaFormProps> = ({ id, onSave }) => {
                   value={values.leiNumero || ""}
                   onChange={handleChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="LEI Nº 1234/2023"
+                  placeholder="Ex: LEI Nº 1234/2023"
                 />
               </FormField>
             </div>
@@ -227,7 +244,7 @@ const ProgramaForm: React.FC<ProgramaFormProps> = ({ id, onSave }) => {
                 value={values.nome}
                 onChange={handleChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Nome do programa de incentivo"
+                placeholder="Nome do programa..."
               />
             </FormField>
 
@@ -259,41 +276,6 @@ const ProgramaForm: React.FC<ProgramaFormProps> = ({ id, onSave }) => {
                   className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                 />
               </FormField>
-            )}
-
-            {/* Resumo das regras existentes */}
-            {regras.length > 0 && (
-              <div className="border-t pt-4 mt-4">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">
-                  Regras de Negócio ({regras.length})
-                </h3>
-                <div className="space-y-2">
-                  {regras.map((regra) => (
-                    <div
-                      key={regra.id}
-                      className="bg-gray-50 p-3 rounded-md flex justify-between items-center"
-                    >
-                      <div>
-                        <span className="font-medium">{regra.tipoRegra}</span>
-                        <span className="text-gray-600 ml-2">
-                          R$ {regra.valorBeneficio.toFixed(2)}
-                        </span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          navigate({
-                            to: `/cadastros/comum/regrasNegocio/${regra.id}`,
-                          })
-                        }
-                        className="text-blue-600 hover:text-blue-900 text-sm"
-                      >
-                        Editar
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
             )}
           </>
         )}

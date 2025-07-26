@@ -1,11 +1,11 @@
 import BaseApiService from "../baseApiService";
 
 export enum TipoPrograma {
-  SUBSIDIO = "subsidio",
-  MATERIAL = "material",
-  SERVICO = "servico",
-  CREDITO = "credito",
-  ASSISTENCIA = "assistencia",
+  SUBSIDIO = "SUBSIDIO",
+  MATERIAL = "MATERIAL",
+  SERVICO = "SERVICO",
+  CREDITO = "CREDITO",
+  ASSISTENCIA = "ASSISTENCIA",
 }
 
 export interface Programa {
