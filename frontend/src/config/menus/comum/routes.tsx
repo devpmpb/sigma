@@ -44,7 +44,17 @@ const TransferenciaPropiedadeForm = lazy(
 );
 
 const SolicitacoesBeneficio = lazy(
-  () => import("../../../pages/movimentos/comum/SolicitacoesBeneficio")
+  () =>
+    import(
+      "../../../pages/movimentos/comum/solicitacoesBeneficio/SolicitacoesBeneficio"
+    )
+);
+
+const SolicitacaoBeneficioForm = lazy(
+  () =>
+    import(
+      "../../../pages/movimentos/comum/solicitacoesBeneficio/SolicitacaoBeneficioForm"
+    )
 );
 const AvaliacoesBeneficio = lazy(
   () => import("../../../pages/movimentos/comum/AvaliacoesBeneficio")
@@ -67,7 +77,7 @@ export const comunComponents = {
   RegrasNegocio,
   RegrasNegocioForm,
   TransferenciaPropiedadeForm,
-  SolicitacoesBeneficio,
+  SolicitacaoBeneficioForm,
   AvaliacoesBeneficio,
   RelatoriosBeneficio,
 };
@@ -188,6 +198,12 @@ export const comunRouteConfig = [
   {
     path: "/movimentos/comum/solicitacoes",
     component: SolicitacoesBeneficio,
+    module: "comum",
+    action: "view",
+  },
+  {
+    path: "/movimentos/comum/solicitacoes/:id",
+    component: SolicitacaoBeneficioForm,
     module: "comum",
     action: "view",
   },

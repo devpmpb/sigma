@@ -139,6 +139,7 @@ model Pessoa {
   transferenciasComoNovo     TransferenciaPropriedade[] @relation("TransferenciaProprietarioNovo")
   pessoaFisica   PessoaFisica?
   pessoaJuridica PessoaJuridica?
+  solicitacoesBeneficio SolicitacaoBeneficio[]
 }
 
 model PessoaFisica {
@@ -208,7 +209,6 @@ model Produtor {
   
   // Campos específicos do produtor rural
   areaEfetiva         AreaEfetiva?
-  solicitacoes        SolicitacaoBeneficio[]
 }
 
 model AreaEfetiva {
@@ -299,8 +299,8 @@ model Arrendamento {
 // Modelo para solicitações de benefícios
 model SolicitacaoBeneficio {
   id              Int       @id @default(autoincrement())
-  produtorId      Int
-  produtor        Produtor  @relation(fields: [produtorId], references: [id])
+  pessoaId        Int       // ALTERADO: era produtorId
+  pessoa          Pessoa    @relation(fields: [pessoaId], references: [id])
   programaId      Int
   programa        Programa  @relation(fields: [programaId], references: [id])
   datasolicitacao DateTime  @default(now())
@@ -317,6 +317,7 @@ model Programa {
   descricao       String?
   leiNumero       String?
   tipoPrograma    TipoPrograma          
+  secretaria      TipoPerfil
   ativo           Boolean               @default(true)
   createdAt       DateTime              @default(now())
   updatedAt       DateTime              @updatedAt

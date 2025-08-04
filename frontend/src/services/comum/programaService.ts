@@ -1,3 +1,4 @@
+// frontend/src/services/comum/programaService.ts - ARQUIVO ATUALIZADO
 import BaseApiService from "../baseApiService";
 
 export enum TipoPrograma {
@@ -8,12 +9,20 @@ export enum TipoPrograma {
   ASSISTENCIA = "ASSISTENCIA",
 }
 
+// NOVO ENUM ADICIONADO
+export enum TipoPerfil {
+  ADMIN = "ADMIN",
+  OBRAS = "OBRAS",
+  AGRICULTURA = "AGRICULTURA",
+}
+
 export interface Programa {
   id: number;
   nome: string;
   descricao: string | null;
   leiNumero: string | null;
   tipoPrograma: TipoPrograma;
+  secretaria: TipoPerfil; // NOVO CAMPO ADICIONADO
   ativo: boolean;
   createdAt: string;
   updatedAt: string;
@@ -30,6 +39,7 @@ export interface ProgramaDTO {
   descricao?: string;
   leiNumero?: string;
   tipoPrograma: TipoPrograma;
+  secretaria: TipoPerfil; // NOVO CAMPO ADICIONADO
   ativo?: boolean;
 }
 
@@ -59,9 +69,15 @@ export interface EstatisticasPrograma {
     tipoPrograma: TipoPrograma;
     _count: { id: number };
   }>;
+  porSecretaria: Array<{
+    // NOVO CAMPO ADICIONADO
+    secretaria: TipoPerfil;
+    _count: { id: number };
+  }>;
   comMaisRegras: Array<{
     id: number;
     nome: string;
+    secretaria: TipoPerfil; // NOVO CAMPO ADICIONADO
     quantidadeRegras: number;
   }>;
 }
@@ -69,6 +85,30 @@ export interface EstatisticasPrograma {
 class ProgramaService extends BaseApiService<Programa, ProgramaDTO> {
   constructor() {
     super("/programas", "comum");
+  }
+
+  /**
+   * NOVO MÉTODO: Busca programas por secretaria
+   */
+  async getBySecretaria(secretaria: string): Promise<Programa[]> {
+    const response = await this.api.get(
+      `${this.baseUrl}/secretaria/${secretaria}`
+    );
+    return response.data;
+  }
+
+  /**
+   * NOVO MÉTODO: Busca programas da agricultura (apenas produtores)
+   */
+  async getProgramasAgricultura(): Promise<Programa[]> {
+    return this.getBySecretaria("agricultura");
+  }
+
+  /**
+   * NOVO MÉTODO: Busca programas de obras (qualquer pessoa)
+   */
+  async getProgramasObras(): Promise<Programa[]> {
+    return this.getBySecretaria("obras");
   }
 
   /**
@@ -110,6 +150,16 @@ class ProgramaService extends BaseApiService<Programa, ProgramaDTO> {
   }
 
   /**
+   * NOVO MÉTODO: Busca secretarias disponíveis
+   */
+  getSecretarias() {
+    return [
+      { value: TipoPerfil.OBRAS, label: "Secretaria de Obras" },
+      { value: TipoPerfil.AGRICULTURA, label: "Secretaria de Agricultura" },
+    ];
+  }
+
+  /**
    * Busca tipos de programa disponíveis
    */
   getTiposPrograma() {
@@ -120,6 +170,32 @@ class ProgramaService extends BaseApiService<Programa, ProgramaDTO> {
       { value: TipoPrograma.CREDITO, label: "Crédito Rural" },
       { value: TipoPrograma.ASSISTENCIA, label: "Assistência Técnica" },
     ];
+  }
+
+  /**
+   * NOVO MÉTODO: Formata secretaria para exibição
+   */
+  formatarSecretaria(secretaria: TipoPerfil): string {
+    const secretariaMap = {
+      [TipoPerfil.OBRAS]: "Obras",
+      [TipoPerfil.AGRICULTURA]: "Agricultura",
+      [TipoPerfil.ADMIN]: "Administração",
+    };
+
+    return secretariaMap[secretaria] || secretaria;
+  }
+
+  /**
+   * NOVO MÉTODO: Retorna cor da secretaria para badges
+   */
+  getSecretariaColor(secretaria: TipoPerfil): "green" | "blue" | "purple" {
+    const colorMap = {
+      [TipoPerfil.OBRAS]: "blue" as const,
+      [TipoPerfil.AGRICULTURA]: "green" as const,
+      [TipoPerfil.ADMIN]: "purple" as const,
+    };
+
+    return colorMap[secretaria] || "blue";
   }
 
   /**
@@ -137,7 +213,7 @@ class ProgramaService extends BaseApiService<Programa, ProgramaDTO> {
   }
 
   /**
-   * Valida dados do programa antes de enviar
+   * Valida dados do programa antes de enviar - ATUALIZADO
    */
   private validateProgramaData(data: ProgramaDTO): string[] {
     const errors: string[] = [];
@@ -148,6 +224,18 @@ class ProgramaService extends BaseApiService<Programa, ProgramaDTO> {
 
     if (!data.tipoPrograma?.trim()) {
       errors.push("Tipo de programa é obrigatório");
+    }
+
+    // NOVA VALIDAÇÃO ADICIONADA
+    if (!data.secretaria) {
+      errors.push("Secretaria é obrigatória");
+    }
+
+    if (
+      data.secretaria &&
+      !Object.values(TipoPerfil).includes(data.secretaria)
+    ) {
+      errors.push("Secretaria deve ser Obras ou Agricultura");
     }
 
     if (

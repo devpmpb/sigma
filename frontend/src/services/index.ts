@@ -50,6 +50,7 @@ export type {
   Programa,
   ProgramaDTO,
   TipoPrograma,
+  TipoPerfil,
   RegrasNegocio as ProgramaRegras,
   ProgramaComRegras,
   EstatisticasPrograma,
@@ -67,6 +68,13 @@ export type {
   ValidacaoRegra,
   ProdutorData,
 } from "./comum/regrasNegocioService";
+
+export type {
+  SolicitacaoBeneficio,
+  SolicitacaoBeneficioDTO,
+  StatusSolicitacao,
+  EstatisticasSolicitacao,
+} from "./comum/solicitacaoBeneficioService";
 
 export type { TipoVeiculo, TipoVeiculoDTO } from "./obras/tipoVeiculoService";
 

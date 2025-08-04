@@ -75,4 +75,10 @@ router.delete(
   programaController.delete
 );
 
+router.get(
+  "/secretaria/:secretaria",
+  requirePermission(ModuloSistema.COMUM, AcaoPermissao.VIEW),
+  programaController.getBySecretaria
+);
+
 export default router;
