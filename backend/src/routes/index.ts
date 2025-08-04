@@ -14,6 +14,7 @@ import enderecoRoutes from "./comum/enderecoRoutes";
 import produtorRoutes from "./comum/produtorRoutes";
 import arrendamentosRoutes from "./agricultura/arrendamentoRoutes";
 import transferenciaPropiedadeRoutes from "./comum/transferenciaPropiedadeRoutes";
+import solicitacoesBeneficioRoutes from "./comum/solicitacoesBeneficioRoutes";
 
 // Importar middleware de autenticação
 import {
@@ -62,7 +63,16 @@ router.use(
   requireModuleAccess(ModuloSistema.COMUM),
   regrasNegocioRoutes
 );
-router.use("/comum/transferencias-propriedade", transferenciaPropiedadeRoutes);
+router.use(
+  "/comum/transferencias-propriedade",
+  requireModuleAccess(ModuloSistema.COMUM),
+  transferenciaPropiedadeRoutes
+);
+router.use(
+  "/solicitacoesBeneficio",
+  requireModuleAccess(ModuloSistema.COMUM),
+  solicitacoesBeneficioRoutes
+);
 
 // AGRICULTURA (requer acesso ao módulo agricultura)
 router.use(

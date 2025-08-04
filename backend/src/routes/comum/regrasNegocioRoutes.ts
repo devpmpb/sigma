@@ -1,4 +1,3 @@
-// backend/src/routes/agricultura/regrasNegocioRoutes.ts
 import { Router } from "express";
 import { regrasNegocioController } from "../../controllers/comum/regrasNegocioController";
 import { requirePermission } from "../../middleware/authMiddleware";

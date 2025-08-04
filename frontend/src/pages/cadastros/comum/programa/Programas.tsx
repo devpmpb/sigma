@@ -4,16 +4,12 @@ import { Column } from "../../../../components/comum/DataTable";
 import programaService, {
   Programa,
   ProgramaDTO,
+  TipoPerfil,
 } from "../../../../services/comum/programaService";
 import { CadastroBase } from "../../../../components/cadastro";
 import ProgramaForm from "./ProgramaForm";
 
-/**
- * Componente de Listagem de Programas de Incentivo
- * Utiliza o CadastroBase para mostrar a listagem
- */
 const Programas: React.FC = () => {
-  // Definição das colunas da tabela
   const columns: Column<Programa>[] = [
     {
       title: "ID",
@@ -31,6 +27,24 @@ const Programas: React.FC = () => {
           )}
         </div>
       ),
+    },
+    {
+      title: "Secretaria",
+      key: "secretaria",
+      render: (programa) => {
+        const cor = programaService.getSecretariaColor(programa.secretaria);
+        const corClass = {
+          green: "bg-green-100 text-green-800",
+          blue: "bg-blue-100 text-blue-800",
+          purple: "bg-purple-100 text-purple-800",
+        };
+
+        return (
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${corClass[cor]}`}>
+            {programaService.formatarSecretaria(programa.secretaria)}
+          </span>
+        );
+      },
     },
     {
       title: "Tipo",
@@ -85,9 +99,46 @@ const Programas: React.FC = () => {
       key: "createdAt",
       render: (programa) => formatarData(programa.createdAt, false),
     },
-    // ❌ REMOVIDO: Não incluir coluna de Status manual aqui
-    // O CadastroBase já adiciona automaticamente com enableStatusToggle={true}
   ];
+
+  // Filtros rápidos - NOVOS FILTROS ADICIONADOS
+  const quickFilters = [
+    {
+      label: "Agricultura",
+      filter: (items: Programa[]) => items.filter(p => p.secretaria === TipoPerfil.AGRICULTURA)
+    },
+    {
+      label: "Obras", 
+      filter: (items: Programa[]) => items.filter(p => p.secretaria === TipoPerfil.OBRAS)
+    },
+    {
+      label: "Com Regras",
+      filter: (items: Programa[]) => items.filter(p => (p._count?.regras || 0) > 0)
+    },
+    {
+      label: "Sem Regras",
+      filter: (items: Programa[]) => items.filter(p => (p._count?.regras || 0) === 0)
+    }
+  ];
+
+  // Função para calcular métricas (simplificada)
+  const calculateMetrics = (items: Programa[]) => {
+    const total = items.length;
+    const ativos = items.filter(p => p.ativo).length;
+    const agricultura = items.filter(p => p.secretaria === TipoPerfil.AGRICULTURA).length;
+    const obras = items.filter(p => p.secretaria === TipoPerfil.OBRAS).length;
+    const comRegras = items.filter(p => (p._count?.regras || 0) > 0).length;
+    const semRegras = total - comRegras;
+
+    return {
+      total,
+      ativos,
+      agricultura,
+      obras,
+      comRegras,
+      semRegras,
+    };
+  };
 
   // Botões de ação adicionais
   const actionButtons = (
@@ -153,6 +204,10 @@ const Programas: React.FC = () => {
         activeText: "Ativo",
         inactiveText: "Inativo",
       }}
+      // NOVAS PROPS ADICIONADAS
+      quickFilters={quickFilters}
+      showMetrics={true}
+      calculateMetrics={calculateMetrics}
     />
   );
 };

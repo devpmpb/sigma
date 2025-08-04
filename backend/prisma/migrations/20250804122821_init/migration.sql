@@ -1,32 +1,32 @@
 -- CreateEnum
-CREATE TYPE "TipoEndereco" AS ENUM ('RESIDENCIAL', 'COMERCIAL', 'RURAL', 'CORRESPONDENCIA');
+CREATE TYPE "public"."TipoEndereco" AS ENUM ('RESIDENCIAL', 'COMERCIAL', 'RURAL', 'CORRESPONDENCIA');
 
 -- CreateEnum
-CREATE TYPE "TipoLogradouro" AS ENUM ('RUA', 'AVENIDA', 'TRAVESSA', 'ALAMEDA', 'RODOVIA', 'LINHA', 'ESTRADA');
+CREATE TYPE "public"."TipoLogradouro" AS ENUM ('RUA', 'AVENIDA', 'TRAVESSA', 'ALAMEDA', 'RODOVIA', 'LINHA', 'ESTRADA');
 
 -- CreateEnum
-CREATE TYPE "TipoPropriedade" AS ENUM ('RURAL', 'LOTE_URBANO', 'COMERCIAL', 'INDUSTRIAL');
+CREATE TYPE "public"."TipoPropriedade" AS ENUM ('RURAL', 'LOTE_URBANO', 'COMERCIAL', 'INDUSTRIAL');
 
 -- CreateEnum
-CREATE TYPE "TipoPessoa" AS ENUM ('FISICA', 'JURIDICA');
+CREATE TYPE "public"."TipoPessoa" AS ENUM ('FISICA', 'JURIDICA');
 
 -- CreateEnum
-CREATE TYPE "SituacaoPropriedade" AS ENUM ('PROPRIA', 'CONDOMINIO', 'USUFRUTO');
+CREATE TYPE "public"."SituacaoPropriedade" AS ENUM ('PROPRIA', 'CONDOMINIO', 'USUFRUTO');
 
 -- CreateEnum
-CREATE TYPE "TipoPerfil" AS ENUM ('ADMIN', 'OBRAS', 'AGRICULTURA');
+CREATE TYPE "public"."TipoPerfil" AS ENUM ('ADMIN', 'OBRAS', 'AGRICULTURA');
 
 -- CreateEnum
-CREATE TYPE "ModuloSistema" AS ENUM ('OBRAS', 'AGRICULTURA', 'COMUM', 'ADMIN');
+CREATE TYPE "public"."ModuloSistema" AS ENUM ('OBRAS', 'AGRICULTURA', 'COMUM', 'ADMIN');
 
 -- CreateEnum
-CREATE TYPE "AcaoPermissao" AS ENUM ('VIEW', 'CREATE', 'EDIT', 'DELETE');
+CREATE TYPE "public"."AcaoPermissao" AS ENUM ('VIEW', 'CREATE', 'EDIT', 'DELETE');
 
 -- CreateEnum
-CREATE TYPE "TipoPrograma" AS ENUM ('SUBSIDIO', 'MATERIAL', 'SERVICO', 'CREDITO', 'ASSISTENCIA');
+CREATE TYPE "public"."TipoPrograma" AS ENUM ('SUBSIDIO', 'MATERIAL', 'SERVICO', 'CREDITO', 'ASSISTENCIA');
 
 -- CreateTable
-CREATE TABLE "Bairro" (
+CREATE TABLE "public"."Bairro" (
     "id" SERIAL NOT NULL,
     "nome" TEXT NOT NULL,
     "ativo" BOOLEAN NOT NULL DEFAULT true,
@@ -37,7 +37,7 @@ CREATE TABLE "Bairro" (
 );
 
 -- CreateTable
-CREATE TABLE "AreaRural" (
+CREATE TABLE "public"."AreaRural" (
     "id" SERIAL NOT NULL,
     "nome" TEXT NOT NULL,
     "ativo" BOOLEAN NOT NULL DEFAULT true,
@@ -48,9 +48,9 @@ CREATE TABLE "AreaRural" (
 );
 
 -- CreateTable
-CREATE TABLE "Logradouro" (
+CREATE TABLE "public"."Logradouro" (
     "id" SERIAL NOT NULL,
-    "tipo" "TipoLogradouro" NOT NULL,
+    "tipo" "public"."TipoLogradouro" NOT NULL,
     "descricao" TEXT NOT NULL,
     "cep" TEXT,
     "ativo" BOOLEAN NOT NULL DEFAULT true,
@@ -61,7 +61,7 @@ CREATE TABLE "Logradouro" (
 );
 
 -- CreateTable
-CREATE TABLE "GrupoProduto" (
+CREATE TABLE "public"."GrupoProduto" (
     "id" SERIAL NOT NULL,
     "descricao" TEXT NOT NULL,
     "ativo" BOOLEAN NOT NULL DEFAULT true,
@@ -72,7 +72,7 @@ CREATE TABLE "GrupoProduto" (
 );
 
 -- CreateTable
-CREATE TABLE "TipoVeiculo" (
+CREATE TABLE "public"."TipoVeiculo" (
     "id" SERIAL NOT NULL,
     "descricao" TEXT NOT NULL,
     "ativo" BOOLEAN NOT NULL DEFAULT true,
@@ -83,9 +83,9 @@ CREATE TABLE "TipoVeiculo" (
 );
 
 -- CreateTable
-CREATE TABLE "Pessoa" (
+CREATE TABLE "public"."Pessoa" (
     "id" SERIAL NOT NULL,
-    "tipoPessoa" "TipoPessoa" NOT NULL,
+    "tipoPessoa" "public"."TipoPessoa" NOT NULL,
     "nome" TEXT NOT NULL,
     "cpfCnpj" TEXT NOT NULL,
     "telefone" TEXT,
@@ -98,7 +98,7 @@ CREATE TABLE "Pessoa" (
 );
 
 -- CreateTable
-CREATE TABLE "PessoaFisica" (
+CREATE TABLE "public"."PessoaFisica" (
     "id" INTEGER NOT NULL,
     "rg" TEXT,
     "dataNascimento" TIMESTAMP(3),
@@ -107,7 +107,7 @@ CREATE TABLE "PessoaFisica" (
 );
 
 -- CreateTable
-CREATE TABLE "PessoaJuridica" (
+CREATE TABLE "public"."PessoaJuridica" (
     "id" INTEGER NOT NULL,
     "nomeFantasia" TEXT,
     "inscricaoEstadual" TEXT,
@@ -119,7 +119,7 @@ CREATE TABLE "PessoaJuridica" (
 );
 
 -- CreateTable
-CREATE TABLE "Endereco" (
+CREATE TABLE "public"."Endereco" (
     "id" SERIAL NOT NULL,
     "pessoaId" INTEGER NOT NULL,
     "logradouroId" INTEGER,
@@ -129,7 +129,7 @@ CREATE TABLE "Endereco" (
     "areaRuralId" INTEGER,
     "referenciaRural" TEXT,
     "coordenadas" TEXT,
-    "tipoEndereco" "TipoEndereco" NOT NULL,
+    "tipoEndereco" "public"."TipoEndereco" NOT NULL,
     "principal" BOOLEAN NOT NULL DEFAULT false,
     "propriedadeId" INTEGER,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -139,7 +139,7 @@ CREATE TABLE "Endereco" (
 );
 
 -- CreateTable
-CREATE TABLE "Produtor" (
+CREATE TABLE "public"."Produtor" (
     "id" INTEGER NOT NULL,
     "inscricaoEstadual" TEXT,
     "dap" TEXT,
@@ -152,7 +152,7 @@ CREATE TABLE "Produtor" (
 );
 
 -- CreateTable
-CREATE TABLE "AreaEfetiva" (
+CREATE TABLE "public"."AreaEfetiva" (
     "id" INTEGER NOT NULL,
     "anoReferencia" INTEGER NOT NULL,
     "areaPropria" DECIMAL(10,2) NOT NULL,
@@ -165,17 +165,17 @@ CREATE TABLE "AreaEfetiva" (
 );
 
 -- CreateTable
-CREATE TABLE "Propriedade" (
+CREATE TABLE "public"."Propriedade" (
     "id" SERIAL NOT NULL,
     "nome" TEXT NOT NULL,
-    "tipoPropriedade" "TipoPropriedade" NOT NULL DEFAULT 'RURAL',
+    "tipoPropriedade" "public"."TipoPropriedade" NOT NULL DEFAULT 'RURAL',
     "logradouroId" INTEGER,
     "numero" TEXT,
     "areaTotal" DECIMAL(10,2) NOT NULL,
     "unidadeArea" TEXT NOT NULL DEFAULT 'alqueires',
     "itr" TEXT,
     "incra" TEXT,
-    "situacao" "SituacaoPropriedade" NOT NULL,
+    "situacao" "public"."SituacaoPropriedade" NOT NULL,
     "proprietarioResidente" BOOLEAN NOT NULL DEFAULT false,
     "localizacao" TEXT,
     "matricula" TEXT,
@@ -187,7 +187,7 @@ CREATE TABLE "Propriedade" (
 );
 
 -- CreateTable
-CREATE TABLE "transferencias_propriedade" (
+CREATE TABLE "public"."transferencias_propriedade" (
     "id" SERIAL NOT NULL,
     "propriedade_id" INTEGER NOT NULL,
     "proprietario_anterior_id" INTEGER NOT NULL,
@@ -201,7 +201,7 @@ CREATE TABLE "transferencias_propriedade" (
 );
 
 -- CreateTable
-CREATE TABLE "Arrendamento" (
+CREATE TABLE "public"."Arrendamento" (
     "id" SERIAL NOT NULL,
     "propriedadeId" INTEGER NOT NULL,
     "proprietarioId" INTEGER NOT NULL,
@@ -218,9 +218,9 @@ CREATE TABLE "Arrendamento" (
 );
 
 -- CreateTable
-CREATE TABLE "SolicitacaoBeneficio" (
+CREATE TABLE "public"."SolicitacaoBeneficio" (
     "id" SERIAL NOT NULL,
-    "produtorId" INTEGER NOT NULL,
+    "pessoaId" INTEGER NOT NULL,
     "programaId" INTEGER NOT NULL,
     "datasolicitacao" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "status" TEXT NOT NULL DEFAULT 'pendente',
@@ -232,12 +232,13 @@ CREATE TABLE "SolicitacaoBeneficio" (
 );
 
 -- CreateTable
-CREATE TABLE "Programa" (
+CREATE TABLE "public"."Programa" (
     "id" SERIAL NOT NULL,
     "nome" TEXT NOT NULL,
     "descricao" TEXT,
     "leiNumero" TEXT,
-    "tipoPrograma" "TipoPrograma" NOT NULL,
+    "tipoPrograma" "public"."TipoPrograma" NOT NULL,
+    "secretaria" "public"."TipoPerfil" NOT NULL,
     "ativo" BOOLEAN NOT NULL DEFAULT true,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -246,7 +247,7 @@ CREATE TABLE "Programa" (
 );
 
 -- CreateTable
-CREATE TABLE "RegrasNegocio" (
+CREATE TABLE "public"."RegrasNegocio" (
     "id" SERIAL NOT NULL,
     "programaId" INTEGER NOT NULL,
     "tipoRegra" TEXT NOT NULL,
@@ -260,7 +261,7 @@ CREATE TABLE "RegrasNegocio" (
 );
 
 -- CreateTable
-CREATE TABLE "Usuario" (
+CREATE TABLE "public"."Usuario" (
     "id" SERIAL NOT NULL,
     "nome" TEXT NOT NULL,
     "email" TEXT NOT NULL,
@@ -277,9 +278,9 @@ CREATE TABLE "Usuario" (
 );
 
 -- CreateTable
-CREATE TABLE "Perfil" (
+CREATE TABLE "public"."Perfil" (
     "id" SERIAL NOT NULL,
-    "nome" "TipoPerfil" NOT NULL,
+    "nome" "public"."TipoPerfil" NOT NULL,
     "descricao" TEXT,
     "ativo" BOOLEAN NOT NULL DEFAULT true,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -289,10 +290,10 @@ CREATE TABLE "Perfil" (
 );
 
 -- CreateTable
-CREATE TABLE "Permissao" (
+CREATE TABLE "public"."Permissao" (
     "id" SERIAL NOT NULL,
-    "modulo" "ModuloSistema" NOT NULL,
-    "acao" "AcaoPermissao" NOT NULL,
+    "modulo" "public"."ModuloSistema" NOT NULL,
+    "acao" "public"."AcaoPermissao" NOT NULL,
     "descricao" TEXT,
     "ativo" BOOLEAN NOT NULL DEFAULT true,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -302,7 +303,7 @@ CREATE TABLE "Permissao" (
 );
 
 -- CreateTable
-CREATE TABLE "PerfilPermissao" (
+CREATE TABLE "public"."PerfilPermissao" (
     "id" SERIAL NOT NULL,
     "perfilId" INTEGER NOT NULL,
     "permissaoId" INTEGER NOT NULL,
@@ -312,7 +313,7 @@ CREATE TABLE "PerfilPermissao" (
 );
 
 -- CreateTable
-CREATE TABLE "UsuarioSessao" (
+CREATE TABLE "public"."UsuarioSessao" (
     "id" SERIAL NOT NULL,
     "usuarioId" INTEGER NOT NULL,
     "token" TEXT NOT NULL,
@@ -327,7 +328,7 @@ CREATE TABLE "UsuarioSessao" (
 );
 
 -- CreateTable
-CREATE TABLE "AuditoriaLogin" (
+CREATE TABLE "public"."AuditoriaLogin" (
     "id" SERIAL NOT NULL,
     "email" TEXT NOT NULL,
     "sucesso" BOOLEAN NOT NULL,
@@ -340,115 +341,115 @@ CREATE TABLE "AuditoriaLogin" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Bairro_nome_key" ON "Bairro"("nome");
+CREATE UNIQUE INDEX "Bairro_nome_key" ON "public"."Bairro"("nome");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "AreaRural_nome_key" ON "AreaRural"("nome");
+CREATE UNIQUE INDEX "AreaRural_nome_key" ON "public"."AreaRural"("nome");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Logradouro_cep_key" ON "Logradouro"("cep");
+CREATE UNIQUE INDEX "Logradouro_cep_key" ON "public"."Logradouro"("cep");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "GrupoProduto_descricao_key" ON "GrupoProduto"("descricao");
+CREATE UNIQUE INDEX "GrupoProduto_descricao_key" ON "public"."GrupoProduto"("descricao");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "TipoVeiculo_descricao_key" ON "TipoVeiculo"("descricao");
+CREATE UNIQUE INDEX "TipoVeiculo_descricao_key" ON "public"."TipoVeiculo"("descricao");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Pessoa_cpfCnpj_key" ON "Pessoa"("cpfCnpj");
+CREATE UNIQUE INDEX "Pessoa_cpfCnpj_key" ON "public"."Pessoa"("cpfCnpj");
 
 -- CreateIndex
-CREATE INDEX "transferencias_propriedade_propriedade_id_idx" ON "transferencias_propriedade"("propriedade_id");
+CREATE INDEX "transferencias_propriedade_propriedade_id_idx" ON "public"."transferencias_propriedade"("propriedade_id");
 
 -- CreateIndex
-CREATE INDEX "transferencias_propriedade_data_transferencia_idx" ON "transferencias_propriedade"("data_transferencia");
+CREATE INDEX "transferencias_propriedade_data_transferencia_idx" ON "public"."transferencias_propriedade"("data_transferencia");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Usuario_email_key" ON "Usuario"("email");
+CREATE UNIQUE INDEX "Usuario_email_key" ON "public"."Usuario"("email");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Perfil_nome_key" ON "Perfil"("nome");
+CREATE UNIQUE INDEX "Perfil_nome_key" ON "public"."Perfil"("nome");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Permissao_modulo_acao_key" ON "Permissao"("modulo", "acao");
+CREATE UNIQUE INDEX "Permissao_modulo_acao_key" ON "public"."Permissao"("modulo", "acao");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "PerfilPermissao_perfilId_permissaoId_key" ON "PerfilPermissao"("perfilId", "permissaoId");
+CREATE UNIQUE INDEX "PerfilPermissao_perfilId_permissaoId_key" ON "public"."PerfilPermissao"("perfilId", "permissaoId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "UsuarioSessao_token_key" ON "UsuarioSessao"("token");
+CREATE UNIQUE INDEX "UsuarioSessao_token_key" ON "public"."UsuarioSessao"("token");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "UsuarioSessao_refreshToken_key" ON "UsuarioSessao"("refreshToken");
+CREATE UNIQUE INDEX "UsuarioSessao_refreshToken_key" ON "public"."UsuarioSessao"("refreshToken");
 
 -- AddForeignKey
-ALTER TABLE "PessoaFisica" ADD CONSTRAINT "PessoaFisica_id_fkey" FOREIGN KEY ("id") REFERENCES "Pessoa"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "public"."PessoaFisica" ADD CONSTRAINT "PessoaFisica_id_fkey" FOREIGN KEY ("id") REFERENCES "public"."Pessoa"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "PessoaJuridica" ADD CONSTRAINT "PessoaJuridica_id_fkey" FOREIGN KEY ("id") REFERENCES "Pessoa"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "public"."PessoaJuridica" ADD CONSTRAINT "PessoaJuridica_id_fkey" FOREIGN KEY ("id") REFERENCES "public"."Pessoa"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Endereco" ADD CONSTRAINT "Endereco_pessoaId_fkey" FOREIGN KEY ("pessoaId") REFERENCES "Pessoa"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "public"."Endereco" ADD CONSTRAINT "Endereco_pessoaId_fkey" FOREIGN KEY ("pessoaId") REFERENCES "public"."Pessoa"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Endereco" ADD CONSTRAINT "Endereco_logradouroId_fkey" FOREIGN KEY ("logradouroId") REFERENCES "Logradouro"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "public"."Endereco" ADD CONSTRAINT "Endereco_logradouroId_fkey" FOREIGN KEY ("logradouroId") REFERENCES "public"."Logradouro"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Endereco" ADD CONSTRAINT "Endereco_bairroId_fkey" FOREIGN KEY ("bairroId") REFERENCES "Bairro"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "public"."Endereco" ADD CONSTRAINT "Endereco_bairroId_fkey" FOREIGN KEY ("bairroId") REFERENCES "public"."Bairro"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Endereco" ADD CONSTRAINT "Endereco_areaRuralId_fkey" FOREIGN KEY ("areaRuralId") REFERENCES "AreaRural"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "public"."Endereco" ADD CONSTRAINT "Endereco_areaRuralId_fkey" FOREIGN KEY ("areaRuralId") REFERENCES "public"."AreaRural"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Endereco" ADD CONSTRAINT "Endereco_propriedadeId_fkey" FOREIGN KEY ("propriedadeId") REFERENCES "Propriedade"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "public"."Endereco" ADD CONSTRAINT "Endereco_propriedadeId_fkey" FOREIGN KEY ("propriedadeId") REFERENCES "public"."Propriedade"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Produtor" ADD CONSTRAINT "Produtor_id_fkey" FOREIGN KEY ("id") REFERENCES "PessoaFisica"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "public"."Produtor" ADD CONSTRAINT "Produtor_id_fkey" FOREIGN KEY ("id") REFERENCES "public"."PessoaFisica"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "AreaEfetiva" ADD CONSTRAINT "AreaEfetiva_id_fkey" FOREIGN KEY ("id") REFERENCES "Produtor"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "public"."AreaEfetiva" ADD CONSTRAINT "AreaEfetiva_id_fkey" FOREIGN KEY ("id") REFERENCES "public"."Produtor"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Propriedade" ADD CONSTRAINT "Propriedade_logradouroId_fkey" FOREIGN KEY ("logradouroId") REFERENCES "Logradouro"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "public"."Propriedade" ADD CONSTRAINT "Propriedade_logradouroId_fkey" FOREIGN KEY ("logradouroId") REFERENCES "public"."Logradouro"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Propriedade" ADD CONSTRAINT "Propriedade_proprietarioId_fkey" FOREIGN KEY ("proprietarioId") REFERENCES "Pessoa"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "public"."Propriedade" ADD CONSTRAINT "Propriedade_proprietarioId_fkey" FOREIGN KEY ("proprietarioId") REFERENCES "public"."Pessoa"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "transferencias_propriedade" ADD CONSTRAINT "transferencias_propriedade_propriedade_id_fkey" FOREIGN KEY ("propriedade_id") REFERENCES "Propriedade"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "public"."transferencias_propriedade" ADD CONSTRAINT "transferencias_propriedade_propriedade_id_fkey" FOREIGN KEY ("propriedade_id") REFERENCES "public"."Propriedade"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "transferencias_propriedade" ADD CONSTRAINT "transferencias_propriedade_proprietario_anterior_id_fkey" FOREIGN KEY ("proprietario_anterior_id") REFERENCES "Pessoa"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "public"."transferencias_propriedade" ADD CONSTRAINT "transferencias_propriedade_proprietario_anterior_id_fkey" FOREIGN KEY ("proprietario_anterior_id") REFERENCES "public"."Pessoa"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "transferencias_propriedade" ADD CONSTRAINT "transferencias_propriedade_proprietario_novo_id_fkey" FOREIGN KEY ("proprietario_novo_id") REFERENCES "Pessoa"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "public"."transferencias_propriedade" ADD CONSTRAINT "transferencias_propriedade_proprietario_novo_id_fkey" FOREIGN KEY ("proprietario_novo_id") REFERENCES "public"."Pessoa"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Arrendamento" ADD CONSTRAINT "Arrendamento_propriedadeId_fkey" FOREIGN KEY ("propriedadeId") REFERENCES "Propriedade"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "public"."Arrendamento" ADD CONSTRAINT "Arrendamento_propriedadeId_fkey" FOREIGN KEY ("propriedadeId") REFERENCES "public"."Propriedade"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Arrendamento" ADD CONSTRAINT "Arrendamento_proprietarioId_fkey" FOREIGN KEY ("proprietarioId") REFERENCES "PessoaFisica"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "public"."Arrendamento" ADD CONSTRAINT "Arrendamento_proprietarioId_fkey" FOREIGN KEY ("proprietarioId") REFERENCES "public"."PessoaFisica"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Arrendamento" ADD CONSTRAINT "Arrendamento_arrendatarioId_fkey" FOREIGN KEY ("arrendatarioId") REFERENCES "PessoaFisica"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "public"."Arrendamento" ADD CONSTRAINT "Arrendamento_arrendatarioId_fkey" FOREIGN KEY ("arrendatarioId") REFERENCES "public"."PessoaFisica"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "SolicitacaoBeneficio" ADD CONSTRAINT "SolicitacaoBeneficio_produtorId_fkey" FOREIGN KEY ("produtorId") REFERENCES "Produtor"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "public"."SolicitacaoBeneficio" ADD CONSTRAINT "SolicitacaoBeneficio_pessoaId_fkey" FOREIGN KEY ("pessoaId") REFERENCES "public"."Pessoa"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "SolicitacaoBeneficio" ADD CONSTRAINT "SolicitacaoBeneficio_programaId_fkey" FOREIGN KEY ("programaId") REFERENCES "Programa"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "public"."SolicitacaoBeneficio" ADD CONSTRAINT "SolicitacaoBeneficio_programaId_fkey" FOREIGN KEY ("programaId") REFERENCES "public"."Programa"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "RegrasNegocio" ADD CONSTRAINT "RegrasNegocio_programaId_fkey" FOREIGN KEY ("programaId") REFERENCES "Programa"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "public"."RegrasNegocio" ADD CONSTRAINT "RegrasNegocio_programaId_fkey" FOREIGN KEY ("programaId") REFERENCES "public"."Programa"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Usuario" ADD CONSTRAINT "Usuario_perfilId_fkey" FOREIGN KEY ("perfilId") REFERENCES "Perfil"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "public"."Usuario" ADD CONSTRAINT "Usuario_perfilId_fkey" FOREIGN KEY ("perfilId") REFERENCES "public"."Perfil"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "PerfilPermissao" ADD CONSTRAINT "PerfilPermissao_perfilId_fkey" FOREIGN KEY ("perfilId") REFERENCES "Perfil"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "public"."PerfilPermissao" ADD CONSTRAINT "PerfilPermissao_perfilId_fkey" FOREIGN KEY ("perfilId") REFERENCES "public"."Perfil"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "PerfilPermissao" ADD CONSTRAINT "PerfilPermissao_permissaoId_fkey" FOREIGN KEY ("permissaoId") REFERENCES "Permissao"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "public"."PerfilPermissao" ADD CONSTRAINT "PerfilPermissao_permissaoId_fkey" FOREIGN KEY ("permissaoId") REFERENCES "public"."Permissao"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "UsuarioSessao" ADD CONSTRAINT "UsuarioSessao_usuarioId_fkey" FOREIGN KEY ("usuarioId") REFERENCES "Usuario"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "public"."UsuarioSessao" ADD CONSTRAINT "UsuarioSessao_usuarioId_fkey" FOREIGN KEY ("usuarioId") REFERENCES "public"."Usuario"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

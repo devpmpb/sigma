@@ -125,9 +125,6 @@ class PropriedadeService extends BaseApiService<Propriedade, PropriedadeDTO> {
     return response.data;
   };
 
-  /**
-   * Busca propriedade com todos os detalhes (endereços, arrendamentos, etc.)
-   */
   getPropriedadeWithDetails = async (id: number): Promise<Propriedade> => {
     const response = await apiClient.get(`${this.baseUrl}/${id}/detalhes`);
     return response.data;

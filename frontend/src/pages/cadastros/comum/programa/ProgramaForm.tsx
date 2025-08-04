@@ -1,9 +1,11 @@
+// frontend/src/pages/cadastros/comum/programa/ProgramaForm.tsx - ARQUIVO ATUALIZADO
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "@tanstack/react-router";
 import programaService, {
   Programa,
   ProgramaDTO,
   TipoPrograma,
+  TipoPerfil, // NOVO IMPORT ADICIONADO
 } from "../../../../services/comum/programaService";
 import regrasNegocioService from "../../../../services/comum/regrasNegocioService";
 import { FormBase } from "../../../../components/cadastro";
@@ -17,6 +19,7 @@ interface ProgramaFormProps {
 /**
  * Componente de Formulário de Programas
  * Inclui visualização das regras existentes e opção de duplicar
+ * ATUALIZADO: Agora inclui campo secretaria
  */
 const ProgramaForm: React.FC<ProgramaFormProps> = ({ id, onSave }) => {
   const navigate = useNavigate();
@@ -26,12 +29,13 @@ const ProgramaForm: React.FC<ProgramaFormProps> = ({ id, onSave }) => {
   const [duplicateName, setDuplicateName] = useState("");
   const [duplicating, setDuplicating] = useState(false);
 
-  // Valor inicial para o formulário
+  // Valor inicial para o formulário - ATUALIZADO
   const initialValues: ProgramaDTO = {
     nome: "",
     descricao: "",
     leiNumero: "",
     tipoPrograma: TipoPrograma.SUBSIDIO,
+    secretaria: TipoPerfil.AGRICULTURA, // NOVO CAMPO ADICIONADO
     ativo: true,
   };
 
@@ -51,7 +55,7 @@ const ProgramaForm: React.FC<ProgramaFormProps> = ({ id, onSave }) => {
     loadQuantidadeRegras();
   }, [programaId]);
 
-  // Validação do formulário
+  // Validação do formulário - ATUALIZADA
   const validate = (values: ProgramaDTO) => {
     const errors: Record<string, string> = {};
 
@@ -61,6 +65,11 @@ const ProgramaForm: React.FC<ProgramaFormProps> = ({ id, onSave }) => {
 
     if (!values.tipoPrograma) {
       errors.tipoPrograma = "Tipo de programa é obrigatório";
+    }
+
+    // NOVA VALIDAÇÃO ADICIONADA
+    if (!values.secretaria) {
+      errors.secretaria = "Secretaria é obrigatória";
     }
 
     if (values.leiNumero && values.leiNumero.trim()) {
@@ -117,7 +126,7 @@ const ProgramaForm: React.FC<ProgramaFormProps> = ({ id, onSave }) => {
       >
         {({ values, errors, touched, handleChange, setValue }) => (
           <>
-            {/* Seção de Regras de Negócio - NOVA */}
+            {/* Seção de Regras de Negócio */}
             {programaId && programaId !== "novo" && (
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
                 <div className="flex items-center justify-between">
@@ -137,7 +146,7 @@ const ProgramaForm: React.FC<ProgramaFormProps> = ({ id, onSave }) => {
                     <button
                       type="button"
                       onClick={handleManageRules}
-                      className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="inline-flex items-center px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -161,11 +170,10 @@ const ProgramaForm: React.FC<ProgramaFormProps> = ({ id, onSave }) => {
                       </svg>
                       Gerenciar Regras
                     </button>
-
                     <button
                       type="button"
                       onClick={() => setShowDuplicateModal(true)}
-                      className="inline-flex items-center px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+                      className="inline-flex items-center px-3 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500"
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -181,7 +189,7 @@ const ProgramaForm: React.FC<ProgramaFormProps> = ({ id, onSave }) => {
                           d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
                         />
                       </svg>
-                      Duplicar Programa
+                      Duplicar
                     </button>
                   </div>
                 </div>
@@ -190,6 +198,48 @@ const ProgramaForm: React.FC<ProgramaFormProps> = ({ id, onSave }) => {
 
             {/* Campos do formulário */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                name="nome"
+                label="Nome do Programa"
+                error={errors.nome}
+                touched={touched.nome}
+                required
+              >
+                <input
+                  type="text"
+                  id="nome"
+                  name="nome"
+                  value={values.nome}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Nome do programa de incentivo"
+                />
+              </FormField>
+
+              {/* NOVO CAMPO ADICIONADO */}
+              <FormField
+                name="secretaria"
+                label="Secretaria"
+                error={errors.secretaria}
+                touched={touched.secretaria}
+                required
+                helpText="Define qual secretaria administra este programa"
+              >
+                <select
+                  id="secretaria"
+                  name="secretaria"
+                  value={values.secretaria}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  {programaService.getSecretarias().map((secretaria) => (
+                    <option key={secretaria.value} value={secretaria.value}>
+                      {secretaria.label}
+                    </option>
+                  ))}
+                </select>
+              </FormField>
+
               <FormField
                 name="tipoPrograma"
                 label="Tipo de Programa"
@@ -214,9 +264,10 @@ const ProgramaForm: React.FC<ProgramaFormProps> = ({ id, onSave }) => {
 
               <FormField
                 name="leiNumero"
-                label="Número da Lei"
+                label="Lei/Decreto"
                 error={errors.leiNumero}
                 touched={touched.leiNumero}
+                helpText="Ex: LEI Nº 1234/2023"
               >
                 <input
                   type="text"
@@ -225,28 +276,10 @@ const ProgramaForm: React.FC<ProgramaFormProps> = ({ id, onSave }) => {
                   value={values.leiNumero || ""}
                   onChange={handleChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Ex: LEI Nº 1234/2023"
+                  placeholder="LEI Nº 1234/2023"
                 />
               </FormField>
             </div>
-
-            <FormField
-              name="nome"
-              label="Nome do Programa"
-              error={errors.nome}
-              touched={touched.nome}
-              required
-            >
-              <input
-                type="text"
-                id="nome"
-                name="nome"
-                value={values.nome}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Nome do programa..."
-              />
-            </FormField>
 
             <FormField
               name="descricao"
@@ -283,42 +316,35 @@ const ProgramaForm: React.FC<ProgramaFormProps> = ({ id, onSave }) => {
 
       {/* Modal de duplicação */}
       {showDuplicateModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <div className="mt-3 text-center">
-              <h3 className="text-lg font-medium text-gray-900">
-                Duplicar Programa
-              </h3>
-              <div className="mt-2 px-7 py-3">
-                <p className="text-sm text-gray-500">
-                  Digite o nome para o novo programa:
-                </p>
-                <input
-                  type="text"
-                  value={duplicateName}
-                  onChange={(e) => setDuplicateName(e.target.value)}
-                  className="mt-3 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Nome do novo programa"
-                />
-              </div>
-              <div className="items-center px-4 py-3">
-                <button
-                  onClick={handleDuplicate}
-                  disabled={duplicating}
-                  className="px-4 py-2 bg-blue-500 text-white text-base font-medium rounded-md w-24 mr-2 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-300 disabled:opacity-50"
-                >
-                  {duplicating ? "..." : "Duplicar"}
-                </button>
-                <button
-                  onClick={() => {
-                    setShowDuplicateModal(false);
-                    setDuplicateName("");
-                  }}
-                  className="px-4 py-2 bg-gray-500 text-white text-base font-medium rounded-md w-24 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-300"
-                >
-                  Cancelar
-                </button>
-              </div>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold mb-4">Duplicar Programa</h3>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Nome do novo programa
+              </label>
+              <input
+                type="text"
+                value={duplicateName}
+                onChange={(e) => setDuplicateName(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Digite o nome do novo programa"
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setShowDuplicateModal(false)}
+                className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleDuplicate}
+                disabled={duplicating}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+              >
+                {duplicating ? "Duplicando..." : "Duplicar"}
+              </button>
             </div>
           </div>
         </div>

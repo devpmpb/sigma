@@ -1,3 +1,4 @@
+// frontend/src/components/cadastro/FormBase.tsx
 import React, { useEffect, useState, ReactNode } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import useForm from "../../hooks/useForm";
@@ -31,8 +32,9 @@ interface FormBaseProps<T, R> {
 
   /**
    * Function called after successful save
+   * ✅ MODIFICADO - Agora recebe o objeto salvo como parâmetro
    */
-  onSave?: () => void;
+  onSave?: (savedItem?: T) => void;
 
   /**
    * URL to return after cancel
@@ -81,18 +83,21 @@ function FormBase<T extends Record<string, any>, R>({
       setError(null);
 
       try {
+        let savedItem: T;
+
         if (id && id !== "novo") {
           // Update existing record
-          await service.update(id, values);
+          savedItem = await service.update(id, values);
           alert("Registro atualizado com sucesso!");
         } else {
           // Create new record
-          await service.create(values);
+          savedItem = await service.create(values);
           alert("Registro criado com sucesso!");
         }
 
+        // ✅ CORREÇÃO - Passar o objeto salvo para o onSave
         if (onSave) {
-          onSave();
+          onSave(savedItem);
         } else {
           navigate({ to: returnUrl });
         }

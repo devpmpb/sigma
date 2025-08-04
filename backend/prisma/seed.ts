@@ -1,6 +1,7 @@
 // backend/prisma/seed.ts - ARQUIVO COMPLETO
 import { PrismaClient } from "@prisma/client";
 import seedAuth from "./seeds/authSeed";
+import { seedProgramas, seedSolicitacoesBeneficio } from "./seeds/programasSeed";
 
 const prisma = new PrismaClient();
 
@@ -9,6 +10,9 @@ async function main() {
 
   // Seed de autenticação (usuários, perfis, permissões) com ENUMs
   await seedAuth();
+
+  await seedProgramas();
+  await seedSolicitacoesBeneficio();
 
   // Cadastrar bairros iniciais de Pato Bragado
   console.log("🏘️ Criando bairros iniciais...");
