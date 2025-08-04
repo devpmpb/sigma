@@ -1,4 +1,3 @@
-// frontend/src/pages/movimentos/comum/SolicitacoesBeneficio/SolicitacaoBeneficioForm.tsx
 import React, { useState, useEffect } from "react";
 import { useParams } from "@tanstack/react-router";
 import solicitacaoBeneficioService, {
@@ -10,9 +9,7 @@ import programaService, {
   Programa,
   TipoPerfil,
 } from "../../../../services/comum/programaService";
-import pessoaService, {
-  Pessoa,
-} from "../../../../services/comum/pessoaService";
+import pessoaService, { Pessoa } from "../../../../services/comum/pessoaService";
 import { FormBase } from "../../../../components/cadastro";
 import { FormField } from "../../../../components/comum";
 
@@ -31,11 +28,10 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
 }) => {
   const params = useParams({ strict: false });
   const solicitacaoId = id || params.id;
-
+  
   const [programas, setProgramas] = useState<Programa[]>([]);
   const [pessoas, setPessoas] = useState<Pessoa[]>([]);
-  const [programaSelecionado, setProgramaSelecionado] =
-    useState<Programa | null>(null);
+  const [programaSelecionado, setProgramaSelecionado] = useState<Programa | null>(null);
   const [loadingProgramas, setLoadingProgramas] = useState(false);
   const [loadingPessoas, setLoadingPessoas] = useState(false);
 
@@ -43,7 +39,6 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
   const initialValues: SolicitacaoBeneficioDTO = {
     pessoaId: 0,
     programaId: 0,
-    valorSolicitado: undefined,
     observacoes: "",
     status: StatusSolicitacao.PENDENTE,
   };
@@ -54,7 +49,7 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
       setLoadingProgramas(true);
       try {
         const programasAtivos = await programaService.getAll();
-        setProgramas(programasAtivos.filter((p) => p.ativo));
+        setProgramas(programasAtivos.filter(p => p.ativo));
       } catch (error) {
         console.error("Erro ao carregar programas:", error);
       } finally {
@@ -80,13 +75,13 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
         if (programaSelecionado.secretaria === TipoPerfil.AGRICULTURA) {
           // Para agricultura, buscar apenas pessoas que são produtores
           const todasPessoas = await pessoaService.getAll();
-          pessoasDisponiveis = todasPessoas.filter(
-            (pessoa) => pessoa.ativo && pessoa.produtor
+          pessoasDisponiveis = todasPessoas.filter(pessoa => 
+            pessoa.ativo && pessoa.produtor
           );
         } else {
           // Para obras, qualquer pessoa ativa
           const todasPessoas = await pessoaService.getAll();
-          pessoasDisponiveis = todasPessoas.filter((pessoa) => pessoa.ativo);
+          pessoasDisponiveis = todasPessoas.filter(pessoa => pessoa.ativo);
         }
 
         setPessoas(pessoasDisponiveis);
@@ -102,7 +97,7 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
 
   // Função para atualizar programa selecionado
   const handleProgramaChange = (programaId: number, setValue: any) => {
-    const programa = programas.find((p) => p.id === programaId);
+    const programa = programas.find(p => p.id === programaId);
     setProgramaSelecionado(programa || null);
     setValue("programaId", programaId);
     setValue("pessoaId", 0); // Resetar pessoa selecionada
@@ -120,14 +115,6 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
       errors.programaId = "Programa é obrigatório";
     }
 
-    if (
-      values.valorSolicitado &&
-      (isNaN(Number(values.valorSolicitado)) ||
-        Number(values.valorSolicitado) <= 0)
-    ) {
-      errors.valorSolicitado = "Valor deve ser um número positivo";
-    }
-
     return Object.keys(errors).length > 0 ? errors : null;
   };
 
@@ -138,7 +125,7 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
       id={solicitacaoId}
       initialValues={initialValues}
       validate={validate}
-      returnUrl="/movimentos/comum/solicitacoes"
+      returnUrl="/movimentos/comum/solicitacoesBeneficios"
       onSave={onSave}
     >
       {({ values, errors, touched, handleChange, setValue }) => (
@@ -150,12 +137,9 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
               error={errors.programaId}
               touched={touched.programaId}
               required
-              helpText={
-                programaSelecionado
-                  ? `Secretaria: ${programaService.formatarSecretaria(
-                      programaSelecionado.secretaria
-                    )}`
-                  : "Selecione o programa para definir as pessoas disponíveis"
+              helpText={programaSelecionado ? 
+                `Secretaria: ${programaService.formatarSecretaria(programaSelecionado.secretaria)}` : 
+                "Selecione o programa para definir as pessoas disponíveis"
               }
             >
               <select
@@ -174,8 +158,7 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
                 </option>
                 {programas.map((programa) => (
                   <option key={programa.id} value={programa.id}>
-                    [{programaService.formatarSecretaria(programa.secretaria)}]{" "}
-                    {programa.nome}
+                    [{programaService.formatarSecretaria(programa.secretaria)}] {programa.nome}
                   </option>
                 ))}
               </select>
@@ -183,11 +166,7 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
 
             <FormField
               name="pessoaId"
-              label={
-                programaSelecionado?.secretaria === TipoPerfil.AGRICULTURA
-                  ? "Produtor"
-                  : "Pessoa"
-              }
+              label={programaSelecionado?.secretaria === TipoPerfil.AGRICULTURA ? "Produtor" : "Pessoa"}
               error={errors.pessoaId}
               touched={touched.pessoaId}
               required
@@ -217,31 +196,10 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
                 {pessoas.map((pessoa) => (
                   <option key={pessoa.id} value={pessoa.id}>
                     {pessoa.nome} - {pessoa.cpfCnpj}
-                    {pessoa.produtor &&
-                      ` (${pessoa.produtor.dap || "Sem DAP"})`}
+                    {/*pessoa.produtor && ` (${pessoa.produtor.dap || 'Sem DAP'})`*/}
                   </option>
                 ))}
               </select>
-            </FormField>
-
-            <FormField
-              name="valorSolicitado"
-              label="Valor Solicitado"
-              error={errors.valorSolicitado}
-              touched={touched.valorSolicitado}
-              helpText="Valor em reais (opcional)"
-            >
-              <input
-                type="number"
-                id="valorSolicitado"
-                name="valorSolicitado"
-                value={values.valorSolicitado || ""}
-                onChange={handleChange}
-                step="0.01"
-                min="0"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="0,00"
-              />
             </FormField>
 
             {solicitacaoId && solicitacaoId !== "novo" && (
@@ -258,13 +216,11 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
                   onChange={handleChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  {solicitacaoBeneficioService
-                    .getStatusOptions()
-                    .map((status) => (
-                      <option key={status.value} value={status.value}>
-                        {status.label}
-                      </option>
-                    ))}
+                  {solicitacaoBeneficioService.getStatusOptions().map((status) => (
+                    <option key={status.value} value={status.value}>
+                      {status.label}
+                    </option>
+                  ))}
                 </select>
               </FormField>
             )}
@@ -295,27 +251,14 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
                 📋 Informações do Programa
               </h4>
               <div className="text-sm text-blue-700 space-y-1">
-                <p>
-                  <strong>Nome:</strong> {programaSelecionado.nome}
-                </p>
-                <p>
-                  <strong>Tipo:</strong> {programaSelecionado.tipoPrograma}
-                </p>
-                <p>
-                  <strong>Secretaria:</strong>{" "}
-                  {programaService.formatarSecretaria(
-                    programaSelecionado.secretaria
-                  )}
-                </p>
+                <p><strong>Nome:</strong> {programaSelecionado.nome}</p>
+                <p><strong>Tipo:</strong> {programaSelecionado.tipoPrograma}</p>
+                <p><strong>Secretaria:</strong> {programaService.formatarSecretaria(programaSelecionado.secretaria)}</p>
                 {programaSelecionado.descricao && (
-                  <p>
-                    <strong>Descrição:</strong> {programaSelecionado.descricao}
-                  </p>
+                  <p><strong>Descrição:</strong> {programaSelecionado.descricao}</p>
                 )}
                 {programaSelecionado.leiNumero && (
-                  <p>
-                    <strong>Lei:</strong> {programaSelecionado.leiNumero}
-                  </p>
+                  <p><strong>Lei:</strong> {programaSelecionado.leiNumero}</p>
                 )}
               </div>
             </div>

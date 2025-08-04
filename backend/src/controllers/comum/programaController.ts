@@ -94,6 +94,34 @@ const genericController = createGenericController({
 export const programaController = {
   ...genericController,
 
+  // Buscar programas por tipo
+  async getByTipo(req: Request, res: Response) {
+    try {
+      const { tipo } = req.params;
+
+      const programas = await prisma.programa.findMany({
+        where: { 
+          tipoPrograma: tipo.toUpperCase() as any,
+          ativo: true 
+        },
+        include: {
+          _count: {
+            select: {
+              solicitacoes: true,
+              regras: true
+            }
+          }
+        },
+        orderBy: { nome: "asc" }
+      });
+
+      res.json(programas);
+    } catch (error) {
+      console.error("Erro ao buscar programas por tipo:", error);
+      res.status(500).json({ erro: "Erro interno do servidor" });
+    }
+  },
+
   // NOVO MÉTODO: Buscar programas por secretaria
   async getBySecretaria(req: Request, res: Response) {
     try {
@@ -226,14 +254,13 @@ export const programaController = {
     }
   },
 
-  // Buscar estatísticas dos programas - ATUALIZADO
   async getEstatisticas(req: Request, res: Response) {
     try {
       const [
         totalProgramas,
         programasAtivos,
         porTipo,
-        porSecretaria, // NOVO
+        porSecretaria,
         comMaisRegras
       ] = await Promise.all([
         prisma.programa.count(),

@@ -16,14 +16,14 @@ router.get(
 router.get(
   "/stats",
   requirePermission(ModuloSistema.COMUM, AcaoPermissao.VIEW),
-  programaController.getStats
+  programaController.getEstatisticas
 );
 
 // Buscar programas por tipo
 router.get(
   "/tipo/:tipo",
   requirePermission(ModuloSistema.COMUM, AcaoPermissao.VIEW),
-  programaController.findByTipo
+  programaController.getByTipo
 );
 
 // Buscar programa por ID
@@ -37,7 +37,7 @@ router.get(
 router.get(
   "/:id/regras",
   requirePermission(ModuloSistema.COMUM, AcaoPermissao.VIEW),
-  programaController.findByIdWithRules
+  programaController.getByIdWithRules
 );
 
 // Criar novo programa
@@ -51,7 +51,7 @@ router.post(
 router.post(
   "/:id/duplicar",
   requirePermission(ModuloSistema.COMUM, AcaoPermissao.CREATE),
-  programaController.duplicate
+  programaController.duplicarPrograma
 );
 
 // Atualizar programa
@@ -62,7 +62,7 @@ router.put(
 );
 
 // Alterar status do programa
-router.patch(
+router.put(
   "/:id/status",
   requirePermission(ModuloSistema.COMUM, AcaoPermissao.EDIT),
   programaController.status

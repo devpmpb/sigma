@@ -1,4 +1,3 @@
-// frontend/src/pages/movimentos/comum/SolicitacoesBeneficio.tsx - ARQUIVO COMPLETO SUBSTITUÍDO
 import React from "react";
 import { formatarData } from "../../../../utils/formatters";
 import { Column } from "../../../../components/comum/DataTable";
@@ -7,9 +6,7 @@ import solicitacaoBeneficioService, {
   SolicitacaoBeneficioDTO,
   StatusSolicitacao,
 } from "../../../../services/comum/solicitacaoBeneficioService";
-import programaService, {
-  TipoPerfil,
-} from "../../../../services/comum/programaService";
+import programaService, { TipoPerfil } from "../../../../services/comum/programaService";
 import { CadastroBase } from "../../../../components/cadastro";
 import SolicitacaoBeneficioForm from "./SolicitacaoBeneficioForm";
 
@@ -50,18 +47,14 @@ const SolicitacoesBeneficio: React.FC = () => {
         <div>
           <div className="font-medium">{solicitacao.programa.nome}</div>
           <div className="flex items-center gap-2 mt-1">
-            <span
+            <span 
               className={`px-2 py-1 rounded-full text-xs font-medium ${
-                programaService.getSecretariaColor(
-                  solicitacao.programa.secretaria
-                ) === "green"
-                  ? "bg-green-100 text-green-800"
-                  : "bg-blue-100 text-blue-800"
+                programaService.getSecretariaColor(solicitacao.programa.secretaria) === 'green' 
+                  ? 'bg-green-100 text-green-800'
+                  : 'bg-blue-100 text-blue-800'
               }`}
             >
-              {programaService.formatarSecretaria(
-                solicitacao.programa.secretaria
-              )}
+              {programaService.formatarSecretaria(solicitacao.programa.secretaria)}
             </span>
             <span className="text-xs text-gray-500">
               {solicitacao.programa.tipoPrograma}
@@ -71,48 +64,10 @@ const SolicitacoesBeneficio: React.FC = () => {
       ),
     },
     {
-      title: "Valor Solicitado",
-      key: "valorSolicitado",
-      align: "right",
-      render: (solicitacao) => (
-        <div className="text-right">
-          {solicitacao.valorSolicitado ? (
-            <span className="font-medium">
-              {solicitacaoBeneficioService.formatarValor(
-                solicitacao.valorSolicitado
-              )}
-            </span>
-          ) : (
-            <span className="text-gray-400">-</span>
-          )}
-        </div>
-      ),
-    },
-    {
-      title: "Valor Aprovado",
-      key: "valorAprovado",
-      align: "right",
-      render: (solicitacao) => (
-        <div className="text-right">
-          {solicitacao.valorAprovado ? (
-            <span className="font-medium text-green-600">
-              {solicitacaoBeneficioService.formatarValor(
-                solicitacao.valorAprovado
-              )}
-            </span>
-          ) : (
-            <span className="text-gray-400">-</span>
-          )}
-        </div>
-      ),
-    },
-    {
       title: "Status",
       key: "status",
       render: (solicitacao) => {
-        const cor = solicitacaoBeneficioService.getStatusColor(
-          solicitacao.status
-        );
+        const cor = solicitacaoBeneficioService.getStatusColor(solicitacao.status);
         const corClasses = {
           green: "bg-green-100 text-green-800",
           red: "bg-red-100 text-red-800",
@@ -122,9 +77,7 @@ const SolicitacoesBeneficio: React.FC = () => {
         };
 
         return (
-          <span
-            className={`px-2 py-1 rounded-full text-xs font-medium ${corClasses[cor]}`}
-          >
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${corClasses[cor]}`}>
             {solicitacaoBeneficioService.formatarStatus(solicitacao.status)}
           </span>
         );
@@ -136,69 +89,45 @@ const SolicitacoesBeneficio: React.FC = () => {
   const quickFilters = [
     {
       label: "Pendentes",
-      filter: (items: SolicitacaoBeneficio[]) =>
-        items.filter((s) => s.status === StatusSolicitacao.PENDENTE),
+      filter: (items: SolicitacaoBeneficio[]) => 
+        items.filter(s => s.status === StatusSolicitacao.PENDENTE)
     },
     {
       label: "Em Análise",
-      filter: (items: SolicitacaoBeneficio[]) =>
-        items.filter((s) => s.status === StatusSolicitacao.EM_ANALISE),
+      filter: (items: SolicitacaoBeneficio[]) => 
+        items.filter(s => s.status === StatusSolicitacao.EM_ANALISE)
     },
     {
       label: "Aprovadas",
-      filter: (items: SolicitacaoBeneficio[]) =>
-        items.filter((s) => s.status === StatusSolicitacao.APROVADA),
+      filter: (items: SolicitacaoBeneficio[]) => 
+        items.filter(s => s.status === StatusSolicitacao.APROVADA)
     },
     {
       label: "Agricultura",
-      filter: (items: SolicitacaoBeneficio[]) =>
-        items.filter((s) => s.programa.secretaria === TipoPerfil.AGRICULTURA),
+      filter: (items: SolicitacaoBeneficio[]) => 
+        items.filter(s => s.programa.secretaria === TipoPerfil.AGRICULTURA)
     },
     {
       label: "Obras",
-      filter: (items: SolicitacaoBeneficio[]) =>
-        items.filter((s) => s.programa.secretaria === TipoPerfil.OBRAS),
-    },
-    {
-      label: "Com Valor",
-      filter: (items: SolicitacaoBeneficio[]) =>
-        items.filter((s) => s.valorSolicitado && s.valorSolicitado > 0),
-    },
+      filter: (items: SolicitacaoBeneficio[]) => 
+        items.filter(s => s.programa.secretaria === TipoPerfil.OBRAS)
+    }
   ];
 
-  // Função para calcular métricas
+  // Função para calcular métricas (simplificada)
   const calculateMetrics = (items: SolicitacaoBeneficio[]) => {
     const total = items.length;
-    const porStatus = {
-      pendentes: items.filter((s) => s.status === StatusSolicitacao.PENDENTE)
-        .length,
-      emAnalise: items.filter((s) => s.status === StatusSolicitacao.EM_ANALISE)
-        .length,
-      aprovadas: items.filter((s) => s.status === StatusSolicitacao.APROVADA)
-        .length,
-      rejeitadas: items.filter((s) => s.status === StatusSolicitacao.REJEITADA)
-        .length,
-    };
-    const porSecretaria = {
-      agricultura: items.filter(
-        (s) => s.programa.secretaria === TipoPerfil.AGRICULTURA
-      ).length,
-      obras: items.filter((s) => s.programa.secretaria === TipoPerfil.OBRAS)
-        .length,
-    };
-    const valorTotalSolicitado = items
-      .filter((s) => s.valorSolicitado)
-      .reduce((sum, s) => sum + (s.valorSolicitado || 0), 0);
-    const valorTotalAprovado = items
-      .filter((s) => s.valorAprovado)
-      .reduce((sum, s) => sum + (s.valorAprovado || 0), 0);
+    const pendentes = items.filter(s => s.status === StatusSolicitacao.PENDENTE).length;
+    const aprovadas = items.filter(s => s.status === StatusSolicitacao.APROVADA).length;
+    const agricultura = items.filter(s => s.programa.secretaria === TipoPerfil.AGRICULTURA).length;
+    const obras = items.filter(s => s.programa.secretaria === TipoPerfil.OBRAS).length;
 
     return {
       total,
-      porStatus,
-      porSecretaria,
-      valorTotalSolicitado,
-      valorTotalAprovado,
+      pendentes,
+      aprovadas,
+      agricultura,
+      obras,
     };
   };
 
@@ -206,9 +135,7 @@ const SolicitacoesBeneficio: React.FC = () => {
   const actionButtons = (
     <>
       <button
-        onClick={() =>
-          window.open("/relatorios/solicitacoes-beneficio", "_blank")
-        }
+        onClick={() => window.open("/relatorios/solicitacoes-beneficio", "_blank")}
         className="inline-flex items-center px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
       >
         <svg
@@ -278,7 +205,7 @@ const SolicitacoesBeneficio: React.FC = () => {
       service={solicitacaoBeneficioService}
       columns={columns}
       rowKey="id"
-      baseUrl="/movimentos/comum/solicitacoes"
+      baseUrl="/movimentos/comum/solicitacoesBeneficios"
       module="comum"
       FormComponent={SolicitacaoBeneficioForm}
       searchPlaceholder="Buscar por pessoa, programa ou observações..."

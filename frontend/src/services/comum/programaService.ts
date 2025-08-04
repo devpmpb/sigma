@@ -97,9 +97,6 @@ class ProgramaService extends BaseApiService<Programa, ProgramaDTO> {
     return response.data;
   }
 
-  /**
-   * NOVO MÉTODO: Busca programas da agricultura (apenas produtores)
-   */
   async getProgramasAgricultura(): Promise<Programa[]> {
     return this.getBySecretaria("agricultura");
   }

@@ -6,6 +6,7 @@ export { default as propriedadeService } from "./comum/propriedadeService";
 export { default as produtorService } from "./comum/produtorService";
 export { default as enderecoService } from "./comum/enderecoService";
 export { default as transferenciaPropiedadeService } from "./comum/transferenciaPropiedadeService";
+export { default as solicitacaoBeneficioService } from "./comum/solicitacaoBeneficioService"; // NOVO SERVIÇO ADICIONADO
 
 // Serviços de agricultura
 export { default as grupoProdutoService } from "./agricultura/grupoProdutoService";
@@ -72,9 +73,9 @@ export type {
 export type {
   SolicitacaoBeneficio,
   SolicitacaoBeneficioDTO,
-  StatusSolicitacao,
   EstatisticasSolicitacao,
 } from "./comum/solicitacaoBeneficioService";
+export { StatusSolicitacao } from "./comum/solicitacaoBeneficioService";
 
 export type { TipoVeiculo, TipoVeiculoDTO } from "./obras/tipoVeiculoService";
 

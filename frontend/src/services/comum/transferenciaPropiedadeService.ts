@@ -63,10 +63,7 @@ class TransferenciaPropiedadeService extends BaseApiService<
     super("/transferencias-propriedade", "comum");
   }
 
-  /**
-   * Sobrescreve o método create para realizar a transferência completa
-   * Chama endpoint específico que altera proprietarioId na Propriedade e salva histórico
-   */
+
   transferir = async (
     data: TransferenciaPropiedadeDTO
   ): Promise<TransferenciaPropriedade> => {

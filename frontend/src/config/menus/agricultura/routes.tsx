@@ -8,7 +8,6 @@ const ProdutorForm = lazy(() => import("../../../pages/cadastros/agricultura/pro
 
 
 // Componentes de movimentos (placeholder)
-const SolicitacoesBeneficio = lazy(() => import("../../../pages/movimentos/comum/SolicitacoesBeneficio"));
 const AvaliacoesBeneficio = lazy(() => import("../../../pages/movimentos/comum/AvaliacoesBeneficio"));
 const RelatoriosBeneficio = lazy(() => import("../../../pages/movimentos/comum/RelatoriosBeneficio"));
 
@@ -24,7 +23,6 @@ export const agriculturaComponents = {
   GrupoProduto,
   Produtor,
   ProdutorForm,
-  SolicitacoesBeneficio,
   AvaliacoesBeneficio,
   RelatoriosBeneficio,
   ArrendamentosPage,
@@ -53,12 +51,6 @@ export const agriculturaRouteConfig = [
     action: "view"
   },
   // Movimentos
-  {
-    path: "/movimentos/agricultura/solicitacoes",
-    component: SolicitacoesBeneficio,
-    module: "agricultura",
-    action: "view"
-  },
   {
     path: "/movimentos/agricultura/avaliacoes",
     component: AvaliacoesBeneficio,

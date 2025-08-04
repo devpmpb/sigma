@@ -36,12 +36,6 @@ router.delete(
   solicitacaoBeneficioController.delete
 );
 
-router.patch(
-  "/:id/toggle",
-  requirePermission(ModuloSistema.COMUM, AcaoPermissao.EDIT),
-  solicitacaoBeneficioController.toggleStatus
-);
-
 // Rotas específicas
 router.get(
   "/pessoa/:pessoaId",

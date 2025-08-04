@@ -1,5 +1,3 @@
-// backend/prisma/seeds/authSeed.ts - ARQUIVO CORRIGIDO COM ENUMs
-
 import {
   PrismaClient,
   TipoPerfil,

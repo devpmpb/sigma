@@ -11,14 +11,13 @@ export enum StatusSolicitacao {
   EM_ANALISE = "em_analise",
   APROVADA = "aprovada",
   REJEITADA = "rejeitada",
-  CANCELADA = "cancelada",
+  CANCELADA = "cancelada"
 }
 
 // Interface para dados da solicitação
 export interface SolicitacaoBeneficioData {
   pessoaId: number;
   programaId: number;
-  valorSolicitado?: number;
   observacoes?: string;
   status?: string;
 }
@@ -41,10 +40,10 @@ const genericController = createGenericController({
             id: true,
             dap: true,
             tipoProdutor: true,
-            atividadePrincipal: true,
-          },
-        },
-      },
+            atividadePrincipal: true
+          }
+        }
+      }
     },
     programa: {
       select: {
@@ -52,48 +51,36 @@ const genericController = createGenericController({
         nome: true,
         tipoPrograma: true,
         secretaria: true,
-        ativo: true,
-      },
-    },
+        ativo: true
+      }
+    }
   },
   validateCreate: (data: SolicitacaoBeneficioData) => {
     const errors = [];
-
+    
     if (!data.pessoaId) {
       errors.push("Pessoa é obrigatória");
     }
-
+    
     if (!data.programaId) {
       errors.push("Programa é obrigatório");
     }
-
-    if (
-      data.valorSolicitado &&
-      (isNaN(Number(data.valorSolicitado)) || Number(data.valorSolicitado) <= 0)
-    ) {
-      errors.push("Valor solicitado deve ser um número positivo");
-    }
-
+    
     return {
       isValid: errors.length === 0,
-      errors: errors.length > 0 ? errors : undefined,
+      errors: errors.length > 0 ? errors : undefined
     };
   },
   validateUpdate: (data: SolicitacaoBeneficioData) => {
     const errors = [];
-
-    if (
-      data.valorSolicitado &&
-      (isNaN(Number(data.valorSolicitado)) || Number(data.valorSolicitado) <= 0)
-    ) {
-      errors.push("Valor solicitado deve ser um número positivo");
-    }
-
+    
+    // Para atualização, não há validações específicas além das básicas
+    
     return {
       isValid: errors.length === 0,
-      errors: errors.length > 0 ? errors : undefined,
+      errors: errors.length > 0 ? errors : undefined
     };
-  },
+  }
 });
 
 // Métodos específicos
@@ -117,21 +104,21 @@ export const solicitacaoBeneficioController = {
                 select: {
                   id: true,
                   dap: true,
-                  tipoProdutor: true,
-                },
-              },
-            },
+                  tipoProdutor: true
+                }
+              }
+            }
           },
           programa: {
             select: {
               id: true,
               nome: true,
               tipoPrograma: true,
-              secretaria: true,
-            },
-          },
+              secretaria: true
+            }
+          }
         },
-        orderBy: { datasolicitacao: "desc" },
+        orderBy: { datasolicitacao: "desc" }
       });
 
       res.json(solicitacoes);
@@ -158,21 +145,21 @@ export const solicitacaoBeneficioController = {
                 select: {
                   id: true,
                   dap: true,
-                  tipoProdutor: true,
-                },
-              },
-            },
+                  tipoProdutor: true
+                }
+              }
+            }
           },
           programa: {
             select: {
               id: true,
               nome: true,
               tipoPrograma: true,
-              secretaria: true,
-            },
-          },
+              secretaria: true
+            }
+          }
         },
-        orderBy: { datasolicitacao: "desc" },
+        orderBy: { datasolicitacao: "desc" }
       });
 
       res.json(solicitacoes);
@@ -190,8 +177,8 @@ export const solicitacaoBeneficioController = {
       const solicitacoes = await prisma.solicitacaoBeneficio.findMany({
         where: {
           programa: {
-            secretaria: secretaria.toUpperCase() as any,
-          },
+            secretaria: secretaria.toUpperCase() as any
+          }
         },
         include: {
           pessoa: {
@@ -203,21 +190,21 @@ export const solicitacaoBeneficioController = {
                 select: {
                   id: true,
                   dap: true,
-                  tipoProdutor: true,
-                },
-              },
-            },
+                  tipoProdutor: true
+                }
+              }
+            }
           },
           programa: {
             select: {
               id: true,
               nome: true,
               tipoPrograma: true,
-              secretaria: true,
-            },
-          },
+              secretaria: true
+            }
+          }
         },
-        orderBy: { datasolicitacao: "desc" },
+        orderBy: { datasolicitacao: "desc" }
       });
 
       res.json(solicitacoes);
@@ -231,38 +218,37 @@ export const solicitacaoBeneficioController = {
   async updateStatus(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      const { status, valorAprovado, observacoes } = req.body;
+      const { status, observacoes } = req.body;
 
       const solicitacao = await prisma.solicitacaoBeneficio.update({
         where: { id: parseInt(id) },
         data: {
           status,
-          valorAprovado: valorAprovado ? parseFloat(valorAprovado) : undefined,
-          observacoes,
+          observacoes
         },
         include: {
           pessoa: {
             select: {
               id: true,
               nome: true,
-              cpfCnpj: true,
-            },
+              cpfCnpj: true
+            }
           },
           programa: {
             select: {
               id: true,
               nome: true,
               tipoPrograma: true,
-              secretaria: true,
-            },
-          },
-        },
+              secretaria: true
+            }
+          }
+        }
       });
 
       res.json({
         sucesso: true,
         mensagem: "Status da solicitação atualizado com sucesso",
-        solicitacao,
+        solicitacao
       });
     } catch (error) {
       console.error("Erro ao atualizar status:", error);
@@ -273,54 +259,57 @@ export const solicitacaoBeneficioController = {
   // Obter estatísticas das solicitações
   async getEstatisticas(req: Request, res: Response) {
     try {
-      const [totalSolicitacoes, porStatus, porSecretaria, porPrograma] =
-        await Promise.all([
-          // Total de solicitações
-          prisma.solicitacaoBeneficio.count(),
-
-          // Por status
-          prisma.solicitacaoBeneficio.groupBy({
-            by: ["status"],
-            _count: { id: true },
-          }),
-
-          // Por secretaria
-          prisma.solicitacaoBeneficio.groupBy({
-            by: ["programaId"],
-            _count: { id: true },
-            _sum: { valorAprovado: true },
-          }),
-
-          // Programas mais solicitados
-          prisma.solicitacaoBeneficio.groupBy({
-            by: ["programaId"],
-            _count: { id: true },
-            orderBy: { _count: { id: "desc" } },
-            take: 5,
-          }),
-        ]);
+      const [
+        totalSolicitacoes,
+        porStatus,
+        porSecretaria,
+        porPrograma
+      ] = await Promise.all([
+        // Total de solicitações
+        prisma.solicitacaoBeneficio.count(),
+        
+        // Por status
+        prisma.solicitacaoBeneficio.groupBy({
+          by: ['status'],
+          _count: { id: true }
+        }),
+        
+        // Por secretaria
+        prisma.solicitacaoBeneficio.groupBy({
+          by: ['programaId'],
+          _count: { id: true }
+        }),
+        
+        // Programas mais solicitados
+        prisma.solicitacaoBeneficio.groupBy({
+          by: ['programaId'],
+          _count: { id: true },
+          orderBy: { _count: { id: 'desc' } },
+          take: 5
+        })
+      ]);
 
       // Buscar nomes dos programas
-      const programaIds = porPrograma.map((p) => p.programaId);
+      const programaIds = porPrograma.map(p => p.programaId);
       const programas = await prisma.programa.findMany({
         where: { id: { in: programaIds } },
-        select: { id: true, nome: true, secretaria: true },
+        select: { id: true, nome: true, secretaria: true }
       });
 
-      const programasComNomes = porPrograma.map((p) => ({
+      const programasComNomes = porPrograma.map(p => ({
         ...p,
-        programa: programas.find((prog) => prog.id === p.programaId),
+        programa: programas.find(prog => prog.id === p.programaId)
       }));
 
       res.json({
         totalSolicitacoes,
         porStatus,
         porSecretaria,
-        programasMaisSolicitados: programasComNomes,
+        programasMaisSolicitados: programasComNomes
       });
     } catch (error) {
       console.error("Erro ao buscar estatísticas:", error);
       res.status(500).json({ erro: "Erro interno do servidor" });
     }
-  },
+  }
 };

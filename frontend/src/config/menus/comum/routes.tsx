@@ -196,13 +196,13 @@ export const comunRouteConfig = [
     action: "create",
   },
   {
-    path: "/movimentos/comum/solicitacoes",
+    path: "/movimentos/comum/solicitacoesBeneficios",
     component: SolicitacoesBeneficio,
     module: "comum",
     action: "view",
   },
   {
-    path: "/movimentos/comum/solicitacoes/:id",
+    path: "/movimentos/comum/solicitacoesBeneficios/:id",
     component: SolicitacaoBeneficioForm,
     module: "comum",
     action: "view",
