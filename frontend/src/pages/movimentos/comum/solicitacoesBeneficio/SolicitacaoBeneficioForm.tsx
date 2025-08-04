@@ -118,6 +118,23 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
     return Object.keys(errors).length > 0 ? errors : null;
   };
 
+  // Função para converter strings para números
+  const handleSelectChange = (
+    e: React.ChangeEvent<HTMLSelectElement>, 
+    handleChange: any, 
+    setValue: any
+  ) => {
+    const { name, value } = e.target;
+    
+    // Converter para número se for pessoaId ou programaId
+    if (name === 'pessoaId' || name === 'programaId') {
+      const numericValue = value === '' ? 0 : parseInt(value, 10);
+      setValue(name, numericValue);
+    } else {
+      handleChange(e);
+    }
+  };
+
   return (
     <FormBase<SolicitacaoBeneficio, SolicitacaoBeneficioDTO>
       title="Solicitação de Benefício"
@@ -125,7 +142,7 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
       id={solicitacaoId}
       initialValues={initialValues}
       validate={validate}
-      returnUrl="/movimentos/comum/solicitacoesBeneficios"
+      returnUrl="/movimentos/comum/solicitacoes"
       onSave={onSave}
     >
       {({ values, errors, touched, handleChange, setValue }) => (
@@ -147,7 +164,7 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
                 name="programaId"
                 value={values.programaId}
                 onChange={(e) => {
-                  handleChange(e);
+                  handleSelectChange(e, handleChange, setValue);
                   handleProgramaChange(Number(e.target.value), setValue);
                 }}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -180,7 +197,7 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
                 id="pessoaId"
                 name="pessoaId"
                 value={values.pessoaId}
-                onChange={handleChange}
+                onChange={(e) => handleSelectChange(e, handleChange, setValue)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 disabled={!programaSelecionado || loadingPessoas}
               >
@@ -196,7 +213,7 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
                 {pessoas.map((pessoa) => (
                   <option key={pessoa.id} value={pessoa.id}>
                     {pessoa.nome} - {pessoa.cpfCnpj}
-                    {/*pessoa.produtor && ` (${pessoa.produtor.dap || 'Sem DAP'})`*/}
+                    {pessoa.produtor && ` (${pessoa.produtor.dap || 'Sem DAP'})`}
                   </option>
                 ))}
               </select>

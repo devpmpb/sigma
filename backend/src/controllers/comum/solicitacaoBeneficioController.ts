@@ -27,34 +27,7 @@ const genericController = createGenericController({
   modelName: "solicitacaoBeneficio",
   displayName: "Solicitação de Benefício",
   orderBy: { datasolicitacao: "desc" },
-  includeRelations: {
-    pessoa: {
-      select: {
-        id: true,
-        nome: true,
-        cpfCnpj: true,
-        telefone: true,
-        email: true,
-        produtor: {
-          select: {
-            id: true,
-            dap: true,
-            tipoProdutor: true,
-            atividadePrincipal: true
-          }
-        }
-      }
-    },
-    programa: {
-      select: {
-        id: true,
-        nome: true,
-        tipoPrograma: true,
-        secretaria: true,
-        ativo: true
-      }
-    }
-  },
+
   validateCreate: (data: SolicitacaoBeneficioData) => {
     const errors = [];
     
@@ -86,6 +59,39 @@ const genericController = createGenericController({
 // Métodos específicos
 export const solicitacaoBeneficioController = {
   ...genericController,
+
+  findAll: async (req: Request, res: Response) => {
+      try {
+        const solicitacoes = await prisma.solicitacaoBeneficio.findMany({
+          include: {
+            pessoa: {
+            select: {
+              id: true,
+              nome: true,
+              cpfCnpj: true,
+              
+            }
+          },
+          programa: {
+            select: {
+              id: true,
+              nome: true,
+              tipoPrograma: true,
+              secretaria: true
+            }
+          }
+          },
+          orderBy: { datasolicitacao: "asc" },
+        });
+  
+        return res.status(200).json(solicitacoes);
+      } catch (error) {
+        console.error("Erro ao listar solicitações:", error);
+        return res.status(500).json({
+          erro: "Erro ao listar solicitações",
+        });
+      }
+    },
 
   // Buscar solicitações por pessoa
   async getByPessoa(req: Request, res: Response) {

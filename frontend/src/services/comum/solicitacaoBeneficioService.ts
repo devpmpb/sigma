@@ -1,3 +1,4 @@
+// frontend/src/services/comum/solicitacaoBeneficioService.ts
 import BaseApiService from "../baseApiService";
 import apiClient from "../apiConfig";
 import { TipoPerfil } from "../comum/programaService";
@@ -20,6 +21,7 @@ export interface SolicitacaoBeneficio {
   createdAt: string;
   updatedAt: string;
   
+  // Relacionamentos
   pessoa: {
     id: number;
     nome: string;
@@ -75,21 +77,63 @@ class SolicitacaoBeneficioService extends BaseApiService<SolicitacaoBeneficio, S
     super("/solicitacoesBeneficio", "comum");
   }
 
+  /**
+   * Sobrescrever create para garantir conversão de tipos
+   */
+  async create(data: SolicitacaoBeneficioDTO): Promise<SolicitacaoBeneficio> {
+    // Garantir que IDs sejam números
+    const processedData = {
+      ...data,
+      pessoaId: Number(data.pessoaId),
+      programaId: Number(data.programaId),
+    };
+
+    const response = await apiClient.post(this.baseUrl, processedData);
+    return response.data;
+  }
+
+  /**
+   * Sobrescrever update para garantir conversão de tipos
+   */
+  async update(id: number | string, data: Partial<SolicitacaoBeneficioDTO>): Promise<SolicitacaoBeneficio> {
+    // Garantir que IDs sejam números se fornecidos
+    const processedData = {
+      ...data,
+      ...(data.pessoaId && { pessoaId: Number(data.pessoaId) }),
+      ...(data.programaId && { programaId: Number(data.programaId) }),
+    };
+
+    const response = await apiClient.put(`${this.baseUrl}/${id}`, processedData);
+    return response.data;
+  }
+
+  /**
+   * Busca solicitações por pessoa
+   */
   async getByPessoa(pessoaId: number | string): Promise<SolicitacaoBeneficio[]> {
     const response = await apiClient.get(`${this.baseUrl}/pessoa/${pessoaId}`);
     return response.data;
   }
 
+  /**
+   * Busca solicitações por programa
+   */
   async getByPrograma(programaId: number | string): Promise<SolicitacaoBeneficio[]> {
     const response = await apiClient.get(`${this.baseUrl}/programa/${programaId}`);
     return response.data;
   }
 
+  /**
+   * Busca solicitações por secretaria
+   */
   async getBySecretaria(secretaria: string): Promise<SolicitacaoBeneficio[]> {
     const response = await apiClient.get(`${this.baseUrl}/secretaria/${secretaria}`);
     return response.data;
   }
 
+  /**
+   * Atualiza status da solicitação
+   */
   async updateStatus(
     id: number | string, 
     dados: {
@@ -101,11 +145,17 @@ class SolicitacaoBeneficioService extends BaseApiService<SolicitacaoBeneficio, S
     return response.data.solicitacao;
   }
 
+  /**
+   * Busca estatísticas das solicitações
+   */
   async getEstatisticas(): Promise<EstatisticasSolicitacao> {
     const response = await apiClient.get(`${this.baseUrl}/stats`);
     return response.data;
   }
 
+  /**
+   * Busca por termo (sobrescreve método da classe base)
+   */
   async buscarPorTermo(termo: string): Promise<SolicitacaoBeneficio[]> {
     if (!termo.trim()) {
       return this.getAll();
@@ -117,6 +167,9 @@ class SolicitacaoBeneficioService extends BaseApiService<SolicitacaoBeneficio, S
     return response.data;
   }
 
+  /**
+   * Opções de status para select
+   */
   getStatusOptions() {
     return [
       { value: StatusSolicitacao.PENDENTE, label: "Pendente", color: "yellow" as const },
@@ -127,6 +180,9 @@ class SolicitacaoBeneficioService extends BaseApiService<SolicitacaoBeneficio, S
     ];
   }
 
+  /**
+   * Formata status para exibição
+   */
   formatarStatus(status: string): string {
     const statusMap = {
       [StatusSolicitacao.PENDENTE]: "Pendente",
@@ -139,6 +195,9 @@ class SolicitacaoBeneficioService extends BaseApiService<SolicitacaoBeneficio, S
     return statusMap[status as StatusSolicitacao] || status;
   }
 
+  /**
+   * Retorna cor do status para badges
+   */
   getStatusColor(status: string): "green" | "red" | "yellow" | "blue" | "gray" {
     const colorMap = {
       [StatusSolicitacao.PENDENTE]: "yellow" as const,
@@ -151,6 +210,9 @@ class SolicitacaoBeneficioService extends BaseApiService<SolicitacaoBeneficio, S
     return colorMap[status as StatusSolicitacao] || "gray";
   }
 
+  /**
+   * Valida dados da solicitação
+   */
   private validateSolicitacaoData(data: SolicitacaoBeneficioDTO): string[] {
     const errors: string[] = [];
 
