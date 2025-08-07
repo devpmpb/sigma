@@ -49,6 +49,18 @@ export const cadastrosComunMenu: MenuGroup = {
       path: "/cadastros/comum/regrasNegocio",
       module: "comum",
     },
+    {
+      id: "cadastro-tipo-veiculo",
+      title: "Tipo de Veículo",
+      path: "/cadastros/comum/tipoVeiculo",
+      module: "comum",
+    },
+    {
+      id: "cadastro-veiculo",
+      title: "Veículo",
+      path: "/cadastros/comum/veiculos",
+      module: "comum",
+    },
   ],
 };
 

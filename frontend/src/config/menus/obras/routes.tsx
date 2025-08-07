@@ -1,9 +1,7 @@
 import { lazy } from "react";
 
 // Usando lazy loading para componentes
-const TipoVeiculo = lazy(
-  () => import("../../../pages/cadastros/obras/TipoVeiculo")
-);
+
 const MovimentoObras1 = lazy(
   () => import("../../../pages/movimentos/obras/Obras")
 );
@@ -16,7 +14,6 @@ const MovimentoObras3 = lazy(
 
 // Exportamos os componentes para compatibilidade com código existente
 export const obrasComponents = {
-  TipoVeiculo,
   MovimentoObras1,
   MovimentoObras2,
   MovimentoObras3,
@@ -24,12 +21,6 @@ export const obrasComponents = {
 
 // Exportamos as configurações das rotas para compatibilidade
 export const obrasRouteConfig = [
-  {
-    path: "/cadastros/obras/tipoVeiculo",
-    component: TipoVeiculo,
-    module: "obras",
-    action: "view",
-  },
   {
     path: "/movimentos/obras/movimento1",
     component: MovimentoObras1,

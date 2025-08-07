@@ -83,6 +83,19 @@ CREATE TABLE "public"."TipoVeiculo" (
 );
 
 -- CreateTable
+CREATE TABLE "public"."Veiculo" (
+    "id" SERIAL NOT NULL,
+    "tipoVeiculoId" INTEGER NOT NULL,
+    "descricao" TEXT NOT NULL,
+    "placa" TEXT NOT NULL,
+    "ativo" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Veiculo_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "public"."Pessoa" (
     "id" SERIAL NOT NULL,
     "tipoPessoa" "public"."TipoPessoa" NOT NULL,
@@ -356,6 +369,9 @@ CREATE UNIQUE INDEX "GrupoProduto_descricao_key" ON "public"."GrupoProduto"("des
 CREATE UNIQUE INDEX "TipoVeiculo_descricao_key" ON "public"."TipoVeiculo"("descricao");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "Veiculo_placa_key" ON "public"."Veiculo"("placa");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "Pessoa_cpfCnpj_key" ON "public"."Pessoa"("cpfCnpj");
 
 -- CreateIndex
@@ -381,6 +397,9 @@ CREATE UNIQUE INDEX "UsuarioSessao_token_key" ON "public"."UsuarioSessao"("token
 
 -- CreateIndex
 CREATE UNIQUE INDEX "UsuarioSessao_refreshToken_key" ON "public"."UsuarioSessao"("refreshToken");
+
+-- AddForeignKey
+ALTER TABLE "public"."Veiculo" ADD CONSTRAINT "Veiculo_tipoVeiculoId_fkey" FOREIGN KEY ("tipoVeiculoId") REFERENCES "public"."TipoVeiculo"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "public"."PessoaFisica" ADD CONSTRAINT "PessoaFisica_id_fkey" FOREIGN KEY ("id") REFERENCES "public"."Pessoa"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

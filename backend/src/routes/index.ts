@@ -6,7 +6,7 @@ import bairroRoutes from "./comum/bairroRoutes";
 import grupoProdutoRoutes from "./agricultura/grupoProdutoRoutes";
 import programaRoutes from "./comum/programaRoutes";
 import regrasNegocioRoutes from "./comum/regrasNegocioRoutes";
-import tipoVeiculoRoutes from "./obras/tipoVeiculoRoutes";
+import tipoVeiculoRoutes from "./comum/tipoVeiculoRoutes";
 import logradouroRoutes from "./comum/logradouroRoutes";
 import pessoaRoutes from "./comum/pessoaRoutes";
 import propriedadeRoutes from "./comum/propriedadeRoutes";
@@ -22,6 +22,7 @@ import {
   requireModuleAccess,
 } from "../middleware/authMiddleware";
 import { ModuloSistema } from "@prisma/client";
+import veiculoRoutes from "./comum/veiculoRoutes";
 
 const router = Router();
 
@@ -91,11 +92,15 @@ router.use(
   arrendamentosRoutes
 );
 
-// OBRAS (requer acesso ao módulo obras)
 router.use(
   "/tipoVeiculos",
-  requireModuleAccess(ModuloSistema.OBRAS),
+  requireModuleAccess(ModuloSistema.COMUM),
   tipoVeiculoRoutes
+);
+router.use(
+  "/veiculos",
+  requireModuleAccess(ModuloSistema.COMUM),
+  veiculoRoutes
 );
 
 export default router;

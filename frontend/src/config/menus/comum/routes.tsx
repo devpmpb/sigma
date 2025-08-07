@@ -1,4 +1,5 @@
 import { lazy } from "react";
+import VeiculoForm from "../../../pages/cadastros/comum/veiculo/VeiculoForm";
 
 const Bairro = lazy(() => import("../../../pages/cadastros/comum/Bairro"));
 const Logradouro = lazy(
@@ -63,6 +64,14 @@ const RelatoriosBeneficio = lazy(
   () => import("../../../pages/movimentos/comum/RelatoriosBeneficio")
 );
 
+const TipoVeiculo = lazy(
+  () => import("../../../pages/cadastros/comum/TipoVeiculo")
+);
+
+const Veiculos = lazy(
+  () => import("../../../pages/cadastros/comum/veiculo/Veiculos")
+);
+
 export const comunComponents = {
   Usuarios,
   UsuarioForm,
@@ -80,6 +89,8 @@ export const comunComponents = {
   SolicitacaoBeneficioForm,
   AvaliacoesBeneficio,
   RelatoriosBeneficio,
+  TipoVeiculo,
+  Veiculos
 };
 
 export const comunRouteConfig = [
@@ -187,6 +198,24 @@ export const comunRouteConfig = [
     component: RegrasNegocioForm,
     module: "comum",
     action: "create",
+  },
+  {
+    path: "/cadastros/comum/tipoVeiculo",
+    component: TipoVeiculo,
+    module: "comum",
+    action: "view",
+  },
+  {
+    path: "/cadastros/comum/veiculos",
+    component: Veiculos,
+    module: "comum",
+    action: "view",
+  },
+  {
+    path: "/cadastros/comum/veiculos/:id",
+    component: VeiculoForm,
+    module: "comum",
+    action: "view",
   },
   // Movimentos
   {
