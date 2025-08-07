@@ -7,6 +7,8 @@ export { default as produtorService } from "./comum/produtorService";
 export { default as enderecoService } from "./comum/enderecoService";
 export { default as transferenciaPropiedadeService } from "./comum/transferenciaPropiedadeService";
 export { default as solicitacaoBeneficioService } from "./comum/solicitacaoBeneficioService"; // NOVO SERVIÇO ADICIONADO
+export { default as tipoVeiculoService } from "./comum/tipoVeiculoService";
+export { default as veiculoService } from "./comum/veiculoService";
 
 // Serviços de agricultura
 export { default as grupoProdutoService } from "./agricultura/grupoProdutoService";
@@ -14,8 +16,7 @@ export { default as programaService } from "./comum/programaService";
 export { default as regrasNegocioService } from "./comum/regrasNegocioService";
 export { default as arrendamentoService } from "./agricultura/arrendamentoService";
 
-// Serviços de obras
-export { default as tipoVeiculoService } from "./obras/tipoVeiculoService";
+
 
 // Exportar tipos também
 export type { Bairro, BairroDTO } from "./comum/bairroService";
@@ -77,7 +78,8 @@ export type {
 } from "./comum/solicitacaoBeneficioService";
 export { StatusSolicitacao } from "./comum/solicitacaoBeneficioService";
 
-export type { TipoVeiculo, TipoVeiculoDTO } from "./obras/tipoVeiculoService";
+export type { TipoVeiculo, TipoVeiculoDTO } from "./comum/tipoVeiculoService";
+export type { Veiculo, VeiculoDTO } from "./comum/veiculoService";
 
 export type {
   Arrendamento,
