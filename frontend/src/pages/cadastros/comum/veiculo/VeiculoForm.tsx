@@ -92,7 +92,10 @@ const VeiculoForm: React.FC<VeiculoFormProps> = ({ id, onSave }) => {
                 id="tipoVeiculoId"
                 name="tipoVeiculoId"
                 value={values.tipoVeiculoId}
-                onChange={handleChange}
+                onChange={(e) => {
+                  const value = e.target.value === "" ? 0 : Number(e.target.value);
+                  setValue("tipoVeiculoId", value); // Converte para number
+                }}
                 disabled={loadingTipos}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >

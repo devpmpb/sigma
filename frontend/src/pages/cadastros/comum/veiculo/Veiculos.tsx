@@ -8,12 +8,8 @@ import veiculoService, {
   VeiculoDTO,
 } from "../../../../services/comum/veiculoService";
 import { CadastroBase } from "../../../../components/cadastro";
-import VeiculoForm from "./VeiculoForm";
 
-/**
- * Componente de Listagem de Veículos
- * Utiliza o CadastroBase para mostrar a listagem em uma página separada
- */
+
 const Veiculos: React.FC = () => {
   // Definição das colunas da tabela
   const columns: Column<Veiculo>[] = [
@@ -59,7 +55,7 @@ const Veiculos: React.FC = () => {
       rowKey="id"
       baseUrl="/cadastros/comum/veiculos"
       module="comum"
-      FormComponent={VeiculoForm}
+      //FormComponent={VeiculoForm}
       searchPlaceholder="Buscar veículos por descrição, placa ou tipo..."
       enableStatusToggle={true}
       statusColumn={{

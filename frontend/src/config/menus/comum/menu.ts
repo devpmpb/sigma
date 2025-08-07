@@ -56,7 +56,7 @@ export const cadastrosComunMenu: MenuGroup = {
       module: "comum",
     },
     {
-      id: "cadastro-tipo-veiculo",
+      id: "cadastro-veiculo",
       title: "Veículo",
       path: "/cadastros/comum/veiculos",
       module: "comum",
