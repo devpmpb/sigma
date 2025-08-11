@@ -15,6 +15,7 @@ import produtorRoutes from "./comum/produtorRoutes";
 import arrendamentosRoutes from "./agricultura/arrendamentoRoutes";
 import transferenciaPropiedadeRoutes from "./comum/transferenciaPropiedadeRoutes";
 import solicitacoesBeneficioRoutes from "./comum/solicitacoesBeneficioRoutes";
+import ordemServicoRoutes from "./obras/ordemServicoRoutes";
 
 // Importar middleware de autenticação
 import {
@@ -102,5 +103,7 @@ router.use(
   requireModuleAccess(ModuloSistema.COMUM),
   veiculoRoutes
 );
+
+router.use("/ordens-servico", requireModuleAccess(ModuloSistema.OBRAS), ordemServicoRoutes);
 
 export default router;

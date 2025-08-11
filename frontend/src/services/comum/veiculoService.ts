@@ -24,26 +24,16 @@ export interface VeiculoDTO {
   ativo?: boolean;
 }
 
-/**
- * Serviço para operações com a entidade Veiculo
- * Módulo obras
- */
 class VeiculoService extends BaseApiService<Veiculo, VeiculoDTO> {
   constructor() {
     super("/veiculos", "obras");
   }
 
-  /**
-   * Busca veículos ativos
-   */
   getAtivos = async (): Promise<Veiculo[]> => {
     const response = await apiClient.get(`${this.baseUrl}/ativos`);
     return response.data;
   };
 
-  /**
-   * Formatar placa para exibição (com hífen)
-   */
   formatarPlaca = (placa: string): string => {
     if (!placa) return "";
     
