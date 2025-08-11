@@ -1,3 +1,4 @@
+// frontend/src/pages/movimentos/obras/ordemServico/OrdensServico.tsx
 import React from "react";
 import { formatarData, formatarMoeda } from "../../../../utils/formatters";
 import StatusBadge from "../../../../components/comum/StatusBadge";
@@ -7,7 +8,7 @@ import ordemServicoService, {
   StatusOrdemServico,
 } from "../../../../services/obras/ordemServicoService";
 import { CadastroBase } from "../../../../components/cadastro";
-import OrdemServicoForm from "./OrdemServicoForm";
+//import OrdemServicoForm from "./OrdemServicoForm";
 
 const OrdensServico: React.FC = () => {
   // Definição das colunas da tabela
@@ -51,7 +52,17 @@ const OrdensServico: React.FC = () => {
         <div>
           <div className="font-medium">{formatarData(ordem.dataServico)}</div>
           <div className="text-xs text-gray-500">
-            {ordem.horaInicio} às {ordem.horaFim}
+            {ordem.horaInicio && ordem.horaFim ? (
+              <span className="text-green-600">
+                ✓ {ordem.horaInicio} às {ordem.horaFim}
+              </span>
+            ) : ordem.horasEstimadas ? (
+              <span className="text-blue-600">
+                ⏱ {ordem.horasEstimadas}h estimadas
+              </span>
+            ) : (
+              <span className="text-gray-400">Aguardando execução</span>
+            )}
           </div>
         </div>
       ),
@@ -213,7 +224,7 @@ const OrdensServico: React.FC = () => {
       rowKey="id"
       baseUrl="/movimentos/obras/ordens-servico"
       module="obras"
-      FormComponent={OrdemServicoForm}
+      //FormComponent={OrdemServicoForm}
       showSearch={true}
       searchPlaceholder="Buscar por número da ordem, solicitante ou veículo..."
       actionButtons={actionButtons}

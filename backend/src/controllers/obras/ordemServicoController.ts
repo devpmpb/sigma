@@ -1,4 +1,3 @@
-// backend/src/controllers/obras/ordemServicoController.ts
 import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
 import { createGenericController } from "../GenericController";
@@ -38,9 +37,29 @@ const calcularHorasTrabalhadas = (horaInicio: string, horaFim: string): number =
   return diferencaMinutos / 60;
 };
 
-// Função para calcular valor do serviço
-const calcularValorServico = (tipoVeiculo: string, horaInicio: string, horaFim: string, valorReferencial: number = 180): number => {
-  const horas = calcularHorasTrabalhadas(horaInicio, horaFim);
+// Função para calcular valor do serviço (atualizada)
+const calcularValorServico = (
+  tipoVeiculo: string, 
+  horaInicio?: string, 
+  horaFim?: string, 
+  horasEstimadas?: number,
+  valorReferencial: number = 180
+): number => {
+  let horas = 0;
+  
+  // Se tem horários reais, usar eles
+  if (horaInicio && horaFim) {
+    horas = calcularHorasTrabalhadas(horaInicio, horaFim);
+  }
+  // Senão, usar horas estimadas
+  else if (horasEstimadas) {
+    horas = horasEstimadas;
+  }
+  // Se não tem nenhum, retorna 0
+  else {
+    return 0;
+  }
+
   const custoVeiculo = CUSTOS_VEICULOS[tipoVeiculo.toUpperCase()];
   
   if (!custoVeiculo) {
@@ -109,15 +128,7 @@ const genericController = createGenericController({
       errors.push("Data do serviço é obrigatória");
     }
     
-    if (!data.horaInicio) {
-      errors.push("Hora de início é obrigatória");
-    }
-    
-    if (!data.horaFim) {
-      errors.push("Hora de fim é obrigatória");
-    }
-    
-    // Validar formato de hora (HH:mm)
+    // Horários são opcionais, mas se preenchidos devem estar corretos
     const horaRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
     if (data.horaInicio && !horaRegex.test(data.horaInicio)) {
       errors.push("Formato da hora de início inválido (use HH:mm)");
@@ -125,6 +136,24 @@ const genericController = createGenericController({
     
     if (data.horaFim && !horaRegex.test(data.horaFim)) {
       errors.push("Formato da hora de fim inválido (use HH:mm)");
+    }
+    
+    // Se ambos os horários foram preenchidos, validar se fim > início
+    if (data.horaInicio && data.horaFim) {
+      const [inicioHora, inicioMin] = data.horaInicio.split(':').map(Number);
+      const [fimHora, fimMin] = data.horaFim.split(':').map(Number);
+      
+      const inicioEmMinutos = inicioHora * 60 + inicioMin;
+      const fimEmMinutos = fimHora * 60 + fimMin;
+      
+      if (fimEmMinutos <= inicioEmMinutos) {
+        errors.push("Hora de fim deve ser maior que a hora de início");
+      }
+    }
+    
+    // Validar horas estimadas se fornecidas
+    if (data.horasEstimadas && data.horasEstimadas <= 0) {
+      errors.push("Horas estimadas deve ser maior que zero");
     }
     
     return {
@@ -156,6 +185,7 @@ const genericController = createGenericController({
       veiculo.tipoVeiculo.descricao,
       data.horaInicio,
       data.horaFim,
+      data.horasEstimadas,
       valorReferencial
     );
     

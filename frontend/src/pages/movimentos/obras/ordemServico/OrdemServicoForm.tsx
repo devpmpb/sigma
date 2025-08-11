@@ -31,6 +31,7 @@ const OrdemServicoForm: React.FC<OrdemServicoFormProps> = ({ id, onSave }) => {
     dataServico: "",
     horaInicio: "",
     horaFim: "",
+    horasEstimadas: undefined,
     valorReferencial: 180,
     observacoes: "",
     enderecoServico: "",
@@ -66,8 +67,14 @@ const OrdemServicoForm: React.FC<OrdemServicoFormProps> = ({ id, onSave }) => {
   }, []);
 
   // Função para calcular valor em tempo real
-  const calcularValor = (veiculoId: number, horaInicio: string, horaFim: string, valorReferencial: number = 180) => {
-    if (!veiculoId || !horaInicio || !horaFim) {
+  const calcularValor = (
+    veiculoId: number, 
+    horaInicio?: string, 
+    horaFim?: string, 
+    horasEstimadas?: number, 
+    valorReferencial: number = 180
+  ) => {
+    if (!veiculoId) {
       setValorCalculado(0);
       return;
     }
@@ -82,6 +89,7 @@ const OrdemServicoForm: React.FC<OrdemServicoFormProps> = ({ id, onSave }) => {
       veiculo.tipoVeiculo.descricao,
       horaInicio,
       horaFim,
+      horasEstimadas,
       valorReferencial
     );
     
@@ -113,15 +121,8 @@ const OrdemServicoForm: React.FC<OrdemServicoFormProps> = ({ id, onSave }) => {
       }
     }
 
-    if (!values.horaInicio) {
-      errors.horaInicio = "Hora de início é obrigatória";
-    }
-
-    if (!values.horaFim) {
-      errors.horaFim = "Hora de fim é obrigatória";
-    }
-
-    // Validar se hora fim é maior que hora início
+    // Horários são opcionais, mas se preenchidos devem estar corretos
+    // Validar se hora fim é maior que hora início (quando ambos preenchidos)
     if (values.horaInicio && values.horaFim) {
       const [inicioHora, inicioMin] = values.horaInicio.split(':').map(Number);
       const [fimHora, fimMin] = values.horaFim.split(':').map(Number);
@@ -132,6 +133,11 @@ const OrdemServicoForm: React.FC<OrdemServicoFormProps> = ({ id, onSave }) => {
       if (fimEmMinutos <= inicioEmMinutos) {
         errors.horaFim = "Hora de fim deve ser maior que a hora de início";
       }
+    }
+
+    // Validar horas estimadas se fornecidas
+    if (values.horasEstimadas !== undefined && values.horasEstimadas <= 0) {
+      errors.horasEstimadas = "Horas estimadas deve ser maior que zero";
     }
 
     if (!values.valorReferencial || values.valorReferencial <= 0) {
@@ -154,8 +160,14 @@ const OrdemServicoForm: React.FC<OrdemServicoFormProps> = ({ id, onSave }) => {
       {({ values, errors, touched, handleChange, setValue }) => {
         // Recalcular valor quando campos relevantes mudarem
         React.useEffect(() => {
-          calcularValor(values.veiculoId, values.horaInicio, values.horaFim, values.valorReferencial);
-        }, [values.veiculoId, values.horaInicio, values.horaFim, values.valorReferencial]);
+          calcularValor(
+            values.veiculoId, 
+            values.horaInicio || undefined, 
+            values.horaFim || undefined, 
+            values.horasEstimadas, 
+            values.valorReferencial
+          );
+        }, [values.veiculoId, values.horaInicio, values.horaFim, values.horasEstimadas, values.valorReferencial]);
 
         return (
           <div className="space-y-6">
@@ -218,7 +230,7 @@ const OrdemServicoForm: React.FC<OrdemServicoFormProps> = ({ id, onSave }) => {
 
             {/* Seção de Data e Horário */}
             <FormSection title="Data e Horário do Serviço">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Data do Serviço */}
                 <FormField
                   name="dataServico"
@@ -237,71 +249,108 @@ const OrdemServicoForm: React.FC<OrdemServicoFormProps> = ({ id, onSave }) => {
                   />
                 </FormField>
 
-                {/* Hora Início */}
+                {/* Horas Estimadas */}
+                <FormField
+                  name="horasEstimadas"
+                  label="Horas Estimadas"
+                  error={touched.horasEstimadas ? errors.horasEstimadas : undefined}
+                  help="Tempo estimado que a máquina será utilizada"
+                >
+                  <input
+                    type="number"
+                    id="horasEstimadas"
+                    name="horasEstimadas"
+                    value={values.horasEstimadas || ""}
+                    onChange={(e) => setValue("horasEstimadas", e.target.value ? Number(e.target.value) : undefined)}
+                    step="0.5"
+                    min="0"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Ex: 4.5"
+                  />
+                </FormField>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                {/* Hora Início - Opcional */}
                 <FormField
                   name="horaInicio"
-                  label="Hora de Início"
+                  label="Hora de Início (Opcional)"
                   error={touched.horaInicio ? errors.horaInicio : undefined}
-                  required
+                  help="Preenchido após o início da execução"
                 >
                   <input
                     type="time"
                     id="horaInicio"
                     name="horaInicio"
-                    value={values.horaInicio}
+                    value={values.horaInicio || ""}
                     onChange={handleChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </FormField>
 
-                {/* Hora Fim */}
+                {/* Hora Fim - Opcional */}
                 <FormField
                   name="horaFim"
-                  label="Hora de Fim"
+                  label="Hora de Fim (Opcional)"
                   error={touched.horaFim ? errors.horaFim : undefined}
-                  required
+                  help="Preenchido após o término da execução"
                 >
                   <input
                     type="time"
                     id="horaFim"
                     name="horaFim"
-                    value={values.horaFim}
+                    value={values.horaFim || ""}
                     onChange={handleChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </FormField>
               </div>
 
-              {/* Cálculo de Horas */}
-              {values.horaInicio && values.horaFim && (
-                <div className="mt-4 p-3 bg-blue-50 rounded-md">
-                  <p className="text-sm text-blue-700">
-                    <strong>Horas trabalhadas:</strong>{" "}
-                    {ordemServicoService.calcularHorasTrabalhadas(values.horaInicio, values.horaFim).toFixed(2)}h
-                  </p>
-                </div>
-              )}
+              {/* Informações de Cálculo */}
+              <div className="mt-4 space-y-2">
+                {/* Horas Trabalhadas (apenas se horários preenchidos) */}
+                {values.horaInicio && values.horaFim && (
+                  <div className="p-3 bg-blue-50 rounded-md">
+                    <p className="text-sm text-blue-700">
+                      <strong>Horas reais trabalhadas:</strong>{" "}
+                      {ordemServicoService.calcularHorasTrabalhadas(values.horaInicio, values.horaFim).toFixed(2)}h
+                    </p>
+                  </div>
+                )}
+                
+                {/* Horas para Cálculo */}
+                {(values.horasEstimadas || (values.horaInicio && values.horaFim)) && (
+                  <div className="p-3 bg-green-50 rounded-md">
+                    <p className="text-sm text-green-700">
+                      <strong>Horas para cálculo:</strong>{" "}
+                      {values.horaInicio && values.horaFim 
+                        ? `${ordemServicoService.calcularHorasTrabalhadas(values.horaInicio, values.horaFim).toFixed(2)}h (horas reais)`
+                        : `${values.horasEstimadas}h (estimadas)`
+                      }
+                    </p>
+                  </div>
+                )}
+              </div>
             </FormSection>
 
             {/* Seção de Valores */}
             <FormSection title="Valores e Cálculos">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Valor Referencial */}
+                {/* Valor Referencial - Desabilitado */}
                 <FormField
                   name="valorReferencial"
                   label="Valor Referencial (VR)"
-                  error={touched.valorReferencial ? errors.valorReferencial : undefined}
-                  required
+                  help="Valor alterado 1x por ano - Não editável"
                 >
                   <input
                     type="number"
                     id="valorReferencial"
                     name="valorReferencial"
                     value={values.valorReferencial || ""}
-                    onChange={(e) => setValue("valorReferencial", Number(e.target.value))}
                     step="0.01"
                     min="0"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    disabled={true}
+                    className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-md text-gray-500 cursor-not-allowed"
                     placeholder="180.00"
                   />
                 </FormField>
@@ -314,6 +363,18 @@ const OrdemServicoForm: React.FC<OrdemServicoFormProps> = ({ id, onSave }) => {
                     </span>
                   </div>
                 </FormField>
+              </div>
+              
+              {/* Informação sobre o cálculo */}
+              <div className="mt-4 p-3 bg-yellow-50 rounded-md">
+                <p className="text-sm text-yellow-700">
+                  <strong>💡 Dica:</strong> O valor é calculado automaticamente baseado no tipo de veículo e nas horas informadas (estimadas ou reais).
+                  {!values.horasEstimadas && !values.horaInicio && (
+                    <span className="block mt-1">
+                      Informe as horas estimadas para ver o cálculo do valor.
+                    </span>
+                  )}
+                </p>
               </div>
             </FormSection>
 

@@ -22,8 +22,9 @@ export interface OrdemServico {
     };
   };
   dataServico: string;
-  horaInicio: string;
-  horaFim: string;
+  horaInicio?: string;
+  horaFim?: string;
+  horasEstimadas?: number;
   valorReferencial: number;
   valorCalculado: number;
   observacoes?: string;
@@ -39,8 +40,9 @@ export interface OrdemServicoDTO {
   pessoaId: number;
   veiculoId: number;
   dataServico: string;
-  horaInicio: string;
-  horaFim: string;
+  horaInicio?: string;
+  horaFim?: string;
+  horasEstimadas?: number;
   valorReferencial?: number;
   observacoes?: string;
   enderecoServico?: string;
@@ -126,9 +128,30 @@ class OrdemServicoService extends BaseApiService<OrdemServico, OrdemServicoDTO> 
 
   /**
    * Calcula o valor do serviço baseado no tipo de veículo e horas
+   * Usa horasEstimadas se horários reais não estiverem disponíveis
    */
-  calcularValorServico = (tipoVeiculo: string, horaInicio: string, horaFim: string, valorReferencial: number = 180): number => {
-    const horas = this.calcularHorasTrabalhadas(horaInicio, horaFim);
+  calcularValorServico = (
+    tipoVeiculo: string, 
+    horaInicio?: string, 
+    horaFim?: string, 
+    horasEstimadas?: number,
+    valorReferencial: number = 180
+  ): number => {
+    let horas = 0;
+    
+    // Se tem horários reais, usar eles
+    if (horaInicio && horaFim) {
+      horas = this.calcularHorasTrabalhadas(horaInicio, horaFim);
+    }
+    // Senão, usar horas estimadas
+    else if (horasEstimadas) {
+      horas = horasEstimadas;
+    }
+    // Se não tem nenhum, retorna 0
+    else {
+      return 0;
+    }
+
     const custoVeiculo = CUSTOS_VEICULOS[tipoVeiculo.toUpperCase()];
     
     if (!custoVeiculo) {

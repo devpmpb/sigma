@@ -361,8 +361,9 @@ model OrdemServico {
   veiculoId         Int       // Veículo que executará o serviço
   veiculo           Veiculo   @relation(fields: [veiculoId], references: [id])
   dataServico       DateTime  // Data em que o serviço será executado
-  horaInicio        String    // Hora de início (formato HH:mm)
-  horaFim           String    // Hora de fim (formato HH:mm)
+  horaInicio        String?   // Hora de início (formato HH:mm) - Preenchida após execução
+  horaFim           String?   // Hora de fim (formato HH:mm) - Preenchida após execução
+  horasEstimadas    Decimal?  @db.Decimal(4, 2) // Horas estimadas solicitadas pelo cidadão
   valorReferencial  Decimal   @db.Decimal(10, 2) @default(180.00) // Valor referencial (VR) do ano
   valorCalculado    Decimal   @db.Decimal(10, 2) // Valor calculado automaticamente
   observacoes       String?   // Observações adicionais

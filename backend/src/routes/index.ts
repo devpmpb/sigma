@@ -76,6 +76,17 @@ router.use(
   solicitacoesBeneficioRoutes
 );
 
+router.use(
+  "/tipoVeiculos",
+  requireModuleAccess(ModuloSistema.COMUM),
+  tipoVeiculoRoutes
+);
+router.use(
+  "/veiculos",
+  requireModuleAccess(ModuloSistema.COMUM),
+  veiculoRoutes
+);
+
 // AGRICULTURA (requer acesso ao módulo agricultura)
 router.use(
   "/grupoProdutos",
@@ -91,17 +102,6 @@ router.use(
   "/arrendamentos",
   requireModuleAccess(ModuloSistema.AGRICULTURA),
   arrendamentosRoutes
-);
-
-router.use(
-  "/tipoVeiculos",
-  requireModuleAccess(ModuloSistema.COMUM),
-  tipoVeiculoRoutes
-);
-router.use(
-  "/veiculos",
-  requireModuleAccess(ModuloSistema.COMUM),
-  veiculoRoutes
 );
 
 router.use("/ordens-servico", requireModuleAccess(ModuloSistema.OBRAS), ordemServicoRoutes);
