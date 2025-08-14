@@ -6,7 +6,7 @@ export const cadastrosObrasMenu: MenuGroup = {
   title: "Obras",
   module: "obras",
   items: [
-    
+    //espaco para cadastro de obras
   ],
 };
 
@@ -17,22 +17,11 @@ export const movimentosObrasMenu: MenuGroup = {
   module: "obras",
   items: [
     {
-      id: "movimento-obras-1",
-      title: "Movimento 1",
-      path: "/movimentos/obras/movimento1",
+      id: "movimento-ordem-servico",
+      title: "Ordens de Serviço",
+      path: "/movimentos/obras/ordens-servico",
       module: "obras",
     },
-    {
-      id: "movimento-obras-2",
-      title: "Movimento 2",
-      path: "/movimentos/obras/movimento2",
-      module: "obras",
-    },
-    {
-      id: "movimento-obras-3",
-      title: "Movimento 3",
-      path: "/movimentos/obras/movimento3",
-      module: "obras",
-    },
+    
   ],
 };

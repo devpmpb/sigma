@@ -15,6 +15,7 @@ import produtorRoutes from "./comum/produtorRoutes";
 import arrendamentosRoutes from "./agricultura/arrendamentoRoutes";
 import transferenciaPropiedadeRoutes from "./comum/transferenciaPropiedadeRoutes";
 import solicitacoesBeneficioRoutes from "./comum/solicitacoesBeneficioRoutes";
+import ordemServicoRoutes from "./obras/ordemServicoRoutes";
 
 // Importar middleware de autenticação
 import {
@@ -75,6 +76,17 @@ router.use(
   solicitacoesBeneficioRoutes
 );
 
+router.use(
+  "/tipoVeiculos",
+  requireModuleAccess(ModuloSistema.COMUM),
+  tipoVeiculoRoutes
+);
+router.use(
+  "/veiculos",
+  requireModuleAccess(ModuloSistema.COMUM),
+  veiculoRoutes
+);
+
 // AGRICULTURA (requer acesso ao módulo agricultura)
 router.use(
   "/grupoProdutos",
@@ -92,15 +104,6 @@ router.use(
   arrendamentosRoutes
 );
 
-router.use(
-  "/tipoVeiculos",
-  requireModuleAccess(ModuloSistema.COMUM),
-  tipoVeiculoRoutes
-);
-router.use(
-  "/veiculos",
-  requireModuleAccess(ModuloSistema.COMUM),
-  veiculoRoutes
-);
+router.use("/ordens-servico", requireModuleAccess(ModuloSistema.OBRAS), ordemServicoRoutes);
 
 export default router;
