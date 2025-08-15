@@ -1,3 +1,4 @@
+// frontend/src/pages/cadastros/comum/pessoa/Pessoas.tsx - VERSÃO ATUALIZADA
 import React from "react";
 import {
   formatarData,
@@ -16,7 +17,7 @@ import PessoaForm from "./PessoaForm";
 
 /**
  * Componente de Listagem de Pessoas
- * Utiliza o CadastroBase para mostrar a listagem em uma página separada
+ * 🆕 ATUALIZADO: Agora mostra status de produtor rural e área efetiva
  */
 const Pessoas: React.FC = () => {
   // Definição das colunas da tabela
@@ -26,15 +27,24 @@ const Pessoas: React.FC = () => {
       title: "Tipo",
       key: "tipoPessoa",
       render: (pessoa) => (
-        <span
-          className={`px-2 py-1 rounded-full text-xs ${
-            pessoa.tipoPessoa === TipoPessoa.FISICA
-              ? "bg-green-100 text-green-800"
-              : "bg-purple-100 text-purple-800"
-          }`}
-        >
-          {pessoa.tipoPessoa === TipoPessoa.FISICA ? "Física" : "Jurídica"}
-        </span>
+        <div className="flex flex-col gap-1">
+          <span
+            className={`px-2 py-1 rounded-full text-xs ${
+              pessoa.tipoPessoa === TipoPessoa.FISICA
+                ? "bg-green-100 text-green-800"
+                : "bg-purple-100 text-purple-800"
+            }`}
+          >
+            {pessoa.tipoPessoa === TipoPessoa.FISICA ? "Física" : "Jurídica"}
+          </span>
+          
+          {/* 🆕 Badge para produtor rural */}
+          {pessoa.produtorRural && (
+            <span className="px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-800 font-medium">
+              🌾 Produtor
+            </span>
+          )}
+        </div>
       ),
     },
     {
@@ -49,6 +59,13 @@ const Pessoas: React.FC = () => {
                 {pessoa.pessoaJuridica.nomeFantasia}
               </div>
             )}
+          
+          {/* 🆕 Mostrar inscrição estadual se for produtor */}
+          {pessoa.produtorRural && pessoa.inscricaoEstadual && (
+            <div className="text-xs text-green-600">
+              IE: {pessoa.inscricaoEstadual}
+            </div>
+          )}
         </div>
       ),
     },
@@ -58,15 +75,23 @@ const Pessoas: React.FC = () => {
       render: (pessoa) => formatarCPFCNPJ(pessoa.cpfCnpj, pessoa.tipoPessoa),
     },
     {
-      title: "E-mail",
-      key: "email",
-      render: (pessoa) => pessoa.email || "-",
-    },
-    {
-      title: "Telefone",
-      key: "telefone",
-      render: (pessoa) =>
-        pessoa.telefone ? formatarTelefone(pessoa.telefone) : "-",
+      title: "Contato",
+      key: "contato",
+      render: (pessoa) => (
+        <div className="text-sm">
+          {pessoa.email && (
+            <div className="text-blue-600">{pessoa.email}</div>
+          )}
+          {pessoa.telefone && (
+            <div className="text-gray-600">
+              {formatarTelefone(pessoa.telefone)}
+            </div>
+          )}
+          {!pessoa.email && !pessoa.telefone && (
+            <span className="text-gray-400">-</span>
+          )}
+        </div>
+      ),
     },
     {
       title: "Info Adicional",
@@ -82,6 +107,13 @@ const Pessoas: React.FC = () => {
           ) : pessoa.pessoaJuridica?.representanteLegal ? (
             <div>Rep: {pessoa.pessoaJuridica.representanteLegal}</div>
           ) : null}
+          
+          {/* 🆕 Mostrar área efetiva se for produtor */}
+          {pessoa.produtorRural && pessoa.areaEfetiva && (
+            <div className="text-green-600 font-medium">
+              Área: {pessoaService.formatarArea(pessoa.areaEfetiva.areaEfetiva)}
+            </div>
+          )}
         </div>
       ),
     },
@@ -91,6 +123,60 @@ const Pessoas: React.FC = () => {
       render: (pessoa) => formatarData(pessoa.createdAt, false),
     },
   ];
+
+  // 🆕 Filtros rápidos para a listagem
+  const quickFilters = [
+    {
+      label: "Todos",
+      filter: (pessoas: Pessoa[]) => pessoas,
+      color: "gray" as const,
+    },
+    {
+      label: "Pessoas Físicas",
+      filter: (pessoas: Pessoa[]) => 
+        pessoas.filter(p => p.tipoPessoa === TipoPessoa.FISICA),
+      color: "green" as const,
+    },
+    {
+      label: "Pessoas Jurídicas",
+      filter: (pessoas: Pessoa[]) => 
+        pessoas.filter(p => p.tipoPessoa === TipoPessoa.JURIDICA),
+      color: "purple" as const,
+    },
+    {
+      label: "Produtores Rurais",
+      filter: (pessoas: Pessoa[]) => pessoas.filter(p => p.produtorRural),
+      color: "yellow" as const,
+    },
+    {
+      label: "Com Área Efetiva",
+      filter: (pessoas: Pessoa[]) => pessoas.filter(p => p.areaEfetiva),
+      color: "blue" as const,
+    },
+  ];
+
+  // 🆕 Função para calcular métricas
+  const calculateMetrics = (pessoas: Pessoa[]) => {
+    const total = pessoas.length;
+    const produtores = pessoas.filter(p => p.produtorRural).length;
+    const comAreaEfetiva = pessoas.filter(p => p.areaEfetiva).length;
+    const pessoasFisicas = pessoas.filter(p => p.tipoPessoa === TipoPessoa.FISICA).length;
+    const pessoasJuridicas = pessoas.filter(p => p.tipoPessoa === TipoPessoa.JURIDICA).length;
+    
+    // Calcular área total efetiva
+    const areaTotal = pessoas
+      .filter(p => p.areaEfetiva)
+      .reduce((sum, p) => sum + Number(p.areaEfetiva!.areaEfetiva), 0);
+
+    return {
+      total,
+      produtores,
+      comAreaEfetiva,
+      pessoasFisicas,
+      pessoasJuridicas,
+      areaTotal: pessoaService.formatarArea(areaTotal),
+    };
+  };
 
   return (
     <CadastroBase<Pessoa, PessoaDTO>
@@ -108,6 +194,10 @@ const Pessoas: React.FC = () => {
         activeText: "Ativo",
         inactiveText: "Inativo",
       }}
+      // 🆕 Novas props para melhor experiência
+      quickFilters={quickFilters}
+      showMetrics={true}
+      calculateMetrics={calculateMetrics}
     />
   );
 };

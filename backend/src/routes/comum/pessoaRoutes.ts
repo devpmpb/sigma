@@ -1,20 +1,34 @@
+
+// backend/src/routes/comum/pessoaRoutes.ts - VERSÃO ATUALIZADA
 import { Router } from "express";
 import { pessoaController } from "../../controllers/comum/pessoaController";
 import { requirePermission } from "../../middleware/authMiddleware";
-import { AcaoPermissao, ModuloSistema } from "@prisma/client";
+import { ModuloSistema, AcaoPermissao } from "@prisma/client";
 
 const router = Router();
 
-// Rotas básicas
+// Rotas básicas CRUD (mantidas)
 router.get("/", requirePermission(ModuloSistema.COMUM, AcaoPermissao.VIEW), pessoaController.findAll);
-router.get("/enderecos", requirePermission(ModuloSistema.COMUM, AcaoPermissao.VIEW), pessoaController.findAllWithEnderecos);
-router.get("/tipo/:tipo", requirePermission(ModuloSistema.COMUM, AcaoPermissao.VIEW), pessoaController.findByTipo);
 router.get("/:id", requirePermission(ModuloSistema.COMUM, AcaoPermissao.VIEW), pessoaController.findById);
-router.get("/:id/detalhes", requirePermission(ModuloSistema.COMUM, AcaoPermissao.VIEW), pessoaController.findByIdWithDetails);
-router.get("/cpfCnpj/:cpfCnpj", requirePermission(ModuloSistema.COMUM, AcaoPermissao.VIEW), pessoaController.findByCpfCnpj);
-router.patch("/:id/status", requirePermission(ModuloSistema.COMUM, AcaoPermissao.EDIT), pessoaController.status);
 router.post("/", requirePermission(ModuloSistema.COMUM, AcaoPermissao.CREATE), pessoaController.create);
 router.put("/:id", requirePermission(ModuloSistema.COMUM, AcaoPermissao.EDIT), pessoaController.update);
 router.delete("/:id", requirePermission(ModuloSistema.COMUM, AcaoPermissao.DELETE), pessoaController.delete);
+
+// Rotas específicas existentes
+router.get("/tipo/:tipo", requirePermission(ModuloSistema.COMUM, AcaoPermissao.VIEW), pessoaController.findByTipo);
+
+// 🆕 NOVAS ROTAS PARA PRODUTORES RURAIS
+router.get("/produtores-rurais", 
+  requirePermission(ModuloSistema.AGRICULTURA, AcaoPermissao.VIEW), 
+  pessoaController.findProdutoresRurais
+);
+
+router.get("/:id/area-efetiva", 
+  requirePermission(ModuloSistema.AGRICULTURA, AcaoPermissao.VIEW), 
+  pessoaController.findWithAreaEfetiva
+);
+
+// Rota para busca por termo (mantida)
+//router.get("/search/:term", requirePermission(ModuloSistema.COMUM, AcaoPermissao.VIEW), pessoaController.searchByTerm);
 
 export default router;

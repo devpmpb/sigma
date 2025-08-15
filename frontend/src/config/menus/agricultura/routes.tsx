@@ -3,9 +3,6 @@ import { lazy } from "react";
 
 // Usando lazy loading para componentes
 const GrupoProduto = lazy(() => import("../../../pages/cadastros/agricultura/produto/GrupoProduto"));
-const Produtor = lazy(() => import("../../../pages/cadastros/agricultura/produtor/Produtor"));
-const ProdutorForm = lazy(() => import("../../../pages/cadastros/agricultura/produtor/ProdutorForm"));
-
 
 // Componentes de movimentos (placeholder)
 const AvaliacoesBeneficio = lazy(() => import("../../../pages/movimentos/comum/AvaliacoesBeneficio"));
@@ -21,8 +18,6 @@ const ArrendamentoForm = lazy(
 // Exportamos os componentes para compatibilidade com código existente
 export const agriculturaComponents = {
   GrupoProduto,
-  Produtor,
-  ProdutorForm,
   AvaliacoesBeneficio,
   RelatoriosBeneficio,
   ArrendamentosPage,
@@ -36,18 +31,6 @@ export const agriculturaRouteConfig = [
     path: "/cadastros/agricultura/grupoProdutos",
     component: GrupoProduto,
     module: "agricultura",
-    action: "view"
-  },
-  {
-    path: "/cadastros/agricultura/produtores",
-    component: Produtor,
-    module: "comum",
-    action: "view"
-  },
-  {
-    path: "/cadastros/agricultura/produtores/:id",
-    component: ProdutorForm,
-    module: "comum",
     action: "view"
   },
   // Movimentos

@@ -40,25 +40,25 @@ router.delete(
 router.get(
   "/pessoa/:pessoaId",
   requirePermission(ModuloSistema.COMUM, AcaoPermissao.VIEW),
-  solicitacaoBeneficioController.getByPessoa
+  solicitacaoBeneficioController.findByPessoa
 );
 
 router.get(
   "/programa/:programaId",
   requirePermission(ModuloSistema.COMUM, AcaoPermissao.VIEW),
-  solicitacaoBeneficioController.getByPrograma
+  solicitacaoBeneficioController.findByPrograma
 );
 
 router.get(
   "/secretaria/:secretaria",
   requirePermission(ModuloSistema.COMUM, AcaoPermissao.VIEW),
-  solicitacaoBeneficioController.getBySecretaria
+  solicitacaoBeneficioController.findBySecretaria
 );
 
 router.put(
   "/:id/status",
   requirePermission(ModuloSistema.COMUM, AcaoPermissao.EDIT),
-  solicitacaoBeneficioController.updateStatus
+  solicitacaoBeneficioController.status
 );
 
 router.get(

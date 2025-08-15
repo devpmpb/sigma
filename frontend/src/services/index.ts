@@ -3,7 +3,6 @@ export { default as bairroService } from "./comum/bairroService";
 export { default as logradouroService } from "./comum/logradouroService";
 export { default as pessoaService } from "./comum/pessoaService";
 export { default as propriedadeService } from "./comum/propriedadeService";
-export { default as produtorService } from "./comum/produtorService";
 export { default as enderecoService } from "./comum/enderecoService";
 export { default as transferenciaPropiedadeService } from "./comum/transferenciaPropiedadeService";
 export { default as solicitacaoBeneficioService } from "./comum/solicitacaoBeneficioService"; // NOVO SERVIÇO ADICIONADO
@@ -31,6 +30,8 @@ export {
   TipoPessoa,
   type PessoaFisicaData,
   type PessoaJuridicaData,
+  type AreaEfetiva,
+  type AreaEfetivaDTO
 } from "./comum/pessoaService";
 export type {
   Propriedade,
@@ -38,12 +39,6 @@ export type {
   TipoPropriedade,
 } from "./comum/propriedadeService";
 //export type { Endereco, EnderecoDTO, TipoEndereco } from "./common/enderecoService";
-export type {
-  Produtor,
-  ProdutorDTO,
-  AreaEfetiva,
-  AreaEfetivaDTO,
-} from "./comum/produtorService";
 export type {
   GrupoProduto,
   GrupoProdutoDTO,

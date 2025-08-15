@@ -104,6 +104,8 @@ CREATE TABLE "public"."Pessoa" (
     "telefone" TEXT,
     "email" TEXT,
     "ativo" BOOLEAN NOT NULL DEFAULT true,
+    "produtorRural" BOOLEAN NOT NULL DEFAULT false,
+    "inscricaoEstadual" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -152,21 +154,9 @@ CREATE TABLE "public"."Endereco" (
 );
 
 -- CreateTable
-CREATE TABLE "public"."Produtor" (
-    "id" INTEGER NOT NULL,
-    "inscricaoEstadual" TEXT,
-    "dap" TEXT,
-    "tipoProdutor" TEXT,
-    "atividadePrincipal" TEXT,
-    "contratoAssistencia" BOOLEAN NOT NULL DEFAULT false,
-    "observacoes" TEXT,
-
-    CONSTRAINT "Produtor_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
 CREATE TABLE "public"."AreaEfetiva" (
-    "id" INTEGER NOT NULL,
+    "id" SERIAL NOT NULL,
+    "pessoaId" INTEGER NOT NULL,
     "anoReferencia" INTEGER NOT NULL,
     "areaPropria" DECIMAL(10,2) NOT NULL,
     "areaArrendadaRecebida" DECIMAL(10,2) NOT NULL,
@@ -274,6 +264,28 @@ CREATE TABLE "public"."RegrasNegocio" (
 );
 
 -- CreateTable
+CREATE TABLE "public"."ordens_servico" (
+    "id" SERIAL NOT NULL,
+    "numeroOrdem" TEXT NOT NULL,
+    "pessoaId" INTEGER NOT NULL,
+    "veiculoId" INTEGER NOT NULL,
+    "dataServico" TIMESTAMP(3) NOT NULL,
+    "horaInicio" TEXT,
+    "horaFim" TEXT,
+    "horasEstimadas" DECIMAL(4,2),
+    "valorReferencial" DECIMAL(10,2) NOT NULL DEFAULT 180.00,
+    "valorCalculado" DECIMAL(10,2) NOT NULL,
+    "observacoes" TEXT,
+    "status" TEXT NOT NULL DEFAULT 'pendente',
+    "usuarioId" INTEGER,
+    "enderecoServico" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "ordens_servico_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "public"."Usuario" (
     "id" SERIAL NOT NULL,
     "nome" TEXT NOT NULL,
@@ -375,10 +387,22 @@ CREATE UNIQUE INDEX "Veiculo_placa_key" ON "public"."Veiculo"("placa");
 CREATE UNIQUE INDEX "Pessoa_cpfCnpj_key" ON "public"."Pessoa"("cpfCnpj");
 
 -- CreateIndex
+CREATE INDEX "Pessoa_produtorRural_idx" ON "public"."Pessoa"("produtorRural");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "AreaEfetiva_pessoaId_key" ON "public"."AreaEfetiva"("pessoaId");
+
+-- CreateIndex
+CREATE INDEX "AreaEfetiva_pessoaId_idx" ON "public"."AreaEfetiva"("pessoaId");
+
+-- CreateIndex
 CREATE INDEX "transferencias_propriedade_propriedade_id_idx" ON "public"."transferencias_propriedade"("propriedade_id");
 
 -- CreateIndex
 CREATE INDEX "transferencias_propriedade_data_transferencia_idx" ON "public"."transferencias_propriedade"("data_transferencia");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "ordens_servico_numeroOrdem_key" ON "public"."ordens_servico"("numeroOrdem");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Usuario_email_key" ON "public"."Usuario"("email");
@@ -423,10 +447,7 @@ ALTER TABLE "public"."Endereco" ADD CONSTRAINT "Endereco_areaRuralId_fkey" FOREI
 ALTER TABLE "public"."Endereco" ADD CONSTRAINT "Endereco_propriedadeId_fkey" FOREIGN KEY ("propriedadeId") REFERENCES "public"."Propriedade"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."Produtor" ADD CONSTRAINT "Produtor_id_fkey" FOREIGN KEY ("id") REFERENCES "public"."PessoaFisica"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "public"."AreaEfetiva" ADD CONSTRAINT "AreaEfetiva_id_fkey" FOREIGN KEY ("id") REFERENCES "public"."Produtor"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "public"."AreaEfetiva" ADD CONSTRAINT "AreaEfetiva_pessoaId_fkey" FOREIGN KEY ("pessoaId") REFERENCES "public"."Pessoa"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "public"."Propriedade" ADD CONSTRAINT "Propriedade_logradouroId_fkey" FOREIGN KEY ("logradouroId") REFERENCES "public"."Logradouro"("id") ON DELETE SET NULL ON UPDATE CASCADE;
@@ -447,10 +468,10 @@ ALTER TABLE "public"."transferencias_propriedade" ADD CONSTRAINT "transferencias
 ALTER TABLE "public"."Arrendamento" ADD CONSTRAINT "Arrendamento_propriedadeId_fkey" FOREIGN KEY ("propriedadeId") REFERENCES "public"."Propriedade"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."Arrendamento" ADD CONSTRAINT "Arrendamento_proprietarioId_fkey" FOREIGN KEY ("proprietarioId") REFERENCES "public"."PessoaFisica"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "public"."Arrendamento" ADD CONSTRAINT "Arrendamento_proprietarioId_fkey" FOREIGN KEY ("proprietarioId") REFERENCES "public"."Pessoa"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."Arrendamento" ADD CONSTRAINT "Arrendamento_arrendatarioId_fkey" FOREIGN KEY ("arrendatarioId") REFERENCES "public"."PessoaFisica"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "public"."Arrendamento" ADD CONSTRAINT "Arrendamento_arrendatarioId_fkey" FOREIGN KEY ("arrendatarioId") REFERENCES "public"."Pessoa"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "public"."SolicitacaoBeneficio" ADD CONSTRAINT "SolicitacaoBeneficio_pessoaId_fkey" FOREIGN KEY ("pessoaId") REFERENCES "public"."Pessoa"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -460,6 +481,12 @@ ALTER TABLE "public"."SolicitacaoBeneficio" ADD CONSTRAINT "SolicitacaoBeneficio
 
 -- AddForeignKey
 ALTER TABLE "public"."RegrasNegocio" ADD CONSTRAINT "RegrasNegocio_programaId_fkey" FOREIGN KEY ("programaId") REFERENCES "public"."Programa"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."ordens_servico" ADD CONSTRAINT "ordens_servico_pessoaId_fkey" FOREIGN KEY ("pessoaId") REFERENCES "public"."Pessoa"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."ordens_servico" ADD CONSTRAINT "ordens_servico_veiculoId_fkey" FOREIGN KEY ("veiculoId") REFERENCES "public"."Veiculo"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "public"."Usuario" ADD CONSTRAINT "Usuario_perfilId_fkey" FOREIGN KEY ("perfilId") REFERENCES "public"."Perfil"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

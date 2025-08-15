@@ -1,10 +1,29 @@
-import apiClient from "../apiConfig";
 import BaseApiService from "../baseApiService";
-import enderecoService, { Endereco, EnderecoDTO } from "./enderecoService";
 
 export enum TipoPessoa {
   FISICA = "FISICA",
   JURIDICA = "JURIDICA",
+}
+
+// 🆕 Interface para área efetiva
+export interface AreaEfetiva {
+  id?: number;
+  pessoaId: number;
+  anoReferencia: number;
+  areaPropria: number;
+  areaArrendadaRecebida: number;
+  areaArrendadaCedida: number;
+  areaEfetiva: number;
+  updatedAt?: string;
+}
+
+// 🆕 DTO para área efetiva
+export interface AreaEfetivaDTO {
+  anoReferencia: number;
+  areaPropria: number;
+  areaArrendadaRecebida: number;
+  areaArrendadaCedida: number;
+  areaEfetiva: number;
 }
 
 export interface PessoaFisicaData {
@@ -20,6 +39,7 @@ export interface PessoaJuridicaData {
   representanteLegal?: string;
 }
 
+// Interface principal da Pessoa atualizada
 export interface Pessoa {
   id: number;
   tipoPessoa: TipoPessoa;
@@ -28,15 +48,25 @@ export interface Pessoa {
   telefone?: string;
   email?: string;
   ativo: boolean;
+  
+  // 🆕 NOVOS CAMPOS
+  produtorRural: boolean;
+  inscricaoEstadual?: string;
+  
   createdAt: string;
   updatedAt: string;
-  // Relacionamentos opcionais
-  enderecos?: Endereco[];
-  propriedades?: any[];
+  
+  // Relacionamentos
   pessoaFisica?: PessoaFisicaData;
   pessoaJuridica?: PessoaJuridicaData;
+  areaEfetiva?: AreaEfetiva; // 🆕 Área efetiva
+  
+  // Helper para o frontend
+  isProdutor?: boolean;
+  areaEfetivaData?: AreaEfetiva;
 }
 
+// DTO para criação/edição
 export interface PessoaDTO {
   tipoPessoa: TipoPessoa;
   nome: string;
@@ -44,259 +74,187 @@ export interface PessoaDTO {
   telefone?: string;
   email?: string;
   ativo?: boolean;
+  
+  // 🆕 NOVOS CAMPOS
+  produtorRural?: boolean;
+  inscricaoEstadual?: string;
+  
   pessoaFisica?: PessoaFisicaData;
   pessoaJuridica?: PessoaJuridicaData;
-  enderecoInicial?: Omit<EnderecoDTO, "pessoaId">;
-  criarComEndereco?: boolean;
+  areaEfetiva?: AreaEfetivaDTO; // 🆕 Área efetiva
 }
 
 class PessoaService extends BaseApiService<Pessoa, PessoaDTO> {
   constructor() {
-    super("/pessoas", "comum");
+    super("/pessoas");
   }
 
-  create = async (dados: PessoaDTO): Promise<Pessoa> => {
-    const { enderecoInicial, criarComEndereco, ...dadosPessoa } = dados;
-
-    const novaPessoa = await this.createPessoaBasica(dadosPessoa);
-
-    // 2. Se tem endereço inicial, criar também
-    if (criarComEndereco && enderecoInicial) {
-      try {
-        await this.adicionarEndereco(novaPessoa.id, {
-          ...enderecoInicial,
-          principal: true, // Primeiro endereço sempre é principal
-        });
-      } catch (error) {
-        console.warn("Erro ao criar endereço inicial:", error);
-        // Não falha a criação da pessoa por causa do endereço
-      }
-    }
-
-    return novaPessoa;
-  };
-
-  private createPessoaBasica = async (dados: Omit<PessoaDTO, 'enderecoInicial' | 'criarComEndereco'>): Promise<Pessoa> => {
-    // Chama diretamente o método original do BaseApiService
-    const response = await apiClient.post(this.baseUrl, dados);
-    return response.data;
-  };
-
-  getPessoaByCpfCnpj = async (cpfCnpj: string): Promise<Pessoa> => {
-    const response = await apiClient.get(`${this.baseUrl}/cpfCnpj/${cpfCnpj}`);
-    return response.data;
-  };
-
-  getPessoasByTipo = async (tipo: TipoPessoa): Promise<Pessoa[]> => {
-    const response = await apiClient.get(`${this.baseUrl}/tipo/${tipo}`);
-    return response.data;
-  };
-
-  getPessoaWithDetails = async (id: number): Promise<Pessoa> => {
-    const response = await apiClient.get(`${this.baseUrl}/${id}/detalhes`);
-    return response.data;
-  };
-
-  getPessoasWithEnderecos = async (tipo?: TipoPessoa): Promise<Pessoa[]> => {
-    const params = tipo ? { tipo } : {};
-    const response = await apiClient.get(`${this.baseUrl}/enderecos`, {
-      params,
-    });
-    return response.data;
-  };
-
-  getPessoaWithEnderecos = async (id: number): Promise<Pessoa> => {
-    const pessoa = await this.getPessoaWithDetails(id);
-
-    if (pessoa) {
-      // Buscar endereços separadamente com dados completos
-      pessoa.enderecos = await enderecoService.getEnderecosByPessoa(id);
-    }
-
-    return pessoa;
-  };
-
-  /**
-   * Busca endereço principal de uma pessoa
-   */
-  getEnderecoPrincipal = async (pessoaId: number): Promise<Endereco | null> => {
-    const enderecos = await enderecoService.getEnderecosByPessoa(pessoaId);
-    return enderecos.find((e) => e.principal) || null;
-  };
-
-  /**
-   * Adiciona endereço a uma pessoa
-   */
-  adicionarEndereco = async (
-    pessoaId: number,
-    dadosEndereco: Omit<EnderecoDTO, "pessoaId">
-  ): Promise<Endereco> => {
-    const enderecoData: EnderecoDTO = {
-      ...dadosEndereco,
-      pessoaId,
-    };
-
-    return enderecoService.createWithValidation(enderecoData);
-  };
-
-  /**
-   * Define endereço principal para uma pessoa
-   */
-  definirEnderecoPrincipal = async (enderecoId: number): Promise<void> => {
-    await enderecoService.setPrincipal(enderecoId);
-  };
-
-  /**
-   * Formata endereço principal para exibição rápida
-   */
-  getEnderecoFormatado = async (pessoaId: number): Promise<string> => {
-    const enderecoPrincipal = await this.getEnderecoPrincipal(pessoaId);
-
-    if (!enderecoPrincipal) {
-      return "Endereço não cadastrado";
-    }
-
-    return enderecoService.formatarEnderecoCompleto(enderecoPrincipal);
-  };
-
-  /**
-   * Valida se pessoa pode ter um novo endereço
-   */
-  podeAdicionarEndereco = async (
-    pessoaId: number
-  ): Promise<{ pode: boolean; motivo?: string }> => {
+  // 🆕 Método para buscar apenas produtores rurais
+  async getProdutoresRurais(): Promise<Pessoa[]> {
     try {
-      const enderecos = await enderecoService.getEnderecosByPessoa(pessoaId);
-
-      // Limite de 5 endereços por pessoa (regra de negócio configurável)
-      if (enderecos.length >= 5) {
-        return {
-          pode: false,
-          motivo: "Pessoa já possui o máximo de 5 endereços cadastrados",
-        };
-      }
-
-      return { pode: true };
+      const response = await this.api.get(`${this.baseUrl}/produtores-rurais`);
+      return response.data;
     } catch (error) {
-      return {
-        pode: false,
-        motivo: "Erro ao verificar endereços existentes",
-      };
+      console.error("Erro ao buscar produtores rurais:", error);
+      throw error;
     }
-  };
+  }
 
-  /**
-   * Validação básica de dados de pessoa
-   */
-  validarPessoa = (dados: PessoaDTO): { isValid: boolean; errors: string[] } => {
-    const errors: string[] = [];
-
-    // Nome obrigatório
-    if (!dados.nome?.trim()) {
-      errors.push("Nome é obrigatório");
+  // Método existente atualizado para incluir área efetiva
+  async getPessoasByTipo(tipo: TipoPessoa): Promise<Pessoa[]> {
+    try {
+      const response = await this.api.get(`${this.baseUrl}/tipo/${tipo}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Erro ao buscar pessoas do tipo ${tipo}:`, error);
+      throw error;
     }
+  }
 
-    // CPF/CNPJ obrigatório e válido
-    if (!dados.cpfCnpj?.trim()) {
-      errors.push("CPF/CNPJ é obrigatório");
-    } else {
-      const cpfCnpjLimpo = dados.cpfCnpj.replace(/[^\d]/g, "");
-      
-      if (dados.tipoPessoa === TipoPessoa.FISICA && cpfCnpjLimpo.length !== 11) {
-        errors.push("CPF deve conter 11 dígitos");
-      } else if (dados.tipoPessoa === TipoPessoa.JURIDICA && cpfCnpjLimpo.length !== 14) {
-        errors.push("CNPJ deve conter 14 dígitos");
-      }
+  // 🆕 Método para buscar pessoa com área efetiva
+  async getPessoaWithAreaEfetiva(id: number): Promise<Pessoa> {
+    try {
+      const response = await this.api.get(`${this.baseUrl}/${id}/area-efetiva`);
+      return response.data;
+    } catch (error) {
+      console.error("Erro ao buscar pessoa com área efetiva:", error);
+      throw error;
     }
+  }
 
-    // Email válido se fornecido
-    if (dados.email?.trim()) {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(dados.email)) {
-        errors.push("Email inválido");
-      }
-    }
-
-    return {
-      isValid: errors.length === 0,
-      errors,
+  // 🆕 Métodos utilitários para produtor rural
+  formatarTipoProdutor(tipo?: string): string {
+    const tipos: Record<string, string> = {
+      "FAMILIAR": "Agricultura Familiar",
+      "PATRONAL": "Agricultura Patronal",
+      "AGRONEGOCIO": "Agronegócio",
+      "ORGANICO": "Agricultura Orgânica",
+      "ASSENTADO": "Assentado Rural",
     };
-  };
+    return tipos[tipo || ""] || tipo || "Não informado";
+  }
 
-  /**
-   * Cria pessoa com validação
-   */
-  createWithValidation = async (dados: PessoaDTO): Promise<Pessoa> => {
-    const validation = this.validarPessoa(dados);
+  formatarAtividadePrincipal(atividade?: string): string {
+    const atividades: Record<string, string> = {
+      "GRAOS": "Cultivo de Grãos",
+      "HORTALICAS": "Cultivo de Hortaliças",
+      "FRUTAS": "Fruticultura",
+      "BOVINOS": "Bovinocultura",
+      "SUINOS": "Suinocultura",
+      "AVES": "Avicultura",
+      "PEIXES": "Piscicultura",
+      "MISTA": "Atividade Mista",
+    };
+    return atividades[atividade || ""] || atividade || "Não informado";
+  }
 
-    if (!validation.isValid) {
-      throw new Error(`Dados inválidos: ${validation.errors.join(", ")}`);
+  formatarDAP(dap?: string): string {
+    if (!dap) return "Não possui";
+    // Formatar DAP se necessário
+    return dap;
+  }
+
+  // 🆕 Métodos para área efetiva
+  calcularAreaEfetiva(areaEfetiva: AreaEfetivaDTO): number {
+    const areaPropria = Number(areaEfetiva.areaPropria) || 0;
+    const areaRecebida = Number(areaEfetiva.areaArrendadaRecebida) || 0;
+    const areaCedida = Number(areaEfetiva.areaArrendadaCedida) || 0;
+    
+    return areaPropria + areaRecebida - areaCedida;
+  }
+
+  formatarArea(area: number | string): string {
+    const areaNum = Number(area);
+    if (isNaN(areaNum)) return "0 alqueires";
+    
+    return `${areaNum.toLocaleString("pt-BR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })} alqueires`;
+  }
+
+  // 🆕 Validações específicas
+  validarInscricaoEstadual(inscricao: string): boolean {
+    // Implementar validação de inscrição estadual
+    // Por enquanto, validação básica
+    return inscricao && inscricao.trim().length >= 3;
+  }
+
+  // 🆕 Filtros úteis
+  filtrarProdutoresRurais(pessoas: Pessoa[]): Pessoa[] {
+    return pessoas.filter(pessoa => pessoa.produtorRural);
+  }
+
+  filtrarPorTipoEProdutor(pessoas: Pessoa[], tipo?: TipoPessoa, somenteProdutor = false): Pessoa[] {
+    let resultado = pessoas;
+    
+    if (tipo) {
+      resultado = resultado.filter(pessoa => pessoa.tipoPessoa === tipo);
     }
-
-    return this.create(dados);
-  };
-
-  /**
-   * Atualiza pessoa com validação
-   */
-  updateWithValidation = async (
-    id: number,
-    dados: PessoaDTO
-  ): Promise<Pessoa> => {
-    const validation = this.validarPessoa(dados);
-
-    if (!validation.isValid) {
-      throw new Error(`Dados inválidos: ${validation.errors.join(", ")}`);
+    
+    if (somenteProdutor) {
+      resultado = resultado.filter(pessoa => pessoa.produtorRural);
     }
+    
+    return resultado;
+  }
 
-    const { enderecoInicial, criarComEndereco, ...dadosUpdate } = dados;
-    return this.update(id, dadosUpdate);
-  };
+  // 🆕 Método para remover/migrar dados de produtor (para migration)
+  async migrarDadosProdutor(): Promise<void> {
+    try {
+      // Este método seria usado durante a migração se necessário
+      const response = await this.api.post(`${this.baseUrl}/migrar-produtores`);
+      return response.data;
+    } catch (error) {
+      console.error("Erro ao migrar dados de produtor:", error);
+      throw error;
+    }
+  }
 
+  // 🆕 Métodos de busca específicos
+  async buscarPorCpfCnpj(cpfCnpj: string): Promise<Pessoa | null> {
+    try {
+      const pessoas = await this.searchByTerm(cpfCnpj);
+      return pessoas.find(p => p.cpfCnpj === cpfCnpj) || null;
+    } catch (error) {
+      console.error("Erro ao buscar por CPF/CNPJ:", error);
+      return null;
+    }
+  }
 
-  getPessoaByTelefone = async (telefone: string): Promise<Pessoa[]> => {
-    const response = await apiClient.get(
-      `${this.baseUrl}/telefone/${telefone}`
-    );
-    return response.data;
-  };
+  async buscarProdutoresPorNome(nome: string): Promise<Pessoa[]> {
+    try {
+      const pessoas = await this.searchByTerm(nome);
+      return pessoas.filter(p => p.produtorRural);
+    } catch (error) {
+      console.error("Erro ao buscar produtores por nome:", error);
+      return [];
+    }
+  }
 
-
-  getPessoaByEmail = async (email: string): Promise<Pessoa[]> => {
-    const response = await apiClient.get(`${this.baseUrl}/email/${email}`);
-    return response.data;
-  };
-
-  getEstatisticas = async (): Promise<{
+  // 🆕 Estatísticas
+  async getEstatisticasProdutores(): Promise<{
     total: number;
-    ativas: number;
-    inativas: number;
-    fisicas: number;
-    juridicas: number;
-    comEnderecos: number;
-    semEnderecos: number;
-  }> => {
-    const response = await apiClient.get(`${this.baseUrl}/estatisticas`);
-    return response.data;
-  };
-
-  duplicarPessoa = async (id: number, novoNome?: string): Promise<Pessoa> => {
-    const pessoaOriginal = await this.getById(id);
-
-    const dadosDuplicacao: PessoaDTO = {
-      tipoPessoa: pessoaOriginal.tipoPessoa,
-      nome: novoNome || `${pessoaOriginal.nome} (Cópia)`,
-      cpfCnpj: "", // CPF/CNPJ deve ser único, deixar vazio para usuário preencher
-      telefone: pessoaOriginal.telefone,
-      email: "", // Email deve ser único, deixar vazio
-      ativo: true,
-      pessoaFisica: pessoaOriginal.pessoaFisica,
-      pessoaJuridica: pessoaOriginal.pessoaJuridica,
-    };
-
-    return this.create(dadosDuplicacao);
-  };
+    comAreaEfetiva: number;
+    porTipo: Record<TipoPessoa, number>;
+  }> {
+    try {
+      const produtores = await this.getProdutoresRurais();
+      
+      return {
+        total: produtores.length,
+        comAreaEfetiva: produtores.filter(p => p.areaEfetiva).length,
+        porTipo: {
+          [TipoPessoa.FISICA]: produtores.filter(p => p.tipoPessoa === TipoPessoa.FISICA).length,
+          [TipoPessoa.JURIDICA]: produtores.filter(p => p.tipoPessoa === TipoPessoa.JURIDICA).length,
+        }
+      };
+    } catch (error) {
+      console.error("Erro ao calcular estatísticas de produtores:", error);
+      throw error;
+    }
+  }
 }
 
-// Exporta uma instância singleton do serviço
+// Instância padrão do serviço
 export default new PessoaService();
