@@ -148,6 +148,16 @@ export const propriedadeController = {
         },
       });
 
+      const proprietario = await prisma.pessoa.findUnique({
+        where: { id: Number(req.body.proprietarioId) },
+        select: { produtorRural: true }
+      });
+
+      if (proprietario?.produtorRural) {
+        const { areaEfetivaMiddleware } = await import("../../utils/areaEfetivaCalculator");
+        await areaEfetivaMiddleware.afterPropriedadeChange(propriedade.id);
+      }
+
       return res.status(201).json(propriedade);
     } catch (error) {
       console.error("Erro ao criar propriedade:", error);

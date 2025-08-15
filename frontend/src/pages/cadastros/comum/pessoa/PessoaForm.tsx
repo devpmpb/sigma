@@ -35,15 +35,7 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
   const [activeTab, setActiveTab] = useState<"dados" | "enderecos" | "areaEfetiva">("dados");
   const [pessoaSalva, setPessoaSalva] = useState<Pessoa | null>(null);
 
-  // 🆕 Estados para área efetiva
-  const [areaEfetiva, setAreaEfetiva] = useState<AreaEfetivaDTO>({
-    anoReferencia: new Date().getFullYear(),
-    areaPropria: 0,
-    areaArrendadaRecebida: 0,
-    areaArrendadaCedida: 0,
-    areaEfetiva: 0,
-  });
-  const [incluirAreaEfetiva, setIncluirAreaEfetiva] = useState(false);
+  // Área efetiva será calculada automaticamente - removida do formulário
 
   // Hook para endereços
   const {
@@ -135,15 +127,7 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
     return Object.keys(errors).length > 0 ? errors : null;
   };
 
-  // Calcular área efetiva automaticamente
-  useEffect(() => {
-    const areaCalculada = pessoaService.calcularAreaEfetiva(areaEfetiva);
-    setAreaEfetiva((prev) => ({ ...prev, areaEfetiva: areaCalculada }));
-  }, [
-    areaEfetiva.areaPropria,
-    areaEfetiva.areaArrendadaRecebida,
-    areaEfetiva.areaArrendadaCedida,
-  ]);
+  // Área efetiva é calculada automaticamente - removed useEffect
 
   // Carregar pessoa salva
   useEffect(() => {
@@ -152,18 +136,7 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
         .getById(pessoaId)
         .then((pessoa) => {
           setPessoaSalva(pessoa);
-          
-          // 🆕 Carregar área efetiva se existir
-          if (pessoa.produtorRural && pessoa.areaEfetiva) {
-            setAreaEfetiva({
-              anoReferencia: pessoa.areaEfetiva.anoReferencia,
-              areaPropria: Number(pessoa.areaEfetiva.areaPropria),
-              areaArrendadaRecebida: Number(pessoa.areaEfetiva.areaArrendadaRecebida),
-              areaArrendadaCedida: Number(pessoa.areaEfetiva.areaArrendadaCedida),
-              areaEfetiva: Number(pessoa.areaEfetiva.areaEfetiva),
-            });
-            setIncluirAreaEfetiva(true);
-          }
+          // Área efetiva é calculada automaticamente - não precisa carregar
         })
         .catch(console.error);
     }
@@ -183,20 +156,11 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
     await definirPrincipal(enderecoId);
   };
 
-  // 🆕 Handlers para área efetiva
-  const updateAreaEfetiva = (field: keyof AreaEfetivaDTO, value: any) => {
-    setAreaEfetiva((prev) => ({ ...prev, [field]: value }));
-  };
+  // Área efetiva é calculada automaticamente - handlers removidos
 
-  // 🆕 Função para construir dados finais
+  // Função para construir dados finais (simplificada)
   const buildFinalData = (values: PessoaDTO): PessoaDTO => {
-    const finalData = { ...values };
-
-    if (values.produtorRural && incluirAreaEfetiva) {
-      finalData.areaEfetiva = { ...areaEfetiva };
-    }
-
-    return finalData;
+    return { ...values }; // Área efetiva não é incluída no DTO
   };
 
   return (
@@ -228,7 +192,7 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
               >
                 📍 Endereços ({totalEnderecos})
               </button>
-              {/* 🆕 Nova aba para área efetiva */}
+              {/* Aba área efetiva (visualização apenas - calculada automaticamente) */}
               {pessoaSalva.produtorRural && (
                 <button
                   type="button"
@@ -443,7 +407,6 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
                         setValue("produtorRural", e.target.checked);
                         if (!e.target.checked) {
                           setValue("inscricaoEstadual", "");
-                          setIncluirAreaEfetiva(false);
                         }
                       }}
                       className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
