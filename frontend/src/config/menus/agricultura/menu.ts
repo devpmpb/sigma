@@ -12,13 +12,6 @@ export const cadastrosAgriculturaMenu: MenuGroup = {
       path: "/cadastros/agricultura/grupoProdutos",
       module: "agricultura",
     },
-    {
-      id: "cadastro-produtor",
-      title: "Produtor",
-      path: "/cadastros/agricultura/produtores",
-      module: "agricultura",
-    },
-    
   ],
 };
 

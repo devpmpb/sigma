@@ -15,6 +15,7 @@ router.get("/cpfCnpj/:cpfCnpj", requirePermission(ModuloSistema.COMUM, AcaoPermi
 router.patch("/:id/status", requirePermission(ModuloSistema.COMUM, AcaoPermissao.EDIT), pessoaController.status);
 router.post("/", requirePermission(ModuloSistema.COMUM, AcaoPermissao.CREATE), pessoaController.create);
 router.put("/:id", requirePermission(ModuloSistema.COMUM, AcaoPermissao.EDIT), pessoaController.update);
+router.put("/:id/area-efetiva", pessoaController.updateAreaEfetiva);
 router.delete("/:id", requirePermission(ModuloSistema.COMUM, AcaoPermissao.DELETE), pessoaController.delete);
 
 export default router;

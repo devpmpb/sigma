@@ -31,11 +31,11 @@ const SolicitacoesBeneficio: React.FC = () => {
           <div className="font-medium">{solicitacao.pessoa.nome}</div>
           <div className="text-sm text-gray-500">
             {solicitacao.pessoa.cpfCnpj}
-            {solicitacao.pessoa.produtor && (
+            {/*solicitacao.pessoa.produtor && (
               <span className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
                 Produtor
               </span>
-            )}
+            )*/}
           </div>
         </div>
       ),

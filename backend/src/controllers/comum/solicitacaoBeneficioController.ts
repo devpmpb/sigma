@@ -106,13 +106,6 @@ export const solicitacaoBeneficioController = {
               id: true,
               nome: true,
               cpfCnpj: true,
-              produtor: {
-                select: {
-                  id: true,
-                  dap: true,
-                  tipoProdutor: true
-                }
-              }
             }
           },
           programa: {
@@ -147,13 +140,6 @@ export const solicitacaoBeneficioController = {
               id: true,
               nome: true,
               cpfCnpj: true,
-              produtor: {
-                select: {
-                  id: true,
-                  dap: true,
-                  tipoProdutor: true
-                }
-              }
             }
           },
           programa: {
@@ -192,13 +178,6 @@ export const solicitacaoBeneficioController = {
               id: true,
               nome: true,
               cpfCnpj: true,
-              produtor: {
-                select: {
-                  id: true,
-                  dap: true,
-                  tipoProdutor: true
-                }
-              }
             }
           },
           programa: {

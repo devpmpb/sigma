@@ -11,7 +11,6 @@ import logradouroRoutes from "./comum/logradouroRoutes";
 import pessoaRoutes from "./comum/pessoaRoutes";
 import propriedadeRoutes from "./comum/propriedadeRoutes";
 import enderecoRoutes from "./comum/enderecoRoutes";
-import produtorRoutes from "./comum/produtorRoutes";
 import arrendamentosRoutes from "./agricultura/arrendamentoRoutes";
 import transferenciaPropiedadeRoutes from "./comum/transferenciaPropiedadeRoutes";
 import solicitacoesBeneficioRoutes from "./comum/solicitacoesBeneficioRoutes";
@@ -93,11 +92,7 @@ router.use(
   requireModuleAccess(ModuloSistema.AGRICULTURA),
   grupoProdutoRoutes
 );
-router.use(
-  "/produtores",
-  requireModuleAccess(ModuloSistema.AGRICULTURA),
-  produtorRoutes
-);
+
 router.use(
   "/arrendamentos",
   requireModuleAccess(ModuloSistema.AGRICULTURA),

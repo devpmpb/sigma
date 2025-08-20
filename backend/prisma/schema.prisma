@@ -142,6 +142,9 @@ model Pessoa {
   telefone       String?
   email          String?
   ativo          Boolean       @default(true)
+  isProdutor     Boolean?      @default(false)  
+  inscricaoEstadual   String?
+  areaEfetiva    AreaEfetiva?
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
   
@@ -154,6 +157,8 @@ model Pessoa {
   pessoaJuridica PessoaJuridica?
   solicitacoesBeneficio SolicitacaoBeneficio[]
   ordensServico     OrdemServico[]
+  arrendamentos  Arrendamento[] @relation("arrendatario")
+  arrendou       Arrendamento[] @relation("proprietario")
 }
 
 model PessoaFisica {
@@ -161,12 +166,6 @@ model PessoaFisica {
   pessoa         Pessoa    @relation(fields: [id], references: [id])
   rg             String?
   dataNascimento DateTime?
-  // Outros campos específicos de pessoa física
-  
-  // Relacionamentos específicos
-  produtor       Produtor?
-  arrendamentos  Arrendamento[] @relation("arrendatario")
-  arrendou       Arrendamento[] @relation("proprietario")
 }
 
 model PessoaJuridica {
@@ -177,7 +176,6 @@ model PessoaJuridica {
   inscricaoMunicipal String?
   dataFundacao       DateTime?
   representanteLegal String?
-  // Outros campos específicos de pessoa jurídica
 }
 
 model Endereco {
@@ -211,23 +209,10 @@ model Endereco {
   updatedAt       DateTime      @updatedAt
 }
 
-model Produtor {
-  id                  Int                   @id
-  pessoa              PessoaFisica          @relation(fields: [id], references: [id])
-  inscricaoEstadual   String?
-  dap                 String?
-  tipoProdutor        String?
-  atividadePrincipal  String?
-  contratoAssistencia Boolean               @default(false)
-  observacoes         String?
-  
-  // Campos específicos do produtor rural
-  areaEfetiva         AreaEfetiva?
-}
-
 model AreaEfetiva {
   id                    Int       @id
-  produtor              Produtor  @relation(fields: [id], references: [id])
+  pessoaId              Int?
+  pessoa                Pessoa  @relation(fields: [id], references: [id])
   anoReferencia         Int
   areaPropria           Decimal   @db.Decimal(10, 2)
   areaArrendadaRecebida Decimal   @db.Decimal(10, 2)
@@ -313,7 +298,7 @@ model Arrendamento {
 // Modelo para solicitações de benefícios
 model SolicitacaoBeneficio {
   id              Int       @id @default(autoincrement())
-  pessoaId        Int       // ALTERADO: era produtorId
+  pessoaId        Int
   pessoa          Pessoa    @relation(fields: [pessoaId], references: [id])
   programaId      Int
   programa        Programa  @relation(fields: [programaId], references: [id])

@@ -50,6 +50,25 @@ export interface PessoaDTO {
   criarComEndereco?: boolean;
 }
 
+export interface AreaEfetiva {
+  id: number;
+  anoReferencia: number;
+  areaPropria: string; // Decimal vem como string do backend
+  areaArrendadaRecebida: string;
+  areaArrendadaCedida: string;
+  areaEfetiva: string;
+  updatedAt: string;
+}
+
+// Interface para AreaEfetiva DTO
+export interface AreaEfetivaDTO {
+  anoReferencia: number;
+  areaPropria: number | string;
+  areaArrendadaRecebida: number | string;
+  areaArrendadaCedida: number | string;
+  areaEfetiva?: number | string; // Calculado automaticamente
+}
+
 class PessoaService extends BaseApiService<Pessoa, PessoaDTO> {
   constructor() {
     super("/pessoas", "comum");
