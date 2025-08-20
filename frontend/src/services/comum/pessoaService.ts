@@ -28,6 +28,8 @@ export interface Pessoa {
   telefone?: string;
   email?: string;
   ativo: boolean;
+  isProdutor?: boolean;
+  inscricaoEstadualProdutor?: string;
   createdAt: string;
   updatedAt: string;
   // Relacionamentos opcionais
@@ -44,6 +46,8 @@ export interface PessoaDTO {
   telefone?: string;
   email?: string;
   ativo?: boolean;
+  isProdutor?: boolean;
+  inscricaoEstadualProdutor?: string;
   pessoaFisica?: PessoaFisicaData;
   pessoaJuridica?: PessoaJuridicaData;
   enderecoInicial?: Omit<EnderecoDTO, "pessoaId">;

@@ -143,7 +143,7 @@ model Pessoa {
   email          String?
   ativo          Boolean       @default(true)
   isProdutor     Boolean?      @default(false)  
-  inscricaoEstadual   String?
+  inscricaoEstadualProdutor   String?
   areaEfetiva    AreaEfetiva?
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt

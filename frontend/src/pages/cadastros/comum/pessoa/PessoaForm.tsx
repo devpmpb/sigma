@@ -56,6 +56,8 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
     email: "",
     telefone: "",
     ativo: true,
+    isProdutor: false,
+    inscricaoEstadualProdutor: "",
     pessoaFisica: {
       rg: "",
       dataNascimento: "",
@@ -254,7 +256,7 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
               const transformBackendData = async () => {
                 if (pessoaId && pessoaId !== "novo") {
                   try {
-                    const pessoaData = await pessoaService.getByIdWithDetails(
+                    const pessoaData = await pessoaService.getPessoaWithDetails(
                       pessoaId
                     );
 
@@ -265,6 +267,8 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
                       email: pessoaData.email || "",
                       telefone: pessoaData.telefone || "",
                       ativo: pessoaData.ativo,
+                      isProdutor: pessoaData.isProdutor,
+                      inscricaoEstadualProdutor: pessoaData.inscricaoEstadualProdutor,
                       pessoaFisica: {
                         rg: pessoaData.pessoaFisica?.rg || "",
                         dataNascimento: formatDateForInput(
