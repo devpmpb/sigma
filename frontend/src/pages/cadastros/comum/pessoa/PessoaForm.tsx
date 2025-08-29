@@ -267,8 +267,8 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
                       email: pessoaData.email || "",
                       telefone: pessoaData.telefone || "",
                       ativo: pessoaData.ativo,
-                      isProdutor: pessoaData.isProdutor,
-                      inscricaoEstadualProdutor: pessoaData.inscricaoEstadualProdutor,
+                      isProdutor: pessoaData?.isProdutor,
+                      inscricaoEstadualProdutor: pessoaData?.inscricaoEstadualProdutor,
                       pessoaFisica: {
                         rg: pessoaData.pessoaFisica?.rg || "",
                         dataNascimento: formatDateForInput(
@@ -445,6 +445,54 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
                     />
                   </FormField>
                 </div>
+                {/* 🆕 SEÇÃO PRODUTOR RURAL */}
+                <div className="border-t pt-6 mt-6">
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+                      <h3 className="text-lg font-medium text-green-900 mb-3 flex items-center">
+                        🌾 Produtor Rural
+                      </h3>
+                      
+                      <div className="flex items-center">
+                        <input
+                          type="checkbox"
+                          id="isProdutor"
+                          name="isProdutor"
+                          checked={values.isProdutor || false}
+                          onChange={(e) => {
+                            setValue("isProdutor", e.target.checked);
+                            if (!e.target.checked) {
+                              setValue("inscricaoEstadualProdutor", "");
+                            }
+                          }}
+                          className="h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                        />
+                        <label htmlFor="isProdutor" className="ml-2 text-sm text-green-800">
+                          <strong>Esta pessoa é um produtor rural?</strong>
+                        </label>
+                      </div>
+                      
+                      {values.isProdutor && (
+                        <div className="mt-4 space-y-4">
+                          <FormField
+                            name="inscricaoEstadualProdutor"
+                            label="Inscrição Estadual de Produtor Rural"
+                            error={errors.inscricaoEstadualProdutor}
+                            touched={touched.inscricaoEstadualProdutor}
+                          >
+                            <input
+                              type="text"
+                              id="inscricaoEstadualProdutor"
+                              name="inscricaoEstadualProdutor"
+                              value={values.inscricaoEstadualProdutor || ""}
+                              onChange={handleChange}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                              placeholder="Número da inscrição estadual"
+                            />
+                          </FormField>                       
+                        </div>
+                      )}
+                    </div>
+                  </div>
 
                 {/* Campos específicos para Pessoa Física */}
                 {values.tipoPessoa === TipoPessoa.FISICA && (
