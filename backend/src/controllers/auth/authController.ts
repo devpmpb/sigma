@@ -1,6 +1,11 @@
 // backend/src/controllers/auth/authController.ts - ARQUIVO COMPLETO
 import { Request, Response } from "express";
-import { PrismaClient, TipoPerfil, ModuloSistema, AcaoPermissao } from "@prisma/client";
+import {
+  PrismaClient,
+  TipoPerfil,
+  ModuloSistema,
+  AcaoPermissao,
+} from "@prisma/client";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
@@ -51,7 +56,9 @@ const generateTokens = (userId: number) => {
 };
 
 // Função para buscar usuário com permissões
-const getUserWithPermissions = async (userId: number): Promise<AuthenticatedUser | null> => {
+const getUserWithPermissions = async (
+  userId: number
+): Promise<AuthenticatedUser | null> => {
   const usuario = await prisma.usuario.findUnique({
     where: { id: userId, ativo: true },
     include: {
@@ -159,9 +166,10 @@ export const authController = {
           data: {
             tentativasLogin: { increment: 1 },
             // Bloquear após 5 tentativas por 30 minutos
-            bloqueadoAte: usuario.tentativasLogin >= 4 
-              ? new Date(Date.now() + 30 * 60 * 1000) 
-              : undefined,
+            bloqueadoAte:
+              usuario.tentativasLogin >= 4
+                ? new Date(Date.now() + 30 * 60 * 1000)
+                : undefined,
           },
         });
 

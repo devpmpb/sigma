@@ -43,7 +43,10 @@ router.use(
   requireModuleAccess(ModuloSistema.COMUM),
   logradouroRoutes
 );
-router.use("/pessoas", requireModuleAccess(ModuloSistema.COMUM), pessoaRoutes);
+router.use(
+  "/pessoas",
+  requireModuleAccess(ModuloSistema.COMUM), pessoaRoutes
+);
 router.use(
   "/enderecos",
   requireModuleAccess(ModuloSistema.COMUM),
@@ -99,6 +102,10 @@ router.use(
   arrendamentosRoutes
 );
 
-router.use("/ordens-servico", requireModuleAccess(ModuloSistema.OBRAS), ordemServicoRoutes);
+router.use(
+  "/ordens-servico",
+  requireModuleAccess(ModuloSistema.OBRAS),
+  ordemServicoRoutes
+);
 
 export default router;

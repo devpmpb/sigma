@@ -67,7 +67,7 @@ const ArrendamentoForm: React.FC<ArrendamentoFormProps> = ({ id, onSave }) => {
     const fetchPessoasFisicas = async () => {
       setLoadingPessoas(true);
       try {
-        const pessoas = await pessoaService.getPessoasByTipo(TipoPessoa.FISICA);
+        const pessoas = await pessoaService.getProdutores();
         setPessoasFisicas(pessoas);
       } catch (error) {
         console.error("Erro ao carregar pessoas físicas:", error);
