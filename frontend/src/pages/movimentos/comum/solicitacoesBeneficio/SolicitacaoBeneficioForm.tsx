@@ -74,9 +74,9 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
 
         if (programaSelecionado.secretaria === TipoPerfil.AGRICULTURA) {
           // Para agricultura, buscar apenas pessoas que são produtores
-          const todasPessoas = await pessoaService.getAll();
+          const todasPessoas = await pessoaService.getProdutores();
           pessoasDisponiveis = todasPessoas.filter(pessoa => 
-            pessoa.ativo && pessoa.produtor
+            pessoa.ativo
           );
         } else {
           // Para obras, qualquer pessoa ativa
@@ -213,7 +213,7 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
                 {pessoas.map((pessoa) => (
                   <option key={pessoa.id} value={pessoa.id}>
                     {pessoa.nome} - {pessoa.cpfCnpj}
-                    {pessoa.produtor && ` (${pessoa.produtor.dap || 'Sem DAP'})`}
+                    {pessoa.isProdutor}
                   </option>
                 ))}
               </select>

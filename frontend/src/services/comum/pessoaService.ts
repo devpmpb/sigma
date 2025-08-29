@@ -28,6 +28,8 @@ export interface Pessoa {
   telefone?: string;
   email?: string;
   ativo: boolean;
+  isProdutor?: boolean;
+  inscricaoEstadualProdutor?: string;
   createdAt: string;
   updatedAt: string;
   // Relacionamentos opcionais
@@ -44,10 +46,31 @@ export interface PessoaDTO {
   telefone?: string;
   email?: string;
   ativo?: boolean;
+  isProdutor?: boolean;
+  inscricaoEstadualProdutor?: string;
   pessoaFisica?: PessoaFisicaData;
   pessoaJuridica?: PessoaJuridicaData;
   enderecoInicial?: Omit<EnderecoDTO, "pessoaId">;
   criarComEndereco?: boolean;
+}
+
+export interface AreaEfetiva {
+  id: number;
+  anoReferencia: number;
+  areaPropria: string; // Decimal vem como string do backend
+  areaArrendadaRecebida: string;
+  areaArrendadaCedida: string;
+  areaEfetiva: string;
+  updatedAt: string;
+}
+
+// Interface para AreaEfetiva DTO
+export interface AreaEfetivaDTO {
+  anoReferencia: number;
+  areaPropria: number | string;
+  areaArrendadaRecebida: number | string;
+  areaArrendadaCedida: number | string;
+  areaEfetiva?: number | string; // Calculado automaticamente
 }
 
 class PessoaService extends BaseApiService<Pessoa, PessoaDTO> {
@@ -76,7 +99,9 @@ class PessoaService extends BaseApiService<Pessoa, PessoaDTO> {
     return novaPessoa;
   };
 
-  private createPessoaBasica = async (dados: Omit<PessoaDTO, 'enderecoInicial' | 'criarComEndereco'>): Promise<Pessoa> => {
+  private createPessoaBasica = async (
+    dados: Omit<PessoaDTO, "enderecoInicial" | "criarComEndereco">
+  ): Promise<Pessoa> => {
     // Chama diretamente o método original do BaseApiService
     const response = await apiClient.post(this.baseUrl, dados);
     return response.data;
@@ -89,6 +114,11 @@ class PessoaService extends BaseApiService<Pessoa, PessoaDTO> {
 
   getPessoasByTipo = async (tipo: TipoPessoa): Promise<Pessoa[]> => {
     const response = await apiClient.get(`${this.baseUrl}/tipo/${tipo}`);
+    return response.data;
+  };
+
+  getProdutores = async (): Promise<Pessoa[]> => {
+    const response = await apiClient.get(`${this.baseUrl}/produtores`);
     return response.data;
   };
 
@@ -188,7 +218,9 @@ class PessoaService extends BaseApiService<Pessoa, PessoaDTO> {
   /**
    * Validação básica de dados de pessoa
    */
-  validarPessoa = (dados: PessoaDTO): { isValid: boolean; errors: string[] } => {
+  validarPessoa = (
+    dados: PessoaDTO
+  ): { isValid: boolean; errors: string[] } => {
     const errors: string[] = [];
 
     // Nome obrigatório
@@ -201,10 +233,16 @@ class PessoaService extends BaseApiService<Pessoa, PessoaDTO> {
       errors.push("CPF/CNPJ é obrigatório");
     } else {
       const cpfCnpjLimpo = dados.cpfCnpj.replace(/[^\d]/g, "");
-      
-      if (dados.tipoPessoa === TipoPessoa.FISICA && cpfCnpjLimpo.length !== 11) {
+
+      if (
+        dados.tipoPessoa === TipoPessoa.FISICA &&
+        cpfCnpjLimpo.length !== 11
+      ) {
         errors.push("CPF deve conter 11 dígitos");
-      } else if (dados.tipoPessoa === TipoPessoa.JURIDICA && cpfCnpjLimpo.length !== 14) {
+      } else if (
+        dados.tipoPessoa === TipoPessoa.JURIDICA &&
+        cpfCnpjLimpo.length !== 14
+      ) {
         errors.push("CNPJ deve conter 14 dígitos");
       }
     }
@@ -253,14 +291,12 @@ class PessoaService extends BaseApiService<Pessoa, PessoaDTO> {
     return this.update(id, dadosUpdate);
   };
 
-
   getPessoaByTelefone = async (telefone: string): Promise<Pessoa[]> => {
     const response = await apiClient.get(
       `${this.baseUrl}/telefone/${telefone}`
     );
     return response.data;
   };
-
 
   getPessoaByEmail = async (email: string): Promise<Pessoa[]> => {
     const response = await apiClient.get(`${this.baseUrl}/email/${email}`);

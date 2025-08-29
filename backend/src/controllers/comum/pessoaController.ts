@@ -52,6 +52,14 @@ const validatePessoaUpdate = (data: any) => {
   };
 };
 
+const calcularAreaEfetiva = (areaEfetiva: any) => {
+  const areaPropria = Number(areaEfetiva.areaPropria) || 0;
+  const areaRecebida = Number(areaEfetiva.areaArrendadaRecebida) || 0;
+  const areaCedida = Number(areaEfetiva.areaArrendadaCedida) || 0;
+
+  return areaPropria + areaRecebida - areaCedida;
+};
+
 // Controlador com os métodos genéricos
 const genericController = createGenericController({
   modelName: "pessoa",
@@ -111,10 +119,11 @@ export const pessoaController = {
           });
         }
       }
-
+      console.log(dadosPessoa);
       // Usar transação para garantir a consistência
       const result = await prisma.$transaction(async (tx) => {
         // Criar pessoa base
+        
         const novaPessoa = await tx.pessoa.create({
           data: {
             ...dadosPessoa,
@@ -309,11 +318,7 @@ export const pessoaController = {
             },
           },
           propriedades: true,
-          pessoaFisica: {
-            include: {
-              produtor: true,
-            },
-          },
+          pessoaFisica: true,
           pessoaJuridica: true,
         },
       });
@@ -355,6 +360,66 @@ export const pessoaController = {
     } catch (error) {
       console.error("Erro ao listar pessoas por tipo:", error);
       return res.status(500).json({ erro: "Erro ao listar pessoas por tipo" });
+    }
+  },
+
+  findProdutores: async (req: Request, res: Response) => {
+    try {
+      console.log("11111111111111111111");
+      const registros = await prisma.pessoa.findMany({
+        where: { isProdutor: true },
+      });
+
+      return res.status(200).json(registros);
+    } catch (error) {
+      console.error("Erro ao listar produtores", error);
+      return res.status(500).json({ erro: "Erro ao listar produtores" });
+    }
+  },
+
+  updateAreaEfetiva: async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const areaEfetiva = req.body;
+
+      // Verificar se produtor existe
+      const produtorExistente = await prisma.produtor.findUnique({
+        where: { id: Number(id) },
+        include: { areaEfetiva: true },
+      });
+
+      if (!produtorExistente) {
+        return res.status(404).json({ erro: "Produtor não encontrado" });
+      }
+
+      const areaEfetivaCalculada = calcularAreaEfetiva(areaEfetiva);
+
+      let result;
+
+      if (produtorExistente.areaEfetiva) {
+        // Atualizar área efetiva existente
+        result = await prisma.areaEfetiva.update({
+          where: { id: Number(id) },
+          data: {
+            ...areaEfetiva,
+            areaEfetiva: areaEfetivaCalculada,
+          },
+        });
+      } else {
+        // Criar nova área efetiva
+        result = await prisma.areaEfetiva.create({
+          data: {
+            id: Number(id),
+            ...areaEfetiva,
+            areaEfetiva: areaEfetivaCalculada,
+          },
+        });
+      }
+
+      return res.status(200).json(result);
+    } catch (error) {
+      console.error("Erro ao atualizar área efetiva:", error);
+      return res.status(500).json({ erro: "Erro ao atualizar área efetiva" });
     }
   },
 };

@@ -162,12 +162,78 @@ export const arrendamentoController = {
   // Sobrescrever findAll para incluir relacionamentos
   findAll: async (req: Request, res: Response) => {
     try {
+      const { status, proprietarioId, arrendatarioId, propriedadeId } =
+        req.query;
+
+      const whereClause: any = {};
+
+      // Filtros opcionais
+      if (status) {
+        whereClause.status = status;
+      }
+
+      if (proprietarioId) {
+        whereClause.proprietarioId = Number(proprietarioId);
+      }
+
+      if (arrendatarioId) {
+        whereClause.arrendatarioId = Number(arrendatarioId);
+      }
+
+      if (propriedadeId) {
+        whereClause.propriedadeId = Number(propriedadeId);
+      }
+
       const arrendamentos = await prisma.arrendamento.findMany({
-        include: includeRelations,
-        orderBy: { dataInicio: "desc" },
+        where: whereClause,
+        include: {
+          propriedade: true,
+          // 🔄 ALTERADO: Agora usa Pessoa diretamente ao invés de PessoaFisica
+          proprietario: {
+            include: {
+              pessoaFisica: true, // Ainda incluímos para compatibilidade
+              pessoaJuridica: true,
+            },
+          },
+          arrendatario: {
+            include: {
+              pessoaFisica: true, // Ainda incluímos para compatibilidade
+              pessoaJuridica: true,
+            },
+          },
+        },
+        orderBy: {
+          dataInicio: "desc",
+        },
       });
 
-      return res.status(200).json(arrendamentos);
+      // 🆕 TRANSFORMAR DADOS PARA MANTER COMPATIBILIDADE COM FRONTEND
+      const arrendamentosFormatados = arrendamentos.map((arrendamento) => ({
+        ...arrendamento,
+        // Manter estrutura antiga para compatibilidade
+        proprietario: {
+          id: arrendamento.proprietario.id,
+          pessoa: {
+            id: arrendamento.proprietario.id,
+            nome: arrendamento.proprietario.nome,
+            cpfCnpj: arrendamento.proprietario.cpfCnpj,
+            telefone: arrendamento.proprietario.telefone,
+            email: arrendamento.proprietario.email,
+          },
+        },
+        arrendatario: {
+          id: arrendamento.arrendatario.id,
+          pessoa: {
+            id: arrendamento.arrendatario.id,
+            nome: arrendamento.arrendatario.nome,
+            cpfCnpj: arrendamento.arrendatario.cpfCnpj,
+            telefone: arrendamento.arrendatario.telefone,
+            email: arrendamento.arrendatario.email,
+          },
+        },
+      }));
+
+      return res.status(200).json(arrendamentosFormatados);
     } catch (error) {
       console.error("Erro ao listar arrendamentos:", error);
       return res.status(500).json({
@@ -183,17 +249,180 @@ export const arrendamentoController = {
 
       const arrendamento = await prisma.arrendamento.findUnique({
         where: { id: Number(id) },
-        include: includeRelations,
+        include: {
+          propriedade: true,
+          // 🔄 ALTERADO: Agora usa Pessoa diretamente
+          proprietario: {
+            include: {
+              pessoaFisica: true,
+              pessoaJuridica: true,
+            },
+          },
+          arrendatario: {
+            include: {
+              pessoaFisica: true,
+              pessoaJuridica: true,
+            },
+          },
+        },
       });
 
       if (!arrendamento) {
         return res.status(404).json({ erro: "Arrendamento não encontrado" });
       }
 
-      return res.status(200).json(arrendamento);
+      // 🆕 TRANSFORMAR DADOS PARA MANTER COMPATIBILIDADE
+      const arrendamentoFormatado = {
+        ...arrendamento,
+        proprietario: {
+          id: arrendamento.proprietario.id,
+          pessoa: {
+            id: arrendamento.proprietario.id,
+            nome: arrendamento.proprietario.nome,
+            cpfCnpj: arrendamento.proprietario.cpfCnpj,
+            telefone: arrendamento.proprietario.telefone,
+            email: arrendamento.proprietario.email,
+          },
+        },
+        arrendatario: {
+          id: arrendamento.arrendatario.id,
+          pessoa: {
+            id: arrendamento.arrendatario.id,
+            nome: arrendamento.arrendatario.nome,
+            cpfCnpj: arrendamento.arrendatario.cpfCnpj,
+            telefone: arrendamento.arrendatario.telefone,
+            email: arrendamento.arrendatario.email,
+          },
+        },
+      };
+
+      return res.status(200).json(arrendamentoFormatado);
     } catch (error) {
       console.error("Erro ao buscar arrendamento:", error);
       return res.status(500).json({ erro: "Erro ao buscar arrendamento" });
+    }
+  },
+
+  // Sobrescrever create para validações específicas
+  create: async (req: Request, res: Response) => {
+    try {
+      const dados = req.body;
+
+      // Validação
+      const validationResult = validateArrendamentoCreate(dados);
+      if (!validationResult.isValid) {
+        return res.status(400).json({
+          erro: "Dados inválidos para criar arrendamento",
+          detalhes: validationResult.errors,
+        });
+      }
+
+      // 🆕 VERIFICAR SE PROPRIETÁRIO E ARRENDATÁRIO EXISTEM (AGORA SÃO PESSOAS)
+      const proprietario = await prisma.pessoa.findUnique({
+        where: { id: Number(dados.proprietarioId) },
+      });
+
+      if (!proprietario) {
+        return res.status(400).json({
+          erro: "Proprietário não encontrado",
+        });
+      }
+
+      const arrendatario = await prisma.pessoa.findUnique({
+        where: { id: Number(dados.arrendatarioId) },
+      });
+
+      if (!arrendatario) {
+        return res.status(400).json({
+          erro: "Arrendatário não encontrado",
+        });
+      }
+
+      // Verificar se a propriedade existe
+      const propriedade = await prisma.propriedade.findUnique({
+        where: { id: Number(dados.propriedadeId) },
+      });
+
+      if (!propriedade) {
+        return res.status(400).json({
+          erro: "Propriedade não encontrada",
+        });
+      }
+
+      // Verificar se a área arrendada não excede a área total da propriedade
+      if (Number(dados.areaArrendada) > Number(propriedade.areaTotal)) {
+        return res.status(400).json({
+          erro: `Área arrendada não pode exceder a área total da propriedade (${propriedade.areaTotal} alqueires)`,
+        });
+      }
+
+      // Verificar sobreposições de arrendamento na mesma propriedade
+      const arrendamentosAtivos = await prisma.arrendamento.findMany({
+        where: {
+          propriedadeId: Number(dados.propriedadeId),
+          status: "ativo",
+          OR: [
+            {
+              dataFim: null, // Arrendamentos sem data fim
+            },
+            {
+              dataFim: {
+                gte: new Date(dados.dataInicio),
+              },
+            },
+          ],
+        },
+      });
+
+      const areaJaArrendada = arrendamentosAtivos.reduce(
+        (total, arr) => total + Number(arr.areaArrendada),
+        0
+      );
+
+      if (
+        areaJaArrendada + Number(dados.areaArrendada) >
+        Number(propriedade.areaTotal)
+      ) {
+        return res.status(400).json({
+          erro: `Área disponível insuficiente. Já existe ${areaJaArrendada} alqueires arrendados na propriedade`,
+        });
+      }
+
+      // Criar arrendamento
+      const novoArrendamento = await prisma.arrendamento.create({
+        data: {
+          propriedadeId: Number(dados.propriedadeId),
+          proprietarioId: Number(dados.proprietarioId),
+          arrendatarioId: Number(dados.arrendatarioId),
+          areaArrendada: Number(dados.areaArrendada),
+          dataInicio: new Date(dados.dataInicio),
+          dataFim: dados.dataFim ? new Date(dados.dataFim) : null,
+          status: dados.status || "ativo",
+          documentoUrl: dados.documentoUrl,
+        },
+        include: {
+          propriedade: true,
+          proprietario: {
+            include: {
+              pessoaFisica: true,
+              pessoaJuridica: true,
+            },
+          },
+          arrendatario: {
+            include: {
+              pessoaFisica: true,
+              pessoaJuridica: true,
+            },
+          },
+        },
+      });
+
+      return res.status(201).json(novoArrendamento);
+    } catch (error) {
+      console.error("Erro ao criar arrendamento:", error);
+      return res.status(500).json({
+        erro: "Erro ao criar arrendamento",
+      });
     }
   },
 

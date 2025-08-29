@@ -76,33 +76,33 @@ enum TipoPrograma {
 
 // Modelos existentes
 model Bairro {
-  id          Int          @id @default(autoincrement())
-  nome        String       @unique
-  ativo       Boolean      @default(true)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  enderecos   Endereco[]
+  id        Int        @id @default(autoincrement())
+  nome      String     @unique
+  ativo     Boolean    @default(true)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  enderecos Endereco[]
 }
 
 model AreaRural {
-  id         Int        @id @default(autoincrement())
-  nome       String     @unique  // Ex: "Linha São Francisco", "Estrada do Açude"
-  ativo      Boolean    @default(true)
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
-  enderecos  Endereco[]
+  id        Int        @id @default(autoincrement())
+  nome      String     @unique // Ex: "Linha São Francisco", "Estrada do Açude"
+  ativo     Boolean    @default(true)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  enderecos Endereco[]
 }
 
 model Logradouro {
-  id              Int           @id @default(autoincrement())
-  tipo            TipoLogradouro
-  descricao       String        
-  cep             String?       @unique
-  ativo           Boolean       @default(true)
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-  enderecos       Endereco[]
-  propriedades    Propriedade[] // NOVA RELAÇÃO
+  id           Int            @id @default(autoincrement())
+  tipo         TipoLogradouro
+  descricao    String
+  cep          String?        @unique
+  ativo        Boolean        @default(true)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  enderecos    Endereco[]
+  propriedades Propriedade[] // NOVA RELAÇÃO
 }
 
 model GrupoProduto {
@@ -114,46 +114,51 @@ model GrupoProduto {
 }
 
 model TipoVeiculo {
-  id        Int      @id @default(autoincrement())
-  descricao String   @unique
-  ativo     Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id        Int       @id @default(autoincrement())
+  descricao String    @unique
+  ativo     Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   veiculos  Veiculo[]
 }
 
 model Veiculo {
-  id            Int         @id @default(autoincrement())
+  id            Int            @id @default(autoincrement())
   tipoVeiculoId Int
-  tipoVeiculo   TipoVeiculo @relation(fields: [tipoVeiculoId], references: [id])
+  tipoVeiculo   TipoVeiculo    @relation(fields: [tipoVeiculoId], references: [id])
   descricao     String
-  placa         String      @unique
-  ativo         Boolean     @default(true)
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-  ordensServico     OrdemServico[]
+  placa         String         @unique
+  ativo         Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  ordensServico OrdemServico[]
 }
 
 model Pessoa {
-  id             Int           @id @default(autoincrement())
-  tipoPessoa     TipoPessoa    
-  nome           String        // Razão social para PJ, nome completo para PF
-  cpfCnpj        String        @unique
-  telefone       String?
-  email          String?
-  ativo          Boolean       @default(true)
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  
+  id                        Int          @id @default(autoincrement())
+  tipoPessoa                TipoPessoa
+  nome                      String // Razão social para PJ, nome completo para PF
+  cpfCnpj                   String       @unique
+  telefone                  String?
+  email                     String?
+  ativo                     Boolean      @default(true)
+  isProdutor                Boolean?     @default(false)
+  inscricaoEstadualProdutor String?
+  areaEfetiva               AreaEfetiva?
+  createdAt                 DateTime     @default(now())
+  updatedAt                 DateTime     @updatedAt
+
   // Relacionamentos
-  enderecos      Endereco[]
-  propriedades   Propriedade[]
+  enderecos                  Endereco[]
+  propriedades               Propriedade[]
   transferenciasComoAnterior TransferenciaPropriedade[] @relation("TransferenciaProprietarioAnterior")
   transferenciasComoNovo     TransferenciaPropriedade[] @relation("TransferenciaProprietarioNovo")
-  pessoaFisica   PessoaFisica?
-  pessoaJuridica PessoaJuridica?
-  solicitacoesBeneficio SolicitacaoBeneficio[]
-  ordensServico     OrdemServico[]
+  pessoaFisica               PessoaFisica?
+  pessoaJuridica             PessoaJuridica?
+  solicitacoesBeneficio      SolicitacaoBeneficio[]
+  ordensServico              OrdemServico[]
+  arrendamentos              Arrendamento[]             @relation("arrendatario")
+  arrendou                   Arrendamento[]             @relation("proprietario")
 }
 
 model PessoaFisica {
@@ -161,136 +166,116 @@ model PessoaFisica {
   pessoa         Pessoa    @relation(fields: [id], references: [id])
   rg             String?
   dataNascimento DateTime?
-  // Outros campos específicos de pessoa física
-  
-  // Relacionamentos específicos
-  produtor       Produtor?
-  arrendamentos  Arrendamento[] @relation("arrendatario")
-  arrendou       Arrendamento[] @relation("proprietario")
 }
 
 model PessoaJuridica {
-  id                 Int      @id
-  pessoa             Pessoa   @relation(fields: [id], references: [id])
+  id                 Int       @id
+  pessoa             Pessoa    @relation(fields: [id], references: [id])
   nomeFantasia       String?
   inscricaoEstadual  String?
   inscricaoMunicipal String?
   dataFundacao       DateTime?
   representanteLegal String?
-  // Outros campos específicos de pessoa jurídica
 }
 
 model Endereco {
-  id              Int           @id @default(autoincrement())
-  pessoaId        Int
-  pessoa          Pessoa        @relation(fields: [pessoaId], references: [id])
-  
+  id       Int    @id @default(autoincrement())
+  pessoaId Int
+  pessoa   Pessoa @relation(fields: [pessoaId], references: [id])
+
   // Para endereços urbanos
-  logradouroId    Int?
-  logradouro      Logradouro?   @relation(fields: [logradouroId], references: [id])
-  numero          String?
-  complemento     String?
-  bairroId        Int?
-  bairro          Bairro?       @relation(fields: [bairroId], references: [id])
-  
+  logradouroId Int?
+  logradouro   Logradouro? @relation(fields: [logradouroId], references: [id])
+  numero       String?
+  complemento  String?
+  bairroId     Int?
+  bairro       Bairro?     @relation(fields: [bairroId], references: [id])
+
   // Para endereços rurais
   areaRuralId     Int?
-  areaRural       AreaRural?    @relation(fields: [areaRuralId], references: [id])
+  areaRural       AreaRural? @relation(fields: [areaRuralId], references: [id])
   referenciaRural String?
-  
-  // Campos comuns
-  coordenadas     String?       // Latitude,Longitude
-  tipoEndereco    TipoEndereco
-  principal       Boolean       @default(false)
-  
-  // Relação com propriedade (se este endereço referencia uma propriedade da pessoa)
-  propriedadeId   Int?  
-  propriedade     Propriedade?  @relation(fields: [propriedadeId], references: [id])
-  
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-}
 
-model Produtor {
-  id                  Int                   @id
-  pessoa              PessoaFisica          @relation(fields: [id], references: [id])
-  inscricaoEstadual   String?
-  dap                 String?
-  tipoProdutor        String?
-  atividadePrincipal  String?
-  contratoAssistencia Boolean               @default(false)
-  observacoes         String?
-  
-  // Campos específicos do produtor rural
-  areaEfetiva         AreaEfetiva?
+  // Campos comuns
+  coordenadas  String? // Latitude,Longitude
+  tipoEndereco TipoEndereco
+  principal    Boolean      @default(false)
+
+  // Relação com propriedade (se este endereço referencia uma propriedade da pessoa)
+  propriedadeId Int?
+  propriedade   Propriedade? @relation(fields: [propriedadeId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model AreaEfetiva {
-  id                    Int       @id
-  produtor              Produtor  @relation(fields: [id], references: [id])
+  id                    Int      @id
+  pessoaId              Int?
+  pessoa                Pessoa   @relation(fields: [id], references: [id])
   anoReferencia         Int
-  areaPropria           Decimal   @db.Decimal(10, 2)
-  areaArrendadaRecebida Decimal   @db.Decimal(10, 2)
-  areaArrendadaCedida   Decimal   @db.Decimal(10, 2)
-  areaEfetiva           Decimal   @db.Decimal(10, 2)
-  updatedAt             DateTime  @updatedAt
+  areaPropria           Decimal  @db.Decimal(10, 2)
+  areaArrendadaRecebida Decimal  @db.Decimal(10, 2)
+  areaArrendadaCedida   Decimal  @db.Decimal(10, 2)
+  areaEfetiva           Decimal  @db.Decimal(10, 2)
+  updatedAt             DateTime @updatedAt
 }
 
 model Propriedade {
-  id               Int                    @id @default(autoincrement())
-  nome             String
-  tipoPropriedade  TipoPropriedade       @default(RURAL)
-  
+  id              Int             @id @default(autoincrement())
+  nome            String
+  tipoPropriedade TipoPropriedade @default(RURAL)
+
   // NOVOS CAMPOS ADICIONADOS
-  logradouroId     Int?                  // Referência à tabela Logradouro
-  logradouro       Logradouro?           @relation(fields: [logradouroId], references: [id])
-  numero           String?               // Número do lote/chácara
-  
+  logradouroId Int? // Referência à tabela Logradouro
+  logradouro   Logradouro? @relation(fields: [logradouroId], references: [id])
+  numero       String? // Número do lote/chácara
+
   // Área total - lógica será: rural = alqueires, outros = metros quadrados
-  areaTotal        Decimal               @db.Decimal(10, 2)
-  unidadeArea      String                @default("alqueires") // "alqueires" ou "metros_quadrados"
-  
+  areaTotal   Decimal @db.Decimal(10, 2)
+  unidadeArea String  @default("alqueires") // "alqueires" ou "metros_quadrados"
+
   // Campos específicos para propriedades RURAIS
-  itr              String?               // ITR (só para rural)
-  incra            String?               // INCRA (só para rural) 
-  
+  itr   String? // ITR (só para rural)
+  incra String? // INCRA (só para rural) 
+
   // NOVOS CAMPOS OBRIGATÓRIOS
-  situacao         SituacaoPropriedade   // própria/condomínio/usufruto
-  proprietarioResidente Boolean          @default(false) // Se o proprietário reside na propriedade
-  
+  situacao              SituacaoPropriedade // própria/condomínio/usufruto
+  isproprietarioResidente Boolean             @default(false) // Se o proprietário reside na propriedade
+
   // Campos existentes mantidos
-  localizacao      String?               // Descrição geral (mantido para compatibilidade)
-  matricula        String?
-  proprietarioId   Int
-  proprietario     Pessoa                @relation(fields: [proprietarioId], references: [id])
-  
+  localizacao    String? // Descrição geral (mantido para compatibilidade)
+  matricula      String?
+  proprietarioId Int
+  proprietario   Pessoa  @relation(fields: [proprietarioId], references: [id])
+
   // Relacionamentos
-  arrendamentos    Arrendamento[]
-  enderecos        Endereco[]
-  transferencias   TransferenciaPropriedade[]
-  
-  createdAt        DateTime              @default(now())
-  updatedAt        DateTime              @updatedAt
+  arrendamentos  Arrendamento[]
+  enderecos      Endereco[]
+  transferencias TransferenciaPropriedade[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model TransferenciaPropriedade {
-  id                     Int          @id @default(autoincrement())
-  propriedadeId          Int          @map("propriedade_id")
-  proprietarioAnteriorId Int          @map("proprietario_anterior_id") 
-  proprietarioNovoId     Int          @map("proprietario_novo_id")
-  dataTransferencia      DateTime     @map("data_transferencia") @db.Date
-  observacoes            String?      @db.Text
-  createdAt              DateTime     @default(now()) @map("created_at")
-  updatedAt              DateTime     @updatedAt @map("updated_at")
+  id                     Int      @id @default(autoincrement())
+  propriedadeId          Int      @map("propriedade_id")
+  proprietarioAnteriorId Int      @map("proprietario_anterior_id")
+  proprietarioNovoId     Int      @map("proprietario_novo_id")
+  dataTransferencia      DateTime @map("data_transferencia") @db.Date
+  observacoes            String?  @db.Text
+  createdAt              DateTime @default(now()) @map("created_at")
+  updatedAt              DateTime @updatedAt @map("updated_at")
 
   // Relacionamentos
-  propriedade           Propriedade @relation(fields: [propriedadeId], references: [id])
-  proprietarioAnterior  Pessoa      @relation("TransferenciaProprietarioAnterior", fields: [proprietarioAnteriorId], references: [id])
-  proprietarioNovo      Pessoa      @relation("TransferenciaProprietarioNovo", fields: [proprietarioNovoId], references: [id])
+  propriedade          Propriedade @relation(fields: [propriedadeId], references: [id])
+  proprietarioAnterior Pessoa      @relation("TransferenciaProprietarioAnterior", fields: [proprietarioAnteriorId], references: [id])
+  proprietarioNovo     Pessoa      @relation("TransferenciaProprietarioNovo", fields: [proprietarioNovoId], references: [id])
 
-  @@map("transferencias_propriedade")
   @@index([propriedadeId])
   @@index([dataTransferencia])
+  @@map("transferencias_propriedade")
 }
 
 model Arrendamento {
@@ -298,9 +283,9 @@ model Arrendamento {
   propriedadeId  Int
   propriedade    Propriedade @relation(fields: [propriedadeId], references: [id])
   proprietarioId Int
-  proprietario   PessoaFisica      @relation("proprietario", fields: [proprietarioId], references: [id])
+  proprietario   Pessoa      @relation("proprietario", fields: [proprietarioId], references: [id])
   arrendatarioId Int
-  arrendatario   PessoaFisica      @relation("arrendatario", fields: [arrendatarioId], references: [id])
+  arrendatario   Pessoa      @relation("arrendatario", fields: [arrendatarioId], references: [id])
   areaArrendada  Decimal     @db.Decimal(10, 2)
   dataInicio     DateTime
   dataFim        DateTime?
@@ -312,66 +297,66 @@ model Arrendamento {
 
 // Modelo para solicitações de benefícios
 model SolicitacaoBeneficio {
-  id              Int       @id @default(autoincrement())
-  pessoaId        Int       // ALTERADO: era produtorId
-  pessoa          Pessoa    @relation(fields: [pessoaId], references: [id])
+  id              Int      @id @default(autoincrement())
+  pessoaId        Int
+  pessoa          Pessoa   @relation(fields: [pessoaId], references: [id])
   programaId      Int
-  programa        Programa  @relation(fields: [programaId], references: [id])
-  datasolicitacao DateTime  @default(now())
-  status          String    @default("pendente")
+  programa        Programa @relation(fields: [programaId], references: [id])
+  datasolicitacao DateTime @default(now())
+  status          String   @default("pendente")
   observacoes     String?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
 
 // Modelo para programas de incentivo
 model Programa {
-  id              Int                   @id @default(autoincrement())
-  nome            String
-  descricao       String?
-  leiNumero       String?
-  tipoPrograma    TipoPrograma          
-  secretaria      TipoPerfil
-  ativo           Boolean               @default(true)
-  createdAt       DateTime              @default(now())
-  updatedAt       DateTime              @updatedAt
-  
-  solicitacoes    SolicitacaoBeneficio[]
-  regras          RegrasNegocio[]
+  id           Int          @id @default(autoincrement())
+  nome         String
+  descricao    String?
+  leiNumero    String?
+  tipoPrograma TipoPrograma
+  secretaria   TipoPerfil
+  ativo        Boolean      @default(true)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  solicitacoes SolicitacaoBeneficio[]
+  regras       RegrasNegocio[]
 }
 
 // Modelo para regras de negócio dos programas
 model RegrasNegocio {
-  id              Int       @id @default(autoincrement())
+  id              Int      @id @default(autoincrement())
   programaId      Int
-  programa        Programa  @relation(fields: [programaId], references: [id])
-  tipoRegra       String    // 'area_efetiva', 'area_construcao', etc.
-  parametro       Json      // Estrutura JSON com condições 
-  valorBeneficio  Decimal   @db.Decimal(10, 2)
-  limiteBeneficio Json?     // Estrutura JSON com limites
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  programa        Programa @relation(fields: [programaId], references: [id])
+  tipoRegra       String // 'area_efetiva', 'area_construcao', etc.
+  parametro       Json // Estrutura JSON com condições 
+  valorBeneficio  Decimal  @db.Decimal(10, 2)
+  limiteBeneficio Json? // Estrutura JSON com limites
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
 
 model OrdemServico {
-  id                Int       @id @default(autoincrement())
-  numeroOrdem       String    @unique   // Número sequencial da ordem
-  pessoaId          Int       // Solicitante do serviço
-  pessoa            Pessoa    @relation(fields: [pessoaId], references: [id])
-  veiculoId         Int       // Veículo que executará o serviço
-  veiculo           Veiculo   @relation(fields: [veiculoId], references: [id])
-  dataServico       DateTime  // Data em que o serviço será executado
-  horaInicio        String?   // Hora de início (formato HH:mm) - Preenchida após execução
-  horaFim           String?   // Hora de fim (formato HH:mm) - Preenchida após execução
-  horasEstimadas    Decimal?  @db.Decimal(4, 2) // Horas estimadas solicitadas pelo cidadão
-  valorReferencial  Decimal   @db.Decimal(10, 2) @default(180.00) // Valor referencial (VR) do ano
-  valorCalculado    Decimal   @db.Decimal(10, 2) // Valor calculado automaticamente
-  observacoes       String?   // Observações adicionais
-  status            String    @default("pendente") // pendente, em_execucao, concluida, cancelada
-  usuarioId         Int?      // Usuário que criou a ordem
-  enderecoServico   String?   // Local onde será executado o serviço
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  id               Int      @id @default(autoincrement())
+  numeroOrdem      String   @unique // Número sequencial da ordem
+  pessoaId         Int // Solicitante do serviço
+  pessoa           Pessoa   @relation(fields: [pessoaId], references: [id])
+  veiculoId        Int // Veículo que executará o serviço
+  veiculo          Veiculo  @relation(fields: [veiculoId], references: [id])
+  dataServico      DateTime // Data em que o serviço será executado
+  horaInicio       String? // Hora de início (formato HH:mm) - Preenchida após execução
+  horaFim          String? // Hora de fim (formato HH:mm) - Preenchida após execução
+  horasEstimadas   Decimal? @db.Decimal(4, 2) // Horas estimadas solicitadas pelo cidadão
+  valorReferencial Decimal  @default(180.00) @db.Decimal(10, 2) // Valor referencial (VR) do ano
+  valorCalculado   Decimal  @db.Decimal(10, 2) // Valor calculado automaticamente
+  observacoes      String? // Observações adicionais
+  status           String   @default("pendente") // pendente, em_execucao, concluida, cancelada
+  usuarioId        Int? // Usuário que criou a ordem
+  enderecoServico  String? // Local onde será executado o serviço
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   @@map("ordens_servico")
 }
@@ -381,7 +366,7 @@ model Usuario {
   id        Int      @id @default(autoincrement())
   nome      String
   email     String   @unique
-  senha     String   // Hash da senha
+  senha     String // Hash da senha
   ativo     Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -389,24 +374,24 @@ model Usuario {
   // Relacionamentos
   perfilId Int
   perfil   Perfil @relation(fields: [perfilId], references: [id])
-  
+
   // Sessões ativas do usuário
   sessoes UsuarioSessao[]
-  
+
   // Auditoria
-  ultimoLogin DateTime?
-  tentativasLogin Int @default(0)
-  bloqueadoAte DateTime?
+  ultimoLogin     DateTime?
+  tentativasLogin Int       @default(0)
+  bloqueadoAte    DateTime?
 }
 
 // Perfis de usuário (Admin, Obras, Agricultura, etc)
 model Perfil {
-  id        Int         @id @default(autoincrement())
-  nome      TipoPerfil  @unique
+  id        Int        @id @default(autoincrement())
+  nome      TipoPerfil @unique
   descricao String?
-  ativo     Boolean     @default(true)
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
+  ativo     Boolean    @default(true)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 
   // Relacionamentos
   usuarios   Usuario[]
@@ -415,17 +400,17 @@ model Perfil {
 
 // Permissões disponíveis no sistema
 model Permissao {
-  id        Int            @id @default(autoincrement())
+  id        Int           @id @default(autoincrement())
   modulo    ModuloSistema
   acao      AcaoPermissao
   descricao String?
-  ativo     Boolean        @default(true)
-  createdAt DateTime       @default(now())
-  updatedAt DateTime       @updatedAt
+  ativo     Boolean       @default(true)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
 
   // Relacionamentos
   perfis PerfilPermissao[]
-  
+
   // Índice composto para evitar duplicatas
   @@unique([modulo, acao])
 }
@@ -433,33 +418,33 @@ model Permissao {
 // Relacionamento Many-to-Many entre Perfil e Permissão
 model PerfilPermissao {
   id Int @id @default(autoincrement())
-  
+
   perfilId    Int
   permissaoId Int
-  
+
   perfil    Perfil    @relation(fields: [perfilId], references: [id])
   permissao Permissao @relation(fields: [permissaoId], references: [id])
-  
+
   createdAt DateTime @default(now())
-  
+
   // Evita permissões duplicadas para o mesmo perfil
   @@unique([perfilId, permissaoId])
 }
 
 // Sessões ativas dos usuários (para controle de login)
 model UsuarioSessao {
-  id           Int      @id @default(autoincrement())
+  id           Int       @id @default(autoincrement())
   usuarioId    Int
-  token        String   @unique
-  refreshToken String?  @unique
+  token        String    @unique
+  refreshToken String?   @unique
   expiresAt    DateTime
-  createdAt    DateTime @default(now())
+  createdAt    DateTime  @default(now())
   revokedAt    DateTime?
-  
+
   // IP e User Agent para auditoria
   ipAddress String?
   userAgent String?
-  
+
   usuario Usuario @relation(fields: [usuarioId], references: [id])
 }
 
@@ -470,6 +455,6 @@ model AuditoriaLogin {
   sucesso   Boolean
   ipAddress String?
   userAgent String?
-  motivo    String?  // "senha_incorreta", "usuario_bloqueado", etc
+  motivo    String? // "senha_incorreta", "usuario_bloqueado", etc
   createdAt DateTime @default(now())
 }

@@ -28,12 +28,8 @@ export interface SolicitacaoBeneficio {
     cpfCnpj: string;
     telefone?: string;
     email?: string;
-    produtor?: {
-      id: number;
-      dap?: string;
-      tipoProdutor?: string;
-      atividadePrincipal?: string;
-    };
+    isProdutor?: boolean;
+    inscricaoEstadual?: string;
   };
   programa: {
     id: number;

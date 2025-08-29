@@ -6,7 +6,7 @@ export interface Arrendamento {
   propriedadeId: number;
   proprietarioId: number;
   arrendatarioId: number;
-  areaArrendada: string; // Decimal vem como string do backend
+  areaArrendada: string;
   dataInicio: string;
   dataFim?: string;
   status: string;
@@ -30,6 +30,7 @@ export interface Arrendamento {
       cpfCnpj: string;
       telefone?: string;
       email?: string;
+      isProdutor?: boolean;
     };
   };
   arrendatario?: {
@@ -40,6 +41,7 @@ export interface Arrendamento {
       cpfCnpj: string;
       telefone?: string;
       email?: string;
+      isProdutor?: boolean;
     };
   };
 }
