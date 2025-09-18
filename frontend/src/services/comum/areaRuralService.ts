@@ -1,3 +1,4 @@
+// frontend/src/services/comum/areaRuralService.ts
 import apiClient from "../apiConfig";
 import BaseApiService from "../baseApiService";
 
@@ -30,16 +31,6 @@ class AreaRuralService extends BaseApiService<AreaRural, AreaRuralDTO> {
    */
   getAtivas = async (): Promise<AreaRural[]> => {
     const response = await apiClient.get(`${this.baseUrl}?ativo=true`);
-    return response.data;
-  };
-
-  /**
-   * Busca área rural por nome
-   */
-  findByNome = async (nome: string): Promise<AreaRural | null> => {
-    const response = await apiClient.get(`${this.baseUrl}/buscar`, {
-      params: { nome },
-    });
     return response.data;
   };
 

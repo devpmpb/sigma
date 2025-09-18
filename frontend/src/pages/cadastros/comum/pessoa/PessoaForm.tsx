@@ -13,7 +13,7 @@ import enderecoService, {
   TipoEndereco,
   type EnderecoDTO,
 } from "../../../../services/comum/enderecoService";
-import areaRuralService from "../../../../services/comum/areaRuralService.ts";
+import areaRuralService from "../../../../services/comum/areaRuralService";
 import { FormBase } from "../../../../components/cadastro";
 import { FormField } from "../../../../components/comum";
 import {
@@ -208,52 +208,101 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
     return Object.keys(errors).length > 0 ? errors : null;
   };
 
-  // Função personalizada para salvar
-  const handleSave = async (values: PessoaFormData) => {
-    try {
+  // Criar um wrapper do serviço para interceptar create/update
+  const pessoaServiceWithEndereco = {
+    ...pessoaService,
+
+    getById: pessoaService.getById,
+    getAll: pessoaService.getAll,
+    delete: pessoaService.delete,
+    search: pessoaService.search,
+    toggleStatus: pessoaService.toggleStatus,
+
+    create: async (data: PessoaFormData): Promise<Pessoa> => {
       // Preparar dados da pessoa (remover campos de endereço)
       const pessoaData: PessoaDTO = {
-        tipoPessoa: values.tipoPessoa,
-        nome: values.nome,
-        cpfCnpj: values.cpfCnpj,
-        email: values.email,
-        telefone: values.telefone,
-        ativo: values.ativo,
-        isProdutor: values.isProdutor,
-        inscricaoEstadualProdutor: values.inscricaoEstadualProdutor,
-        pessoaFisica: values.pessoaFisica,
-        pessoaJuridica: values.pessoaJuridica,
+        tipoPessoa: data.tipoPessoa,
+        nome: data.nome,
+        cpfCnpj: data.cpfCnpj,
+        email: data.email,
+        telefone: data.telefone,
+        ativo: data.ativo,
+        isProdutor: data.isProdutor,
+        inscricaoEstadualProdutor: data.inscricaoEstadualProdutor,
+        pessoaFisica: data.pessoaFisica,
+        pessoaJuridica: data.pessoaJuridica,
       };
 
-      // Salvar ou atualizar pessoa
-      let pessoaSalva: Pessoa;
-      if (pessoaId && pessoaId !== "novo") {
-        pessoaSalva = await pessoaService.update(pessoaId, pessoaData);
-      } else {
-        pessoaSalva = await pessoaService.create(pessoaData);
-      }
+      // Criar pessoa
+      const pessoaSalva = await pessoaService.create(pessoaData);
 
       // Se incluir endereço, salvar o endereço
-      if (values.incluirEndereco && pessoaSalva) {
+      if (data.incluirEndereco && pessoaSalva) {
         const enderecoData: EnderecoDTO = {
           pessoaId: pessoaSalva.id,
-          tipoEndereco: values.tipoEndereco!,
-          logradouroId: values.isEnderecoRural
+          tipoEndereco: data.tipoEndereco!,
+          logradouroId: data.isEnderecoRural
             ? undefined
-            : Number(values.logradouroId),
-          numero: values.isEnderecoRural ? undefined : values.numero,
-          complemento: values.isEnderecoRural ? undefined : values.complemento,
-          bairroId: values.isEnderecoRural
+            : Number(data.logradouroId),
+          numero: data.isEnderecoRural ? undefined : data.numero,
+          complemento: data.isEnderecoRural ? undefined : data.complemento,
+          bairroId: data.isEnderecoRural ? undefined : Number(data.bairroId),
+          areaRuralId: data.isEnderecoRural
+            ? Number(data.areaRuralId)
+            : undefined,
+          referenciaRural: data.isEnderecoRural
+            ? data.referenciaRural
+            : undefined,
+          coordenadas: data.coordenadas,
+          principal: true,
+        };
+
+        await enderecoService.create(enderecoData);
+      }
+
+      return pessoaSalva;
+    },
+
+    update: async (
+      id: string | number,
+      data: PessoaFormData
+    ): Promise<Pessoa> => {
+      // Preparar dados da pessoa (remover campos de endereço)
+      const pessoaData: PessoaDTO = {
+        tipoPessoa: data.tipoPessoa,
+        nome: data.nome,
+        cpfCnpj: data.cpfCnpj,
+        email: data.email,
+        telefone: data.telefone,
+        ativo: data.ativo,
+        isProdutor: data.isProdutor,
+        inscricaoEstadualProdutor: data.inscricaoEstadualProdutor,
+        pessoaFisica: data.pessoaFisica,
+        pessoaJuridica: data.pessoaJuridica,
+      };
+
+      // Atualizar pessoa
+      const pessoaSalva = await pessoaService.update(id, pessoaData);
+
+      // Se incluir endereço, salvar ou atualizar o endereço
+      if (data.incluirEndereco && pessoaSalva) {
+        const enderecoData: EnderecoDTO = {
+          pessoaId: pessoaSalva.id,
+          tipoEndereco: data.tipoEndereco!,
+          logradouroId: data.isEnderecoRural
             ? undefined
-            : Number(values.bairroId),
-          areaRuralId: values.isEnderecoRural
-            ? Number(values.areaRuralId)
+            : Number(data.logradouroId),
+          numero: data.isEnderecoRural ? undefined : data.numero,
+          complemento: data.isEnderecoRural ? undefined : data.complemento,
+          bairroId: data.isEnderecoRural ? undefined : Number(data.bairroId),
+          areaRuralId: data.isEnderecoRural
+            ? Number(data.areaRuralId)
             : undefined,
-          referenciaRural: values.isEnderecoRural
-            ? values.referenciaRural
+          referenciaRural: data.isEnderecoRural
+            ? data.referenciaRural
             : undefined,
-          coordenadas: values.coordenadas,
-          principal: true, // Sempre definir como principal
+          coordenadas: data.coordenadas,
+          principal: true,
         };
 
         // Se já existe um endereço, atualizar, senão criar
@@ -264,24 +313,19 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
         }
       }
 
-      alert("Registro salvo com sucesso!");
-      onSave();
       return pessoaSalva;
-    } catch (error) {
-      console.error("Erro ao salvar:", error);
-      throw error;
-    }
+    },
   };
 
   return (
     <FormBase<Pessoa, PessoaFormData>
       title="Pessoa"
-      service={pessoaService}
+      service={pessoaServiceWithEndereco}
       id={pessoaId}
       initialValues={initialValues}
       validate={validate}
       returnUrl="/cadastros/comum/pessoas"
-      onSave={handleSave}
+      //onSave={onSave}
     >
       {({
         values,

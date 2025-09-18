@@ -86,7 +86,7 @@ router.use(
   requireModuleAccess(ModuloSistema.COMUM),
   veiculoRoutes
 );
-/
+
 router.use(
   "/areas-rurais",
   requireModuleAccess(ModuloSistema.COMUM),
