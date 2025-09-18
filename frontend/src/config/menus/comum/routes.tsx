@@ -5,6 +5,9 @@ const Bairro = lazy(() => import("../../../pages/cadastros/comum/Bairro"));
 const Logradouro = lazy(
   () => import("../../../pages/cadastros/comum/logradouro/Logradouros")
 );
+const LogradouroForm = lazy(
+  () => import("../../../pages/cadastros/comum/logradouro/LogradouroForm")
+);
 const Pessoa = lazy(
   () => import("../../../pages/cadastros/comum/pessoa/Pessoas")
 );
@@ -77,6 +80,7 @@ export const comunComponents = {
   UsuarioForm,
   Bairro,
   Logradouro,
+  LogradouroForm,
   Pessoa,
   PessoaForm,
   Propriedade,
@@ -90,7 +94,7 @@ export const comunComponents = {
   AvaliacoesBeneficio,
   RelatoriosBeneficio,
   TipoVeiculo,
-  Veiculos
+  Veiculos,
 };
 
 export const comunRouteConfig = [
@@ -129,7 +133,7 @@ export const comunRouteConfig = [
   },
   {
     path: "/cadastros/comum/logradouros/:id",
-    component: Logradouro,
+    component: LogradouroForm,
     module: "comum",
     action: "view",
   },

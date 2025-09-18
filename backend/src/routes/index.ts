@@ -15,6 +15,7 @@ import arrendamentosRoutes from "./agricultura/arrendamentoRoutes";
 import transferenciaPropiedadeRoutes from "./comum/transferenciaPropiedadeRoutes";
 import solicitacoesBeneficioRoutes from "./comum/solicitacoesBeneficioRoutes";
 import ordemServicoRoutes from "./obras/ordemServicoRoutes";
+import areaRuralRoutes from "./comum/areaRuralRoutes";
 
 // Importar middleware de autenticação
 import {
@@ -43,10 +44,7 @@ router.use(
   requireModuleAccess(ModuloSistema.COMUM),
   logradouroRoutes
 );
-router.use(
-  "/pessoas",
-  requireModuleAccess(ModuloSistema.COMUM), pessoaRoutes
-);
+router.use("/pessoas", requireModuleAccess(ModuloSistema.COMUM), pessoaRoutes);
 router.use(
   "/enderecos",
   requireModuleAccess(ModuloSistema.COMUM),
@@ -87,6 +85,12 @@ router.use(
   "/veiculos",
   requireModuleAccess(ModuloSistema.COMUM),
   veiculoRoutes
+);
+
+router.use(
+  "/areas-rurais",
+  requireModuleAccess(ModuloSistema.COMUM),
+  areaRuralRoutes
 );
 
 // AGRICULTURA (requer acesso ao módulo agricultura)

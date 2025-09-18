@@ -1,3 +1,4 @@
+// frontend/src/pages/cadastros/comum/pessoa/PessoaForm.tsx
 import React, { useEffect, useState } from "react";
 import { useParams } from "@tanstack/react-router";
 import pessoaService, {
@@ -7,6 +8,12 @@ import pessoaService, {
   PessoaFisicaData,
   PessoaJuridicaData,
 } from "../../../../services/comum/pessoaService";
+import { logradouroService, bairroService } from "../../../../services";
+import enderecoService, {
+  TipoEndereco,
+  type EnderecoDTO,
+} from "../../../../services/comum/enderecoService";
+import areaRuralService from "../../../../services/comum/areaRuralService";
 import { FormBase } from "../../../../components/cadastro";
 import { FormField } from "../../../../components/comum";
 import {
@@ -15,41 +22,39 @@ import {
   formatarTelefone,
   formatDateForInput,
 } from "../../../../utils/formatters";
-import { EnderecoLista } from "../../../../components/endereco/EnderecoLista";
-import { EnderecoForm } from "../../../../components/endereco/EnderecoForm";
-import { usePessoaEnderecos } from "../../../../hooks/usePessoaEnderecos";
 
 interface PessoaFormProps {
   id?: string | number;
   onSave: () => void;
 }
 
+// Interface estendida para incluir dados de endereço
+interface PessoaFormData extends PessoaDTO {
+  // Campos de endereço integrados
+  incluirEndereco?: boolean;
+  tipoEndereco?: TipoEndereco;
+  isEnderecoRural?: boolean;
+  logradouroId?: string;
+  numero?: string;
+  complemento?: string;
+  bairroId?: string;
+  areaRuralId?: string;
+  referenciaRural?: string;
+  coordenadas?: string;
+}
+
 const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
-  // O params é extraído diretamente da rota
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const pessoaId = id || useParams({ strict: false }).id;
 
-  // ✅ NOVOS ESTADOS PARA ENDEREÇOS
-  const [showEnderecoForm, setShowEnderecoForm] = useState(false);
-  const [activeTab, setActiveTab] = useState<"dados" | "enderecos">("dados");
-  const [pessoaSalva, setPessoaSalva] = useState<Pessoa | null>(null);
+  // Estados para dados auxiliares
+  const [logradouros, setLogradouros] = useState<any[]>([]);
+  const [bairros, setBairros] = useState<any[]>([]);
+  const [areasRurais, setAreasRurais] = useState<any[]>([]);
+  const [enderecoExistente, setEnderecoExistente] = useState<any>(null);
+  const [loadingDados, setLoadingDados] = useState(false);
 
-  // ✅ HOOK PARA GERENCIAR ENDEREÇOS
-  const {
-    enderecos,
-    enderecoPrincipal,
-    loading: enderecosLoading,
-    error: enderecosError,
-    adicionarEndereco,
-    removerEndereco,
-    definirPrincipal,
-    totalEnderecos,
-    recarregarEnderecos,
-    podeAdicionarEndereco,
-  } = usePessoaEnderecos(pessoaSalva?.id);
-
-  // Valor inicial para o formulário (MANTÉM O MESMO)
-  const initialValues: PessoaDTO = {
+  // Valor inicial para o formulário com campos de endereço
+  const initialValues: PessoaFormData = {
     tipoPessoa: TipoPessoa.FISICA,
     nome: "",
     cpfCnpj: "",
@@ -69,12 +74,72 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
       dataFundacao: "",
       representanteLegal: "",
     },
+    // Campos de endereço
+    incluirEndereco: true, // Por padrão, incluir endereço
+    tipoEndereco: TipoEndereco.RESIDENCIAL,
+    isEnderecoRural: false,
+    logradouroId: "",
+    numero: "",
+    complemento: "",
+    bairroId: "",
+    areaRuralId: "",
+    referenciaRural: "",
+    coordenadas: "",
   };
 
-  // Validação do formulário (MANTÉM A MESMA)
-  const validate = (values: PessoaDTO) => {
+  // Carregar dados auxiliares
+  useEffect(() => {
+    carregarDadosAuxiliares();
+  }, []);
+
+  // Carregar endereço existente se estiver editando
+  useEffect(() => {
+    if (pessoaId && pessoaId !== "novo") {
+      carregarEnderecoExistente();
+    }
+  }, [pessoaId]);
+
+  const carregarDadosAuxiliares = async () => {
+    setLoadingDados(true);
+    try {
+      const [logradourosData, bairrosData, areasRuraisData] = await Promise.all(
+        [
+          logradouroService.getAll(),
+          bairroService.getAll(),
+          areaRuralService.getAll(),
+        ]
+      );
+
+      setLogradouros(logradourosData.filter((l: any) => l.ativo));
+      setBairros(bairrosData.filter((b: any) => b.ativo));
+      setAreasRurais(areasRuraisData.filter((a: any) => a.ativo));
+    } catch (error) {
+      console.error("Erro ao carregar dados auxiliares:", error);
+    } finally {
+      setLoadingDados(false);
+    }
+  };
+
+  const carregarEnderecoExistente = async () => {
+    try {
+      const enderecos = await enderecoService.getEnderecosByPessoa(
+        Number(pessoaId)
+      );
+      const enderecoPrincipal =
+        enderecos.find((e) => e.principal) || enderecos[0];
+      if (enderecoPrincipal) {
+        setEnderecoExistente(enderecoPrincipal);
+      }
+    } catch (error) {
+      console.error("Erro ao carregar endereço:", error);
+    }
+  };
+
+  // Validação do formulário
+  const validate = (values: PessoaFormData) => {
     const errors: Record<string, string> = {};
 
+    // Validações de pessoa
     if (!values.nome) {
       errors.nome = "Nome é obrigatório";
     }
@@ -117,276 +182,321 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
       }
     }
 
+    // Validações de endereço (se incluirEndereco estiver marcado)
+    if (values.incluirEndereco) {
+      if (!values.tipoEndereco) {
+        errors.tipoEndereco = "Tipo de endereço é obrigatório";
+      }
+
+      if (values.isEnderecoRural) {
+        if (!values.areaRuralId) {
+          errors.areaRuralId = "Área rural é obrigatória";
+        }
+      } else {
+        if (!values.logradouroId) {
+          errors.logradouroId = "Logradouro é obrigatório";
+        }
+        if (!values.numero) {
+          errors.numero = "Número é obrigatório";
+        }
+        if (!values.bairroId) {
+          errors.bairroId = "Bairro é obrigatório";
+        }
+      }
+    }
+
     return Object.keys(errors).length > 0 ? errors : null;
   };
 
-  // ✅ CARREGAR PESSOA SALVA QUANDO EXISTE ID
-  useEffect(() => {
-    if (pessoaId && pessoaId !== "novo") {
-      pessoaService
-        .getById(pessoaId)
-        .then((pessoa) => {
-          setPessoaSalva(pessoa);
-        })
-        .catch(console.error);
-    }
-  }, [pessoaId]);
+  // Criar um wrapper do serviço para interceptar create/update
+  const pessoaServiceWithEndereco = {
+    ...pessoaService,
 
-  // ✅ HANDLERS PARA ENDEREÇOS
-  const handleEnderecoSuccess = () => {
-    setShowEnderecoForm(false);
-    recarregarEnderecos();
-  };
+    getById: pessoaService.getById,
+    getAll: pessoaService.getAll,
+    delete: pessoaService.delete,
+    search: pessoaService.search,
+    toggleStatus: pessoaService.toggleStatus,
 
-  const handleRemoverEndereco = async (enderecoId: number) => {
-    await removerEndereco(enderecoId);
-  };
+    create: async (data: PessoaFormData): Promise<Pessoa> => {
+      // Preparar dados da pessoa (remover campos de endereço)
+      const pessoaData: PessoaDTO = {
+        tipoPessoa: data.tipoPessoa,
+        nome: data.nome,
+        cpfCnpj: data.cpfCnpj,
+        email: data.email,
+        telefone: data.telefone,
+        ativo: data.ativo,
+        isProdutor: data.isProdutor,
+        inscricaoEstadualProdutor: data.inscricaoEstadualProdutor,
+        pessoaFisica: data.pessoaFisica,
+        pessoaJuridica: data.pessoaJuridica,
+      };
 
-  const handleDefinirPrincipal = async (enderecoId: number) => {
-    await definirPrincipal(enderecoId);
+      // Criar pessoa
+      const pessoaSalva = await pessoaService.create(pessoaData);
+
+      // Se incluir endereço, salvar o endereço
+      if (data.incluirEndereco && pessoaSalva) {
+        const enderecoData: EnderecoDTO = {
+          pessoaId: pessoaSalva.id,
+          tipoEndereco: data.tipoEndereco!,
+          logradouroId: data.isEnderecoRural
+            ? undefined
+            : Number(data.logradouroId),
+          numero: data.isEnderecoRural ? undefined : data.numero,
+          complemento: data.isEnderecoRural ? undefined : data.complemento,
+          bairroId: data.isEnderecoRural ? undefined : Number(data.bairroId),
+          areaRuralId: data.isEnderecoRural
+            ? Number(data.areaRuralId)
+            : undefined,
+          referenciaRural: data.isEnderecoRural
+            ? data.referenciaRural
+            : undefined,
+          coordenadas: data.coordenadas,
+          principal: true,
+        };
+
+        await enderecoService.create(enderecoData);
+      }
+
+      return pessoaSalva;
+    },
+
+    update: async (
+      id: string | number,
+      data: PessoaFormData
+    ): Promise<Pessoa> => {
+      // Preparar dados da pessoa (remover campos de endereço)
+      const pessoaData: PessoaDTO = {
+        tipoPessoa: data.tipoPessoa,
+        nome: data.nome,
+        cpfCnpj: data.cpfCnpj,
+        email: data.email,
+        telefone: data.telefone,
+        ativo: data.ativo,
+        isProdutor: data.isProdutor,
+        inscricaoEstadualProdutor: data.inscricaoEstadualProdutor,
+        pessoaFisica: data.pessoaFisica,
+        pessoaJuridica: data.pessoaJuridica,
+      };
+
+      // Atualizar pessoa
+      const pessoaSalva = await pessoaService.update(id, pessoaData);
+
+      // Se incluir endereço, salvar ou atualizar o endereço
+      if (data.incluirEndereco && pessoaSalva) {
+        const enderecoData: EnderecoDTO = {
+          pessoaId: pessoaSalva.id,
+          tipoEndereco: data.tipoEndereco!,
+          logradouroId: data.isEnderecoRural
+            ? undefined
+            : Number(data.logradouroId),
+          numero: data.isEnderecoRural ? undefined : data.numero,
+          complemento: data.isEnderecoRural ? undefined : data.complemento,
+          bairroId: data.isEnderecoRural ? undefined : Number(data.bairroId),
+          areaRuralId: data.isEnderecoRural
+            ? Number(data.areaRuralId)
+            : undefined,
+          referenciaRural: data.isEnderecoRural
+            ? data.referenciaRural
+            : undefined,
+          coordenadas: data.coordenadas,
+          principal: true,
+        };
+
+        // Se já existe um endereço, atualizar, senão criar
+        if (enderecoExistente) {
+          await enderecoService.update(enderecoExistente.id, enderecoData);
+        } else {
+          await enderecoService.create(enderecoData);
+        }
+      }
+
+      return pessoaSalva;
+    },
   };
 
   return (
-    <div className="pessoa-form-container">
-      {/* ✅ NAVEGAÇÃO POR ABAS (só aparece se pessoa existe) */}
-      {pessoaSalva && (
-        <div className="mb-6">
-          <div className="border-b border-gray-200">
-            <nav className="-mb-px flex space-x-8">
-              <button
-                type="button"
-                onClick={() => setActiveTab("dados")}
-                className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
-                  activeTab === "dados"
-                    ? "border-blue-500 text-blue-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
-              >
-                👤 Dados Pessoais
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab("enderecos")}
-                className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
-                  activeTab === "enderecos"
-                    ? "border-blue-500 text-blue-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
-              >
-                📍 Endereços ({totalEnderecos})
-              </button>
-            </nav>
-          </div>
-        </div>
-      )}
+    <FormBase<Pessoa, PessoaFormData>
+      title="Pessoa"
+      service={pessoaServiceWithEndereco}
+      id={pessoaId}
+      initialValues={initialValues}
+      validate={validate}
+      returnUrl="/cadastros/comum/pessoas"
+      //onSave={onSave}
+    >
+      {({
+        values,
+        errors,
+        touched,
+        handleChange,
+        setValue,
+        setFieldTouched,
+      }) => {
+        // Funções auxiliares
+        const updatePessoaFisica = (
+          field: keyof PessoaFisicaData,
+          value: string
+        ) => {
+          setValue("pessoaFisica", {
+            ...values.pessoaFisica,
+            [field]: value,
+          });
+          setFieldTouched(`pessoaFisica.${field}`, true);
+        };
 
-      {/* ✅ ABA DE DADOS PESSOAIS */}
-      {(!pessoaSalva || activeTab === "dados") && (
-        <FormBase<Pessoa, PessoaDTO>
-          title="Pessoa"
-          service={pessoaService}
-          id={pessoaId}
-          initialValues={initialValues}
-          validate={validate}
-          returnUrl="/cadastros/comum/pessoas"
-          onSave={(pessoa) => {
-            setPessoaSalva(pessoa);
-            if (pessoaId === "novo") {
-              setActiveTab("enderecos"); // Vai para endereços após criar
-            }
-            onSave();
-          }}
-        >
-          {({
-            values,
-            errors,
-            touched,
-            handleChange,
-            setValue,
-            setFieldTouched,
-          }) => {
-            // ✅ FUNÇÕES AUXILIARES (MANTÉM AS MESMAS)
-            const updatePessoaFisica = (
-              field: keyof PessoaFisicaData,
-              value: string
-            ) => {
-              setValue("pessoaFisica", {
-                ...values.pessoaFisica,
-                [field]: value,
-              });
-              setFieldTouched(`pessoaFisica.${field}`, true);
-            };
+        const updatePessoaJuridica = (
+          field: keyof PessoaJuridicaData,
+          value: string
+        ) => {
+          setValue("pessoaJuridica", {
+            ...values.pessoaJuridica,
+            [field]: value,
+          });
+          setFieldTouched(`pessoaJuridica.${field}`, true);
+        };
 
-            const updatePessoaJuridica = (
-              field: keyof PessoaJuridicaData,
-              value: string
-            ) => {
-              setValue("pessoaJuridica", {
-                ...values.pessoaJuridica,
-                [field]: value,
-              });
-              setFieldTouched(`pessoaJuridica.${field}`, true);
-            };
+        // Carregar dados da pessoa ao editar
+        useEffect(() => {
+          const loadPessoaData = async () => {
+            if (pessoaId && pessoaId !== "novo") {
+              try {
+                const pessoaData = await pessoaService.getById(pessoaId);
 
-            const handleCpfCnpjChange = (
-              e: React.ChangeEvent<HTMLInputElement>
-            ) => {
-              const value = e.target.value;
-              let formattedValue = value;
+                // Preencher dados da pessoa
+                setValue("tipoPessoa", pessoaData.tipoPessoa);
+                setValue("nome", pessoaData.nome);
+                setValue("cpfCnpj", pessoaData.cpfCnpj);
+                setValue("email", pessoaData.email || "");
+                setValue("telefone", pessoaData.telefone || "");
+                setValue("ativo", pessoaData.ativo);
+                setValue("isProdutor", pessoaData.isProdutor || false);
+                setValue(
+                  "inscricaoEstadualProdutor",
+                  pessoaData.inscricaoEstadualProdutor || ""
+                );
 
-              if (values.tipoPessoa === TipoPessoa.FISICA) {
-                formattedValue = formatarCPF(value);
-              } else {
-                formattedValue = formatarCNPJ(value);
-              }
-
-              setValue("cpfCnpj", formattedValue);
-              setFieldTouched("cpfCnpj", true);
-            };
-
-            const handleTelefoneBlur = (
-              e: React.FocusEvent<HTMLInputElement>
-            ) => {
-              const formatted = formatarTelefone(e.target.value);
-              setValue("telefone", formatted);
-            };
-
-            // ✅ TRANSFORMAR DADOS DO BACKEND (MANTÉM O MESMO)
-            useEffect(() => {
-              const transformBackendData = async () => {
-                if (pessoaId && pessoaId !== "novo") {
-                  try {
-                    const pessoaData = await pessoaService.getPessoaWithDetails(
-                      pessoaId
-                    );
-
-                    const formData: PessoaDTO = {
-                      tipoPessoa: pessoaData.tipoPessoa,
-                      nome: pessoaData.nome,
-                      cpfCnpj: pessoaData.cpfCnpj,
-                      email: pessoaData.email || "",
-                      telefone: pessoaData.telefone || "",
-                      ativo: pessoaData.ativo,
-                      isProdutor: pessoaData?.isProdutor,
-                      inscricaoEstadualProdutor: pessoaData?.inscricaoEstadualProdutor,
-                      pessoaFisica: {
-                        rg: pessoaData.pessoaFisica?.rg || "",
-                        dataNascimento: formatDateForInput(
-                          pessoaData.pessoaFisica?.dataNascimento || ""
-                        ),
-                      },
-                      pessoaJuridica: {
-                        nomeFantasia:
-                          pessoaData.pessoaJuridica?.nomeFantasia || "",
-                        inscricaoEstadual:
-                          pessoaData.pessoaJuridica?.inscricaoEstadual || "",
-                        inscricaoMunicipal:
-                          pessoaData.pessoaJuridica?.inscricaoMunicipal || "",
-                        dataFundacao: formatDateForInput(
-                          pessoaData.pessoaJuridica?.dataFundacao || ""
-                        ),
-                        representanteLegal:
-                          pessoaData.pessoaJuridica?.representanteLegal || "",
-                      },
-                    };
-
-                    Object.keys(formData).forEach((key) => {
-                      setValue(key, (formData as any)[key]);
-                    });
-                  } catch (error) {
-                    console.error("Erro ao carregar dados da pessoa:", error);
-                  }
+                if (pessoaData.pessoaFisica) {
+                  setValue("pessoaFisica", {
+                    rg: pessoaData.pessoaFisica.rg || "",
+                    dataNascimento: formatDateForInput(
+                      pessoaData.pessoaFisica.dataNascimento || ""
+                    ),
+                  });
                 }
-              };
 
-              transformBackendData();
-            }, [pessoaId]);
+                if (pessoaData.pessoaJuridica) {
+                  setValue("pessoaJuridica", {
+                    nomeFantasia: pessoaData.pessoaJuridica.nomeFantasia || "",
+                    inscricaoEstadual:
+                      pessoaData.pessoaJuridica.inscricaoEstadual || "",
+                    inscricaoMunicipal:
+                      pessoaData.pessoaJuridica.inscricaoMunicipal || "",
+                    dataFundacao: formatDateForInput(
+                      pessoaData.pessoaJuridica.dataFundacao || ""
+                    ),
+                    representanteLegal:
+                      pessoaData.pessoaJuridica.representanteLegal || "",
+                  });
+                }
 
-            // ✅ RENDER DO FORMULÁRIO (MANTÉM EXATAMENTE O MESMO)
-            return (
-              <div className="space-y-6">
-                {/* Tipo de Pessoa */}
-                <div>
-                  <label className="text-base font-medium text-gray-900">
-                    Tipo de Pessoa
-                  </label>
-                  <fieldset className="mt-4">
-                    <div className="space-y-4 sm:flex sm:items-center sm:space-y-0 sm:space-x-10">
-                      {[
-                        {
-                          value: TipoPessoa.FISICA,
-                          label: "Pessoa Física",
-                          icon: "👤",
-                        },
-                        {
-                          value: TipoPessoa.JURIDICA,
-                          label: "Pessoa Jurídica",
-                          icon: "🏢",
-                        },
-                      ].map((option) => (
-                        <div key={option.value} className="flex items-center">
-                          <input
-                            id={option.value}
-                            name="tipoPessoa"
-                            type="radio"
-                            checked={values.tipoPessoa === option.value}
-                            onChange={() =>
-                              setValue("tipoPessoa", option.value)
-                            }
-                            className="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300"
-                          />
-                          <label
-                            htmlFor={option.value}
-                            className="ml-3 block text-sm font-medium text-gray-700"
-                          >
-                            {option.icon} {option.label}
-                          </label>
-                        </div>
-                      ))}
+                // Preencher dados do endereço se existir
+                if (enderecoExistente) {
+                  setValue("incluirEndereco", true);
+                  setValue("tipoEndereco", enderecoExistente.tipoEndereco);
+                  setValue("isEnderecoRural", !!enderecoExistente.areaRuralId);
+                  setValue(
+                    "logradouroId",
+                    enderecoExistente.logradouroId?.toString() || ""
+                  );
+                  setValue("numero", enderecoExistente.numero || "");
+                  setValue("complemento", enderecoExistente.complemento || "");
+                  setValue(
+                    "bairroId",
+                    enderecoExistente.bairroId?.toString() || ""
+                  );
+                  setValue(
+                    "areaRuralId",
+                    enderecoExistente.areaRuralId?.toString() || ""
+                  );
+                  setValue(
+                    "referenciaRural",
+                    enderecoExistente.referenciaRural || ""
+                  );
+                  setValue("coordenadas", enderecoExistente.coordenadas || "");
+                }
+              } catch (error) {
+                console.error("Erro ao carregar dados da pessoa:", error);
+              }
+            }
+          };
+
+          loadPessoaData();
+        }, [pessoaId, enderecoExistente]);
+
+        return (
+          <div className="space-y-8">
+            {/* SEÇÃO 1: DADOS PESSOAIS */}
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900 mb-6">
+                📋 Dados Pessoais
+              </h3>
+
+              {/* Tipo de Pessoa */}
+              <div className="mb-6">
+                <label className="text-base font-medium text-gray-900">
+                  Tipo de Pessoa
+                </label>
+                <fieldset className="mt-4">
+                  <div className="space-y-4 sm:flex sm:items-center sm:space-y-0 sm:space-x-10">
+                    <div className="flex items-center">
+                      <input
+                        id="fisica"
+                        name="tipoPessoa"
+                        type="radio"
+                        value={TipoPessoa.FISICA}
+                        checked={values.tipoPessoa === TipoPessoa.FISICA}
+                        onChange={handleChange}
+                        className="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300"
+                      />
+                      <label
+                        htmlFor="fisica"
+                        className="ml-3 block text-sm font-medium text-gray-700"
+                      >
+                        Pessoa Física
+                      </label>
                     </div>
-                  </fieldset>
-                </div>
+                    <div className="flex items-center">
+                      <input
+                        id="juridica"
+                        name="tipoPessoa"
+                        type="radio"
+                        value={TipoPessoa.JURIDICA}
+                        checked={values.tipoPessoa === TipoPessoa.JURIDICA}
+                        onChange={handleChange}
+                        className="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300"
+                      />
+                      <label
+                        htmlFor="juridica"
+                        className="ml-3 block text-sm font-medium text-gray-700"
+                      >
+                        Pessoa Jurídica
+                      </label>
+                    </div>
+                  </div>
+                </fieldset>
+              </div>
 
-                {/* CPF/CNPJ */}
-                <FormField
-                  name="cpfCnpj"
-                  label={
-                    values.tipoPessoa === TipoPessoa.FISICA ? "CPF" : "CNPJ"
-                  }
-                  error={errors.cpfCnpj}
-                  touched={touched.cpfCnpj}
-                  required
-                  helpText={
-                    values.tipoPessoa === TipoPessoa.FISICA
-                      ? "Formato: 123.456.789-00"
-                      : "Formato: 12.345.678/0001-90"
-                  }
-                >
-                  <input
-                    type="text"
-                    id="cpfCnpj"
-                    name="cpfCnpj"
-                    value={values.cpfCnpj}
-                    onChange={handleCpfCnpjChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder={
-                      values.tipoPessoa === TipoPessoa.FISICA
-                        ? "000.000.000-00"
-                        : "00.000.000/0000-00"
-                    }
-                    maxLength={
-                      values.tipoPessoa === TipoPessoa.FISICA ? 14 : 18
-                    }
-                  />
-                </FormField>
-
-                {/* Nome */}
+              {/* Dados básicos */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   name="nome"
                   label={
-                    values.tipoPessoa === TipoPessoa.FISICA
-                      ? "Nome Completo"
-                      : "Razão Social"
+                    values.tipoPessoa === TipoPessoa.JURIDICA
+                      ? "Razão Social"
+                      : "Nome Completo"
                   }
                   error={errors.nome}
                   touched={touched.nome}
@@ -399,364 +509,464 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
                     value={values.nome}
                     onChange={handleChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </FormField>
+
+                <FormField
+                  name="cpfCnpj"
+                  label={
+                    values.tipoPessoa === TipoPessoa.JURIDICA ? "CNPJ" : "CPF"
+                  }
+                  error={errors.cpfCnpj}
+                  touched={touched.cpfCnpj}
+                  required
+                >
+                  <input
+                    type="text"
+                    id="cpfCnpj"
+                    name="cpfCnpj"
+                    value={
+                      values.tipoPessoa === TipoPessoa.JURIDICA
+                        ? formatarCNPJ(values.cpfCnpj)
+                        : formatarCPF(values.cpfCnpj)
+                    }
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder={
-                      values.tipoPessoa === TipoPessoa.FISICA
-                        ? "Nome completo"
-                        : "Razão social"
+                      values.tipoPessoa === TipoPessoa.JURIDICA
+                        ? "00.000.000/0000-00"
+                        : "000.000.000-00"
                     }
                   />
                 </FormField>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
+                <FormField
+                  name="email"
+                  label="Email"
+                  error={errors.email}
+                  touched={touched.email}
+                >
+                  <input
+                    type="email"
+                    id="email"
                     name="email"
-                    label="E-mail"
-                    error={errors.email}
-                    touched={touched.email}
-                  >
+                    value={values.email}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </FormField>
+
+                <FormField
+                  name="telefone"
+                  label="Telefone"
+                  error={errors.telefone}
+                  touched={touched.telefone}
+                >
+                  <input
+                    type="text"
+                    id="telefone"
+                    name="telefone"
+                    value={formatarTelefone(values.telefone || "")}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="(00) 00000-0000"
+                  />
+                </FormField>
+              </div>
+
+              {/* Campos específicos para Pessoa Física */}
+              {values.tipoPessoa === TipoPessoa.FISICA && (
+                <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField name="rg" label="RG">
                     <input
-                      type="email"
-                      id="email"
-                      name="email"
-                      value={values.email || ""}
-                      onChange={handleChange}
+                      type="text"
+                      id="rg"
+                      name="pessoaFisica.rg"
+                      value={values.pessoaFisica?.rg || ""}
+                      onChange={(e) => updatePessoaFisica("rg", e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="exemplo@email.com"
                     />
                   </FormField>
 
                   <FormField
-                    name="telefone"
-                    label="Telefone"
-                    error={errors.telefone}
-                    touched={touched.telefone}
-                    helpText="Formato: (99) 9 9999-9999"
+                    name="dataNascimento"
+                    label="Data de Nascimento"
+                    error={errors.dataNascimento}
+                    touched={touched.dataNascimento}
+                    required
                   >
                     <input
-                      type="text"
-                      id="telefone"
-                      name="telefone"
-                      value={values.telefone || ""}
-                      onChange={handleChange}
-                      onBlur={handleTelefoneBlur}
+                      type="date"
+                      id="dataNascimento"
+                      name="pessoaFisica.dataNascimento"
+                      value={values.pessoaFisica?.dataNascimento || ""}
+                      onChange={(e) =>
+                        updatePessoaFisica("dataNascimento", e.target.value)
+                      }
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="(99) 9 9999-9999"
-                      maxLength={16}
                     />
                   </FormField>
                 </div>
-                {/* 🆕 SEÇÃO PRODUTOR RURAL */}
-                <div className="border-t pt-6 mt-6">
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
-                      <h3 className="text-lg font-medium text-green-900 mb-3 flex items-center">
-                        🌾 Produtor Rural
-                      </h3>
-                      
-                      <div className="flex items-center">
-                        <input
-                          type="checkbox"
-                          id="isProdutor"
-                          name="isProdutor"
-                          checked={values.isProdutor || false}
-                          onChange={(e) => {
-                            setValue("isProdutor", e.target.checked);
-                            if (!e.target.checked) {
-                              setValue("inscricaoEstadualProdutor", "");
-                            }
-                          }}
-                          className="h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
-                        />
-                        <label htmlFor="isProdutor" className="ml-2 text-sm text-green-800">
-                          <strong>Esta pessoa é um produtor rural?</strong>
-                        </label>
-                      </div>
-                      
-                      {values.isProdutor && (
-                        <div className="mt-4 space-y-4">
-                          <FormField
-                            name="inscricaoEstadualProdutor"
-                            label="Inscrição Estadual de Produtor Rural"
-                            error={errors.inscricaoEstadualProdutor}
-                            touched={touched.inscricaoEstadualProdutor}
-                          >
-                            <input
-                              type="text"
-                              id="inscricaoEstadualProdutor"
-                              name="inscricaoEstadualProdutor"
-                              value={values.inscricaoEstadualProdutor || ""}
-                              onChange={handleChange}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                              placeholder="Número da inscrição estadual"
-                            />
-                          </FormField>                       
-                        </div>
-                      )}
-                    </div>
+              )}
+
+              {/* Campos específicos para Pessoa Jurídica */}
+              {values.tipoPessoa === TipoPessoa.JURIDICA && (
+                <div className="mt-4 space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField name="nomeFantasia" label="Nome Fantasia">
+                      <input
+                        type="text"
+                        id="nomeFantasia"
+                        name="pessoaJuridica.nomeFantasia"
+                        value={values.pessoaJuridica?.nomeFantasia || ""}
+                        onChange={(e) =>
+                          updatePessoaJuridica("nomeFantasia", e.target.value)
+                        }
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </FormField>
+
+                    <FormField
+                      name="representanteLegal"
+                      label="Representante Legal"
+                      error={errors.representanteLegal}
+                      touched={touched.representanteLegal}
+                      required
+                    >
+                      <input
+                        type="text"
+                        id="representanteLegal"
+                        name="pessoaJuridica.representanteLegal"
+                        value={values.pessoaJuridica?.representanteLegal || ""}
+                        onChange={(e) =>
+                          updatePessoaJuridica(
+                            "representanteLegal",
+                            e.target.value
+                          )
+                        }
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </FormField>
                   </div>
 
-                {/* Campos específicos para Pessoa Física */}
-                {values.tipoPessoa === TipoPessoa.FISICA && (
-                  <div className="border-t pt-4 mt-4">
-                    <h3 className="text-lg font-medium text-gray-900 mb-4">
-                      Dados da Pessoa Física
-                    </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <FormField
+                      name="inscricaoEstadual"
+                      label="Inscrição Estadual"
+                    >
+                      <input
+                        type="text"
+                        id="inscricaoEstadual"
+                        name="pessoaJuridica.inscricaoEstadual"
+                        value={values.pessoaJuridica?.inscricaoEstadual || ""}
+                        onChange={(e) =>
+                          updatePessoaJuridica(
+                            "inscricaoEstadual",
+                            e.target.value
+                          )
+                        }
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </FormField>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField
-                        name="rg"
-                        label="RG"
-                        error={errors.rg}
-                        touched={touched.rg}
-                      >
-                        <input
-                          type="text"
-                          id="rg"
-                          name="rg"
-                          value={values.pessoaFisica?.rg || ""}
-                          onChange={(e) =>
-                            updatePessoaFisica("rg", e.target.value)
-                          }
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          placeholder="12.345.678-9"
-                        />
-                      </FormField>
+                    <FormField
+                      name="inscricaoMunicipal"
+                      label="Inscrição Municipal"
+                    >
+                      <input
+                        type="text"
+                        id="inscricaoMunicipal"
+                        name="pessoaJuridica.inscricaoMunicipal"
+                        value={values.pessoaJuridica?.inscricaoMunicipal || ""}
+                        onChange={(e) =>
+                          updatePessoaJuridica(
+                            "inscricaoMunicipal",
+                            e.target.value
+                          )
+                        }
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </FormField>
 
-                      <FormField
-                        name="dataNascimento"
-                        label="Data de Nascimento"
-                        error={errors.dataNascimento}
-                        touched={touched.dataNascimento}
-                        required
-                      >
-                        <input
-                          type="date"
-                          id="dataNascimento"
-                          name="dataNascimento"
-                          value={values.pessoaFisica?.dataNascimento || ""}
-                          onChange={(e) =>
-                            updatePessoaFisica("dataNascimento", e.target.value)
-                          }
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                      </FormField>
-                    </div>
+                    <FormField name="dataFundacao" label="Data de Fundação">
+                      <input
+                        type="date"
+                        id="dataFundacao"
+                        name="pessoaJuridica.dataFundacao"
+                        value={values.pessoaJuridica?.dataFundacao || ""}
+                        onChange={(e) =>
+                          updatePessoaJuridica("dataFundacao", e.target.value)
+                        }
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </FormField>
                   </div>
-                )}
+                </div>
+              )}
 
-                {/* Campos específicos para Pessoa Jurídica */}
-                {values.tipoPessoa === TipoPessoa.JURIDICA && (
-                  <div className="border-t pt-4 mt-4">
-                    <h3 className="text-lg font-medium text-gray-900 mb-4">
-                      Dados da Pessoa Jurídica
-                    </h3>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField
-                        name="nomeFantasia"
-                        label="Nome Fantasia"
-                        error={errors.nomeFantasia}
-                        touched={touched.nomeFantasia}
-                      >
-                        <input
-                          type="text"
-                          id="nomeFantasia"
-                          name="nomeFantasia"
-                          value={values.pessoaJuridica?.nomeFantasia || ""}
-                          onChange={(e) =>
-                            updatePessoaJuridica("nomeFantasia", e.target.value)
-                          }
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          placeholder="Nome fantasia da empresa"
-                        />
-                      </FormField>
-
-                      <FormField
-                        name="representanteLegal"
-                        label="Representante Legal"
-                        error={errors.representanteLegal}
-                        touched={touched.representanteLegal}
-                        required
-                      >
-                        <input
-                          type="text"
-                          id="representanteLegal"
-                          name="representanteLegal"
-                          value={
-                            values.pessoaJuridica?.representanteLegal || ""
-                          }
-                          onChange={(e) =>
-                            updatePessoaJuridica(
-                              "representanteLegal",
-                              e.target.value
-                            )
-                          }
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          placeholder="Nome do representante legal"
-                        />
-                      </FormField>
-
-                      <FormField
-                        name="inscricaoEstadual"
-                        label="Inscrição Estadual"
-                        error={errors.inscricaoEstadual}
-                        touched={touched.inscricaoEstadual}
-                      >
-                        <input
-                          type="text"
-                          id="inscricaoEstadual"
-                          name="inscricaoEstadual"
-                          value={values.pessoaJuridica?.inscricaoEstadual || ""}
-                          onChange={(e) =>
-                            updatePessoaJuridica(
-                              "inscricaoEstadual",
-                              e.target.value
-                            )
-                          }
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          placeholder="123.456.789.000"
-                        />
-                      </FormField>
-
-                      <FormField
-                        name="inscricaoMunicipal"
-                        label="Inscrição Municipal"
-                        error={errors.inscricaoMunicipal}
-                        touched={touched.inscricaoMunicipal}
-                      >
-                        <input
-                          type="text"
-                          id="inscricaoMunicipal"
-                          name="inscricaoMunicipal"
-                          value={
-                            values.pessoaJuridica?.inscricaoMunicipal || ""
-                          }
-                          onChange={(e) =>
-                            updatePessoaJuridica(
-                              "inscricaoMunicipal",
-                              e.target.value
-                            )
-                          }
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          placeholder="123456789"
-                        />
-                      </FormField>
-
-                      <FormField
-                        name="dataFundacao"
-                        label="Data de Fundação"
-                        error={errors.dataFundacao}
-                        touched={touched.dataFundacao}
-                      >
-                        <input
-                          type="date"
-                          id="dataFundacao"
-                          name="dataFundacao"
-                          value={values.pessoaJuridica?.dataFundacao || ""}
-                          onChange={(e) =>
-                            updatePessoaJuridica("dataFundacao", e.target.value)
-                          }
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                      </FormField>
-                    </div>
-                  </div>
-                )}
-
-                {/* ✅ BOTÃO PARA IR PARA ENDEREÇOS (só aparece após salvar) */}
-                {pessoaSalva && (
-                  <div className="border-t pt-4 mt-6">
-                    <div className="flex justify-end">
-                      <button
-                        type="button"
-                        onClick={() => setActiveTab("enderecos")}
-                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                      >
-                        📍 Gerenciar Endereços ({totalEnderecos})
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          }}
-        </FormBase>
-      )}
-
-      {/* ✅ ABA DE ENDEREÇOS */}
-      {pessoaSalva && activeTab === "enderecos" && (
-        <div className="bg-white shadow rounded-lg">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <div className="flex justify-between items-center">
-              <div>
-                <h2 className="text-lg font-medium text-gray-900">
-                  Endereços de {pessoaSalva.nome}
-                </h2>
-                <p className="text-sm text-gray-500 mt-1">
-                  {totalEnderecos} endereço(s) cadastrado(s)
-                  {enderecoPrincipal && " • Principal definido"}
-                </p>
-              </div>
-              {!showEnderecoForm && (
-                <button
-                  type="button"
-                  onClick={() => setShowEnderecoForm(true)}
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+              {/* Checkbox para produtor rural */}
+              <div className="mt-6 flex items-center">
+                <input
+                  type="checkbox"
+                  id="isProdutor"
+                  name="isProdutor"
+                  checked={values.isProdutor || false}
+                  onChange={handleChange}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <label
+                  htmlFor="isProdutor"
+                  className="ml-2 block text-sm text-gray-900"
                 >
-                  + Adicionar Endereço
-                </button>
+                  É produtor rural
+                </label>
+              </div>
+
+              {values.isProdutor && (
+                <div className="mt-4">
+                  <FormField
+                    name="inscricaoEstadualProdutor"
+                    label="Inscrição Estadual de Produtor"
+                  >
+                    <input
+                      type="text"
+                      id="inscricaoEstadualProdutor"
+                      name="inscricaoEstadualProdutor"
+                      value={values.inscricaoEstadualProdutor}
+                      onChange={handleChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </FormField>
+                </div>
+              )}
+            </div>
+
+            {/* SEÇÃO 2: ENDEREÇO */}
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  📍 Endereço Principal
+                </h3>
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    name="incluirEndereco"
+                    checked={values.incluirEndereco}
+                    onChange={handleChange}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <span className="ml-2 text-sm text-gray-700">
+                    Incluir endereço
+                  </span>
+                </label>
+              </div>
+
+              {values.incluirEndereco && (
+                <>
+                  {/* Tipo de Endereço e Rural/Urbano */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <FormField
+                      name="tipoEndereco"
+                      label="Tipo de Endereço"
+                      error={errors.tipoEndereco}
+                      touched={touched.tipoEndereco}
+                      required
+                    >
+                      <select
+                        id="tipoEndereco"
+                        name="tipoEndereco"
+                        value={values.tipoEndereco}
+                        onChange={handleChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value={TipoEndereco.RESIDENCIAL}>
+                          Residencial
+                        </option>
+                        <option value={TipoEndereco.COMERCIAL}>
+                          Comercial
+                        </option>
+                        <option value={TipoEndereco.RURAL}>Rural</option>
+                        <option value={TipoEndereco.CORRESPONDENCIA}>
+                          Correspondência
+                        </option>
+                      </select>
+                    </FormField>
+
+                    <div className="flex items-center mt-6">
+                      <input
+                        type="checkbox"
+                        id="isEnderecoRural"
+                        name="isEnderecoRural"
+                        checked={values.isEnderecoRural}
+                        onChange={handleChange}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      />
+                      <label
+                        htmlFor="isEnderecoRural"
+                        className="ml-2 block text-sm text-gray-900"
+                      >
+                        Endereço em área rural
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Campos para endereço urbano */}
+                  {!values.isEnderecoRural && (
+                    <>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <FormField
+                          name="logradouroId"
+                          label="Logradouro"
+                          error={errors.logradouroId}
+                          touched={touched.logradouroId}
+                          required
+                        >
+                          <select
+                            id="logradouroId"
+                            name="logradouroId"
+                            value={values.logradouroId}
+                            onChange={handleChange}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            disabled={loadingDados}
+                          >
+                            <option value="">Selecione...</option>
+                            {logradouros.map((log: any) => (
+                              <option key={log.id} value={log.id}>
+                                {log.tipo} {log.descricao}
+                              </option>
+                            ))}
+                          </select>
+                        </FormField>
+
+                        <FormField
+                          name="numero"
+                          label="Número"
+                          error={errors.numero}
+                          touched={touched.numero}
+                          required
+                        >
+                          <input
+                            type="text"
+                            id="numero"
+                            name="numero"
+                            value={values.numero}
+                            onChange={handleChange}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        </FormField>
+
+                        <FormField name="complemento" label="Complemento">
+                          <input
+                            type="text"
+                            id="complemento"
+                            name="complemento"
+                            value={values.complemento}
+                            onChange={handleChange}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Apto, Bloco, etc."
+                          />
+                        </FormField>
+                      </div>
+
+                      <div className="mt-4">
+                        <FormField
+                          name="bairroId"
+                          label="Bairro"
+                          error={errors.bairroId}
+                          touched={touched.bairroId}
+                          required
+                        >
+                          <select
+                            id="bairroId"
+                            name="bairroId"
+                            value={values.bairroId}
+                            onChange={handleChange}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            disabled={loadingDados}
+                          >
+                            <option value="">Selecione...</option>
+                            {bairros.map((bairro: any) => (
+                              <option key={bairro.id} value={bairro.id}>
+                                {bairro.nome}
+                              </option>
+                            ))}
+                          </select>
+                        </FormField>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Campos para endereço rural */}
+                  {values.isEnderecoRural && (
+                    <>
+                      <div className="grid grid-cols-1 gap-4">
+                        <FormField
+                          name="areaRuralId"
+                          label="Área Rural"
+                          error={errors.areaRuralId}
+                          touched={touched.areaRuralId}
+                          required
+                        >
+                          <select
+                            id="areaRuralId"
+                            name="areaRuralId"
+                            value={values.areaRuralId}
+                            onChange={handleChange}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            disabled={loadingDados}
+                          >
+                            <option value="">Selecione...</option>
+                            {areasRurais.map((area: any) => (
+                              <option key={area.id} value={area.id}>
+                                {area.nome}
+                              </option>
+                            ))}
+                          </select>
+                        </FormField>
+
+                        <FormField
+                          name="referenciaRural"
+                          label="Referência/Ponto de Referência"
+                        >
+                          <textarea
+                            id="referenciaRural"
+                            name="referenciaRural"
+                            value={values.referenciaRural}
+                            onChange={handleChange}
+                            rows={2}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Ex: Próximo ao silo azul, após a ponte..."
+                          />
+                        </FormField>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Campo de coordenadas (comum para ambos) */}
+                  <div className="mt-4">
+                    <FormField
+                      name="coordenadas"
+                      label="Coordenadas GPS"
+                      helpText="Formato: latitude,longitude (ex: -24.9555,-54.3222)"
+                    >
+                      <input
+                        type="text"
+                        id="coordenadas"
+                        name="coordenadas"
+                        value={values.coordenadas}
+                        onChange={handleChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="-24.9555,-54.3222"
+                      />
+                    </FormField>
+                  </div>
+                </>
               )}
             </div>
           </div>
-
-          <div className="p-6">
-            {enderecosError && (
-              <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
-                <p className="text-red-600 text-sm">{enderecosError}</p>
-              </div>
-            )}
-
-            {showEnderecoForm && (
-              <div className="mb-6 p-6 bg-gray-50 border border-gray-200 rounded-lg">
-                <EnderecoForm
-                  pessoaId={pessoaSalva.id}
-                  onSuccess={handleEnderecoSuccess}
-                  onCancel={() => setShowEnderecoForm(false)}
-                />
-              </div>
-            )}
-
-            {!showEnderecoForm && (
-              <EnderecoLista
-                enderecos={enderecos}
-                loading={enderecosLoading}
-                onRemover={handleRemoverEndereco}
-                onDefinirPrincipal={handleDefinirPrincipal}
-                showActions={true}
-              />
-            )}
-
-            <div className="border-t border-gray-200 pt-6 mt-6">
-              <div className="flex justify-between">
-                <button
-                  type="button"
-                  onClick={() => setActiveTab("dados")}
-                  className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-                >
-                  ← Voltar aos Dados
-                </button>
-                <button
-                  type="button"
-                  onClick={() => window.history.back()}
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors"
-                >
-                  ✅ Concluir
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+        );
+      }}
+    </FormBase>
   );
 };
 
