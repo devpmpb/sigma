@@ -336,6 +336,31 @@ export const pessoaController = {
     }
   },
 
+  findById: async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+
+      const pessoa = await prisma.pessoa.findUnique({
+        where: { id: Number(id) },
+        include: {
+          pessoaFisica: true,
+          pessoaJuridica: true,
+        },
+      });
+
+      if (!pessoa) {
+        return res.status(404).json({ erro: "Pessoa não encontrada" });
+      }
+
+      return res.status(200).json(pessoa);
+    } catch (error) {
+      console.error("Erro ao buscar pessoa:", error);
+      return res.status(500).json({
+        erro: "Erro ao buscar pessoa",
+      });
+    }
+  },
+
   // Listar pessoas por tipo (FISICA ou JURIDICA)
   findByTipo: async (req: Request, res: Response) => {
     try {

@@ -374,43 +374,92 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
           const loadPessoaData = async () => {
             if (pessoaId && pessoaId !== "novo") {
               try {
-                const pessoaData = await pessoaService.getById(pessoaId);
+                // Tentar usar o método que traz detalhes completos, senão usar getById
+                let pessoaData;
+                try {
+                  // Primeiro tentar o método com detalhes
+                  pessoaData = await pessoaService.getPessoaWithDetails(
+                    Number(pessoaId)
+                  );
+                } catch {
+                  // Se não existir, usar o método padrão
+                  pessoaData = await pessoaService.getById(pessoaId);
+                }
 
-                // Preencher dados da pessoa
+                // Debug - remover depois de confirmar que funciona
+                console.log("Dados da pessoa carregados:", pessoaData);
+                if (pessoaData.pessoaFisica) {
+                  console.log("PessoaFisica - RG:", pessoaData.pessoaFisica.rg);
+                  console.log(
+                    "PessoaFisica - Data Nasc:",
+                    pessoaData.pessoaFisica.dataNascimento
+                  );
+                }
+
+                // Preencher dados básicos da pessoa
                 setValue("tipoPessoa", pessoaData.tipoPessoa);
                 setValue("nome", pessoaData.nome);
                 setValue("cpfCnpj", pessoaData.cpfCnpj);
                 setValue("email", pessoaData.email || "");
                 setValue("telefone", pessoaData.telefone || "");
-                setValue("ativo", pessoaData.ativo);
+                setValue("ativo", pessoaData.ativo !== false); // garantir que seja boolean
                 setValue("isProdutor", pessoaData.isProdutor || false);
                 setValue(
                   "inscricaoEstadualProdutor",
                   pessoaData.inscricaoEstadualProdutor || ""
                 );
 
-                if (pessoaData.pessoaFisica) {
-                  setValue("pessoaFisica", {
-                    rg: pessoaData.pessoaFisica.rg || "",
-                    dataNascimento: formatDateForInput(
-                      pessoaData.pessoaFisica.dataNascimento || ""
-                    ),
-                  });
+                // Preencher dados específicos de pessoa física
+                if (
+                  pessoaData.tipoPessoa === TipoPessoa.FISICA &&
+                  pessoaData.pessoaFisica
+                ) {
+                  const rg = pessoaData.pessoaFisica.rg || "";
+                  const dataNascimento = pessoaData.pessoaFisica.dataNascimento
+                    ? formatDateForInput(pessoaData.pessoaFisica.dataNascimento)
+                    : "";
+
+                  console.log(
+                    "Setando campos PF - RG:",
+                    rg,
+                    "Data:",
+                    dataNascimento
+                  );
+
+                  // Usar a função helper para atualizar os campos
+                  updatePessoaFisica("rg", rg);
+                  updatePessoaFisica("dataNascimento", dataNascimento);
                 }
 
-                if (pessoaData.pessoaJuridica) {
-                  setValue("pessoaJuridica", {
-                    nomeFantasia: pessoaData.pessoaJuridica.nomeFantasia || "",
-                    inscricaoEstadual:
-                      pessoaData.pessoaJuridica.inscricaoEstadual || "",
-                    inscricaoMunicipal:
-                      pessoaData.pessoaJuridica.inscricaoMunicipal || "",
-                    dataFundacao: formatDateForInput(
-                      pessoaData.pessoaJuridica.dataFundacao || ""
-                    ),
-                    representanteLegal:
-                      pessoaData.pessoaJuridica.representanteLegal || "",
-                  });
+                // Preencher dados específicos de pessoa jurídica
+                if (
+                  pessoaData.tipoPessoa === TipoPessoa.JURIDICA &&
+                  pessoaData.pessoaJuridica
+                ) {
+                  const nomeFantasia =
+                    pessoaData.pessoaJuridica.nomeFantasia || "";
+                  const inscricaoEstadual =
+                    pessoaData.pessoaJuridica.inscricaoEstadual || "";
+                  const inscricaoMunicipal =
+                    pessoaData.pessoaJuridica.inscricaoMunicipal || "";
+                  const dataFundacao = pessoaData.pessoaJuridica.dataFundacao
+                    ? formatDateForInput(pessoaData.pessoaJuridica.dataFundacao)
+                    : "";
+                  const representanteLegal =
+                    pessoaData.pessoaJuridica.representanteLegal || "";
+
+                  // Usar a função helper para atualizar os campos
+                  updatePessoaJuridica("nomeFantasia", nomeFantasia);
+                  updatePessoaJuridica("inscricaoEstadual", inscricaoEstadual);
+                  updatePessoaJuridica(
+                    "inscricaoMunicipal",
+                    inscricaoMunicipal
+                  );
+                  updatePessoaJuridica("dataFundacao", dataFundacao);
+                  updatePessoaJuridica(
+                    "representanteLegal",
+                    representanteLegal
+                  );
                 }
 
                 // Preencher dados do endereço se existir
@@ -444,7 +493,7 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
           };
 
           loadPessoaData();
-        }, [pessoaId, enderecoExistente]);
+        }, [pessoaId, enderecoExistente, setValue]);
 
         return (
           <div className="space-y-8">
