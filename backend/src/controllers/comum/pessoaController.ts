@@ -123,7 +123,7 @@ export const pessoaController = {
       // Usar transação para garantir a consistência
       const result = await prisma.$transaction(async (tx) => {
         // Criar pessoa base
-        
+
         const novaPessoa = await tx.pessoa.create({
           data: {
             ...dadosPessoa,
@@ -365,7 +365,6 @@ export const pessoaController = {
 
   findProdutores: async (req: Request, res: Response) => {
     try {
-      console.log("11111111111111111111");
       const registros = await prisma.pessoa.findMany({
         where: { isProdutor: true },
       });
