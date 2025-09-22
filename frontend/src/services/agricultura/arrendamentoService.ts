@@ -1,6 +1,18 @@
 import apiClient from "../apiConfig";
 import BaseApiService from "../baseApiService";
 
+export enum AtividadeProdutiva {
+  AGRICULTURA = "AGRICULTURA",
+  PECUARIA = "PECUARIA",
+  AGRICULTURA_PECUARIA = "AGRICULTURA_PECUARIA",
+  SILVICULTURA = "SILVICULTURA",
+  AQUICULTURA = "AQUICULTURA",
+  HORTIFRUTI = "HORTIFRUTI",
+  AVICULTURA = "AVICULTURA",
+  SUINOCULTURA = "SUINOCULTURA",
+  OUTROS = "OUTROS"
+}
+
 export interface Arrendamento {
   id: number;
   propriedadeId: number;
@@ -55,6 +67,8 @@ export interface ArrendamentoDTO {
   dataFim?: string;
   status?: string;
   documentoUrl?: string;
+  residente: boolean;
+  atividadeProdutiva?: AtividadeProdutiva;
 }
 
 export const StatusArrendamento = {
@@ -65,6 +79,18 @@ export const StatusArrendamento = {
 } as const;
 
 export type StatusArrendamentoType = typeof StatusArrendamento[keyof typeof StatusArrendamento];
+
+export const atividadeProdutivaLabels: Record<AtividadeProdutiva, string> = {
+  [AtividadeProdutiva.AGRICULTURA]: "Agricultura",
+  [AtividadeProdutiva.PECUARIA]: "Pecuária",
+  [AtividadeProdutiva.AGRICULTURA_PECUARIA]: "Agricultura e Pecuária",
+  [AtividadeProdutiva.SILVICULTURA]: "Silvicultura",
+  [AtividadeProdutiva.AQUICULTURA]: "Aquicultura",
+  [AtividadeProdutiva.HORTIFRUTI]: "Hortifruti",
+  [AtividadeProdutiva.AVICULTURA]: "Avicultura",
+  [AtividadeProdutiva.SUINOCULTURA]: "Suinocultura",
+  [AtividadeProdutiva.OUTROS]: "Outros"
+};
 
 class ArrendamentoService extends BaseApiService<Arrendamento, ArrendamentoDTO> {
   constructor() {

@@ -7,6 +7,8 @@ import arrendamentoService, {
   ArrendamentoDTO,
   Arrendamento,
   StatusArrendamento,
+  AtividadeProdutiva,
+  atividadeProdutivaLabels
 } from "../../../../services/agricultura/arrendamentoService";
 import propriedadeService, {
   Propriedade,
@@ -15,10 +17,11 @@ import pessoaService, {
   Pessoa,
   TipoPessoa,
 } from "../../../../services/comum/pessoaService";
+import { useParams } from "@tanstack/react-router";
 
 interface ArrendamentoFormProps {
   id?: string | number;
-  onSave: () => void;
+  onSave?: () => void;
 }
 
 /**
@@ -26,6 +29,8 @@ interface ArrendamentoFormProps {
  * USA FormBase ESTENDIDO com FormSection ao invés de criar novo template
  */
 const ArrendamentoForm: React.FC<ArrendamentoFormProps> = ({ id, onSave }) => {
+  const params = useParams({ strict: false });
+  const arrendamentoId = id || params.id;
   // Estados (mesmo código de antes)
   const [propriedades, setPropriedades] = useState<Propriedade[]>([]);
   const [pessoasFisicas, setPessoasFisicas] = useState<Pessoa[]>([]);
@@ -44,6 +49,8 @@ const ArrendamentoForm: React.FC<ArrendamentoFormProps> = ({ id, onSave }) => {
     dataFim: "",
     status: StatusArrendamento.ATIVO,
     documentoUrl: "",
+    residente: false,
+    atividadeProdutiva: undefined
   };
 
   // useEffects para carregar dados (mesmo código de antes)
@@ -146,7 +153,7 @@ const ArrendamentoForm: React.FC<ArrendamentoFormProps> = ({ id, onSave }) => {
     <FormBase<Arrendamento, ArrendamentoDTO>
       title="Arrendamento"
       service={arrendamentoService}
-      id={id}
+      id={arrendamentoId}
       initialValues={initialValues}
       validate={validate}
       returnUrl="/movimentos/agricultura/arrendamentos"
@@ -220,6 +227,30 @@ const ArrendamentoForm: React.FC<ArrendamentoFormProps> = ({ id, onSave }) => {
                   placeholder="0.00"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
+              </FormField>
+
+              <FormField
+                name="atividadeProdutiva"
+                label="Atividade Produtiva"
+                error={errors.atividadeProdutiva}
+                touched={touched.atividadeProdutiva}
+                helpText="Selecione a principal atividade produtiva a ser desenvolvida"
+              >
+                <select
+                  id="atividadeProdutiva"
+                  name="atividadeProdutiva"
+                  value={values.atividadeProdutiva || ""}
+                  onChange={handleChange}
+                  onBlur={() => setFieldTouched("atividadeProdutiva", true)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Selecione uma atividade</option>
+                  {Object.entries(atividadeProdutivaLabels).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
               </FormField>
 
               {propriedadeSelecionada && (
@@ -322,6 +353,28 @@ const ArrendamentoForm: React.FC<ArrendamentoFormProps> = ({ id, onSave }) => {
                   ))}
                 </select>
               </FormField>
+              <FormField
+              name="residente"
+              label="Arrendatário será residente da terra?"
+              error={errors.residente}
+              touched={touched.residente}
+            >
+              <div className="flex items-center space-x-4">
+                <label className="inline-flex items-center">
+                  <input
+                    type="checkbox"
+                    id="residente"
+                    name="residente"
+                    checked={values.residente}
+                    onChange={handleChange}
+                    className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <span className="ml-2 text-gray-700">
+                    Marque se o arrendatário irá residir na propriedade arrendada
+                  </span>
+                </label>
+              </div>
+            </FormField>
             </div>
           </FormSection>
 

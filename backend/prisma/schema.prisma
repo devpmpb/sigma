@@ -304,6 +304,8 @@ model Arrendamento {
   dataFim        DateTime?
   status         String      @default("ativo")
   documentoUrl   String?
+  residente      Boolean     @default(false) // Se o arrendatário será residente da terra
+  atividadeProdutiva AtividadeProdutiva?  // Atividade produtiva do arrendamento
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
 }
