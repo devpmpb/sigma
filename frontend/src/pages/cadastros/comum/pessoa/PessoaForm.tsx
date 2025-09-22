@@ -33,7 +33,6 @@ interface PessoaFormData extends PessoaDTO {
   // Campos de endereço integrados
   incluirEndereco?: boolean;
   tipoEndereco?: TipoEndereco;
-  isEnderecoRural?: boolean;
   logradouroId?: string;
   numero?: string;
   complemento?: string;
@@ -77,7 +76,6 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
     // Campos de endereço
     incluirEndereco: true, // Por padrão, incluir endereço
     tipoEndereco: TipoEndereco.RESIDENCIAL,
-    isEnderecoRural: false,
     logradouroId: "",
     numero: "",
     complemento: "",
@@ -188,11 +186,13 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
         errors.tipoEndereco = "Tipo de endereço é obrigatório";
       }
 
-      if (values.isEnderecoRural) {
+      if (values.tipoEndereco === TipoEndereco.RURAL) {
+        // Validações para endereço rural
         if (!values.areaRuralId) {
           errors.areaRuralId = "Área rural é obrigatória";
         }
       } else {
+        // Validações para endereço urbano
         if (!values.logradouroId) {
           errors.logradouroId = "Logradouro é obrigatório";
         }
@@ -238,21 +238,16 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
 
       // Se incluir endereço, salvar o endereço
       if (data.incluirEndereco && pessoaSalva) {
+        const isRural = data.tipoEndereco === TipoEndereco.RURAL;
         const enderecoData: EnderecoDTO = {
           pessoaId: pessoaSalva.id,
           tipoEndereco: data.tipoEndereco!,
-          logradouroId: data.isEnderecoRural
-            ? undefined
-            : Number(data.logradouroId),
-          numero: data.isEnderecoRural ? undefined : data.numero,
-          complemento: data.isEnderecoRural ? undefined : data.complemento,
-          bairroId: data.isEnderecoRural ? undefined : Number(data.bairroId),
-          areaRuralId: data.isEnderecoRural
-            ? Number(data.areaRuralId)
-            : undefined,
-          referenciaRural: data.isEnderecoRural
-            ? data.referenciaRural
-            : undefined,
+          logradouroId: isRural ? undefined : Number(data.logradouroId),
+          numero: isRural ? undefined : data.numero,
+          complemento: isRural ? undefined : data.complemento,
+          bairroId: isRural ? undefined : Number(data.bairroId),
+          areaRuralId: isRural ? Number(data.areaRuralId) : undefined,
+          referenciaRural: isRural ? data.referenciaRural : undefined,
           coordenadas: data.coordenadas,
           principal: true,
         };
@@ -286,21 +281,16 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
 
       // Se incluir endereço, salvar ou atualizar o endereço
       if (data.incluirEndereco && pessoaSalva) {
+        const isRural = data.tipoEndereco === TipoEndereco.RURAL;
         const enderecoData: EnderecoDTO = {
           pessoaId: pessoaSalva.id,
           tipoEndereco: data.tipoEndereco!,
-          logradouroId: data.isEnderecoRural
-            ? undefined
-            : Number(data.logradouroId),
-          numero: data.isEnderecoRural ? undefined : data.numero,
-          complemento: data.isEnderecoRural ? undefined : data.complemento,
-          bairroId: data.isEnderecoRural ? undefined : Number(data.bairroId),
-          areaRuralId: data.isEnderecoRural
-            ? Number(data.areaRuralId)
-            : undefined,
-          referenciaRural: data.isEnderecoRural
-            ? data.referenciaRural
-            : undefined,
+          logradouroId: isRural ? undefined : Number(data.logradouroId),
+          numero: isRural ? undefined : data.numero,
+          complemento: isRural ? undefined : data.complemento,
+          bairroId: isRural ? undefined : Number(data.bairroId),
+          areaRuralId: isRural ? Number(data.areaRuralId) : undefined,
+          referenciaRural: isRural ? data.referenciaRural : undefined,
           coordenadas: data.coordenadas,
           principal: true,
         };
@@ -358,55 +348,124 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
           setFieldTouched(`pessoaJuridica.${field}`, true);
         };
 
+        // Limpar campos específicos quando mudar entre rural/urbano
+        const handleTipoEnderecoChange = (
+          e: React.ChangeEvent<HTMLSelectElement>
+        ) => {
+          const novoTipo = e.target.value as TipoEndereco;
+          setValue("tipoEndereco", novoTipo);
+
+          // Limpar campos específicos ao mudar o tipo
+          if (novoTipo === TipoEndereco.RURAL) {
+            // Limpar campos urbanos
+            setValue("logradouroId", "");
+            setValue("numero", "");
+            setValue("complemento", "");
+            setValue("bairroId", "");
+          } else {
+            // Limpar campos rurais
+            setValue("areaRuralId", "");
+            setValue("referenciaRural", "");
+          }
+        };
+
         // Carregar dados da pessoa ao editar
         useEffect(() => {
           const loadPessoaData = async () => {
             if (pessoaId && pessoaId !== "novo") {
               try {
-                const pessoaData = await pessoaService.getById(pessoaId);
+                // Tentar usar o método que traz detalhes completos, senão usar getById
+                let pessoaData;
+                try {
+                  // Primeiro tentar o método com detalhes
+                  pessoaData = await pessoaService.getPessoaWithDetails(
+                    Number(pessoaId)
+                  );
+                } catch {
+                  // Se não existir, usar o método padrão
+                  pessoaData = await pessoaService.getById(pessoaId);
+                }
 
-                // Preencher dados da pessoa
+                // Debug - remover depois de confirmar que funciona
+                console.log("Dados da pessoa carregados:", pessoaData);
+                if (pessoaData.pessoaFisica) {
+                  console.log("PessoaFisica - RG:", pessoaData.pessoaFisica.rg);
+                  console.log(
+                    "PessoaFisica - Data Nasc:",
+                    pessoaData.pessoaFisica.dataNascimento
+                  );
+                }
+
+                // Preencher dados básicos da pessoa
                 setValue("tipoPessoa", pessoaData.tipoPessoa);
                 setValue("nome", pessoaData.nome);
                 setValue("cpfCnpj", pessoaData.cpfCnpj);
                 setValue("email", pessoaData.email || "");
                 setValue("telefone", pessoaData.telefone || "");
-                setValue("ativo", pessoaData.ativo);
+                setValue("ativo", pessoaData.ativo !== false); // garantir que seja boolean
                 setValue("isProdutor", pessoaData.isProdutor || false);
                 setValue(
                   "inscricaoEstadualProdutor",
                   pessoaData.inscricaoEstadualProdutor || ""
                 );
 
-                if (pessoaData.pessoaFisica) {
-                  setValue("pessoaFisica", {
-                    rg: pessoaData.pessoaFisica.rg || "",
-                    dataNascimento: formatDateForInput(
-                      pessoaData.pessoaFisica.dataNascimento || ""
-                    ),
-                  });
+                // Preencher dados específicos de pessoa física
+                if (
+                  pessoaData.tipoPessoa === TipoPessoa.FISICA &&
+                  pessoaData.pessoaFisica
+                ) {
+                  const rg = pessoaData.pessoaFisica.rg || "";
+                  const dataNascimento = pessoaData.pessoaFisica.dataNascimento
+                    ? formatDateForInput(pessoaData.pessoaFisica.dataNascimento)
+                    : "";
+
+                  console.log(
+                    "Setando campos PF - RG:",
+                    rg,
+                    "Data:",
+                    dataNascimento
+                  );
+
+                  // Usar a função helper para atualizar os campos
+                  updatePessoaFisica("rg", rg);
+                  updatePessoaFisica("dataNascimento", dataNascimento);
                 }
 
-                if (pessoaData.pessoaJuridica) {
-                  setValue("pessoaJuridica", {
-                    nomeFantasia: pessoaData.pessoaJuridica.nomeFantasia || "",
-                    inscricaoEstadual:
-                      pessoaData.pessoaJuridica.inscricaoEstadual || "",
-                    inscricaoMunicipal:
-                      pessoaData.pessoaJuridica.inscricaoMunicipal || "",
-                    dataFundacao: formatDateForInput(
-                      pessoaData.pessoaJuridica.dataFundacao || ""
-                    ),
-                    representanteLegal:
-                      pessoaData.pessoaJuridica.representanteLegal || "",
-                  });
+                // Preencher dados específicos de pessoa jurídica
+                if (
+                  pessoaData.tipoPessoa === TipoPessoa.JURIDICA &&
+                  pessoaData.pessoaJuridica
+                ) {
+                  const nomeFantasia =
+                    pessoaData.pessoaJuridica.nomeFantasia || "";
+                  const inscricaoEstadual =
+                    pessoaData.pessoaJuridica.inscricaoEstadual || "";
+                  const inscricaoMunicipal =
+                    pessoaData.pessoaJuridica.inscricaoMunicipal || "";
+                  const dataFundacao = pessoaData.pessoaJuridica.dataFundacao
+                    ? formatDateForInput(pessoaData.pessoaJuridica.dataFundacao)
+                    : "";
+                  const representanteLegal =
+                    pessoaData.pessoaJuridica.representanteLegal || "";
+
+                  // Usar a função helper para atualizar os campos
+                  updatePessoaJuridica("nomeFantasia", nomeFantasia);
+                  updatePessoaJuridica("inscricaoEstadual", inscricaoEstadual);
+                  updatePessoaJuridica(
+                    "inscricaoMunicipal",
+                    inscricaoMunicipal
+                  );
+                  updatePessoaJuridica("dataFundacao", dataFundacao);
+                  updatePessoaJuridica(
+                    "representanteLegal",
+                    representanteLegal
+                  );
                 }
 
                 // Preencher dados do endereço se existir
                 if (enderecoExistente) {
                   setValue("incluirEndereco", true);
                   setValue("tipoEndereco", enderecoExistente.tipoEndereco);
-                  setValue("isEnderecoRural", !!enderecoExistente.areaRuralId);
                   setValue(
                     "logradouroId",
                     enderecoExistente.logradouroId?.toString() || ""
@@ -434,7 +493,7 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
           };
 
           loadPessoaData();
-        }, [pessoaId, enderecoExistente]);
+        }, [pessoaId, enderecoExistente, setValue]);
 
         return (
           <div className="space-y-8">
@@ -763,8 +822,8 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
 
               {values.incluirEndereco && (
                 <>
-                  {/* Tipo de Endereço e Rural/Urbano */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  {/* Tipo de Endereço */}
+                  <div className="mb-6">
                     <FormField
                       name="tipoEndereco"
                       label="Tipo de Endereço"
@@ -776,7 +835,7 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
                         id="tipoEndereco"
                         name="tipoEndereco"
                         value={values.tipoEndereco}
-                        onChange={handleChange}
+                        onChange={handleTipoEnderecoChange}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
                         <option value={TipoEndereco.RESIDENCIAL}>
@@ -792,26 +851,25 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
                       </select>
                     </FormField>
 
-                    <div className="flex items-center mt-6">
-                      <input
-                        type="checkbox"
-                        id="isEnderecoRural"
-                        name="isEnderecoRural"
-                        checked={values.isEnderecoRural}
-                        onChange={handleChange}
-                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                      />
-                      <label
-                        htmlFor="isEnderecoRural"
-                        className="ml-2 block text-sm text-gray-900"
-                      >
-                        Endereço em área rural
-                      </label>
-                    </div>
+                    {/* Indicador visual do tipo de campos */}
+                    {values.tipoEndereco === TipoEndereco.RURAL && (
+                      <div className="mt-2 p-2 bg-green-50 border-l-4 border-green-400 text-green-700">
+                        <p className="text-sm">
+                          🌾 Preencha os campos de endereço rural abaixo
+                        </p>
+                      </div>
+                    )}
+                    {values.tipoEndereco !== TipoEndereco.RURAL && (
+                      <div className="mt-2 p-2 bg-blue-50 border-l-4 border-blue-400 text-blue-700">
+                        <p className="text-sm">
+                          🏢 Preencha os campos de endereço urbano abaixo
+                        </p>
+                      </div>
+                    )}
                   </div>
 
-                  {/* Campos para endereço urbano */}
-                  {!values.isEnderecoRural && (
+                  {/* Campos para endereço urbano (não rural) */}
+                  {values.tipoEndereco !== TipoEndereco.RURAL && (
                     <>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <FormField
@@ -897,7 +955,7 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
                   )}
 
                   {/* Campos para endereço rural */}
-                  {values.isEnderecoRural && (
+                  {values.tipoEndereco === TipoEndereco.RURAL && (
                     <>
                       <div className="grid grid-cols-1 gap-4">
                         <FormField
