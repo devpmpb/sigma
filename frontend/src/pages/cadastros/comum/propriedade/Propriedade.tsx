@@ -87,30 +87,47 @@ const PropriedadePage: React.FC = () => {
       },
     },
     {
-      title: "Proprietário",
+      title: "Proprietário/Usufruto",
       key: "proprietario",
-      render: (propriedade) => (
-        <div>
-          {propriedade.proprietario ? (
-            <>
-              <div className="font-medium text-gray-900">
-                {propriedade.proprietario.nome}
+      render: (propriedade) => {
+        // USANDO O MÉTODO hasUsufruto
+        if (propriedadeService.hasUsufruto(propriedade)) {
+          return (
+            <div className="space-y-1">
+              <div className="flex items-center gap-1">
+                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">
+                  Usufrutuário
+                </span>
+                <span className="text-sm font-medium">
+                  {propriedade.proprietario?.nome || "-"}
+                </span>
               </div>
-              <div className="text-sm text-gray-500">
+              <div className="flex items-center gap-1">
+                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-800">
+                  Nu-proprietário
+                </span>
+                <span className="text-sm text-gray-600">
+                  {propriedade.nuProprietario?.nome || "-"}
+                </span>
+              </div>
+            </div>
+          );
+        }
+        
+        // Propriedade normal
+        return (
+          <div className="text-sm">
+            <span className="font-medium">
+              {propriedade.proprietario?.nome || "-"}
+            </span>
+            {propriedade.proprietario?.cpfCnpj && (
+              <div className="text-xs text-gray-500">
                 {propriedade.proprietario.cpfCnpj}
               </div>
-              {/* NOVO: Indicador se é residente */}
-              {propriedade.proprietarioResidente && (
-                <div className="text-xs text-green-600 font-medium">
-                  📍 Residente
-                </div>
-              )}
-            </>
-          ) : (
-            <span className="text-gray-400">Não informado</span>
-          )}
-        </div>
-      ),
+            )}
+          </div>
+        );
+      },
     },
     {
       title: "Informações Rurais", // NOVA COLUNA

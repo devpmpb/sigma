@@ -13,16 +13,20 @@ import pessoaService, {
 import logradouroService, {
   Logradouro,
 } from "../../../../services/comum/logradouroService";
+import { useParams } from "@tanstack/react-router";
 
 interface PropriedadeFormProps {
   id?: string | number;
-  onSave: () => void;
+  onSave?: () => void;
 }
 
 /**
  * Formulário para cadastro e edição de propriedades
  */
 const PropriedadeForm: React.FC<PropriedadeFormProps> = ({ id, onSave }) => {
+  const params = useParams({ strict: false });
+  const propriedadeId = id || params.id;
+  
   const [pessoas, setPessoas] = useState<Pessoa[]>([]);
   const [logradouros, setLogradouros] = useState<Logradouro[]>([]);
   const [loadingPessoas, setLoadingPessoas] = useState(false);
@@ -37,11 +41,13 @@ const PropriedadeForm: React.FC<PropriedadeFormProps> = ({ id, onSave }) => {
     areaTotal: "",
     itr: "",
     incra: "",
+    atividadeProdutiva: undefined,
     situacao: SituacaoPropriedade.PROPRIA,
-    proprietarioResidente: false,
+    isproprietarioResidente: false,
     localizacao: "",
     matricula: "",
     proprietarioId: 0,
+    nuProprietarioId: undefined,
   };
 
   // Carregar pessoas para seleção
@@ -102,6 +108,23 @@ const PropriedadeForm: React.FC<PropriedadeFormProps> = ({ id, onSave }) => {
       errors.situacao = "Situação da propriedade é obrigatória";
     }
 
+    if (propriedadeService.isRural(values.tipoPropriedade)) {
+      if (!values.atividadeProdutiva) {
+        errors.atividadeProdutiva = "Atividade produtiva é obrigatória para propriedades rurais";
+      }
+    }
+
+    if (values.situacao === SituacaoPropriedade.USUFRUTO) {
+      if (!values.nuProprietarioId || values.nuProprietarioId === 0) {
+        errors.nuProprietarioId =
+          "Nu-proprietário é obrigatório quando a situação é Usufruto";
+      }
+      if (values.nuProprietarioId === values.proprietarioId) {
+        errors.nuProprietarioId =
+          "Nu-proprietário deve ser diferente do usufrutuário";
+      }
+    }
+
     // Validações específicas para propriedades rurais
     if (propriedadeService.isRural(values.tipoPropriedade)) {
       if (values.itr && values.itr.length > 0 && values.itr.length < 3) {
@@ -120,7 +143,7 @@ const PropriedadeForm: React.FC<PropriedadeFormProps> = ({ id, onSave }) => {
     <FormBase<Propriedade, PropriedadeDTO>
       title="Propriedade"
       service={propriedadeService}
-      id={id}
+      id={propriedadeId}
       initialValues={initialValues}
       validate={validate}
       returnUrl="/cadastros/comum/propriedades"
@@ -170,9 +193,10 @@ const PropriedadeForm: React.FC<PropriedadeFormProps> = ({ id, onSave }) => {
                 onChange={(e) => {
                   handleChange(e);
                   // Limpar campos rurais quando mudar para não rural
-                  if (e.target.value !== TipoPropriedade.RURAL) {
+                  if (!propriedadeService.isRural(e.target.value as TipoPropriedade)) {
                     setValue("itr", "");
                     setValue("incra", "");
+                    setValue("atividadeProdutiva", undefined);
                   }
                 }}
                 onBlur={() => setFieldTouched("tipoPropriedade")}
@@ -198,7 +222,13 @@ const PropriedadeForm: React.FC<PropriedadeFormProps> = ({ id, onSave }) => {
                 id="situacao"
                 name="situacao"
                 value={values.situacao}
-                onChange={handleChange}
+                onChange={(e) => {
+                  handleChange(e);
+                  // Limpar nu-proprietário se não for usufruto
+                  if (e.target.value !== SituacaoPropriedade.USUFRUTO) {
+                    setValue("nuProprietarioId", undefined);
+                  }
+                }}
                 onBlur={() => setFieldTouched("situacao")}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
@@ -211,6 +241,80 @@ const PropriedadeForm: React.FC<PropriedadeFormProps> = ({ id, onSave }) => {
                   ))}
               </select>
             </FormField>
+
+            {/* Campo Proprietário - Renomear conforme situação */}
+            <FormField
+              name="proprietarioId"
+              label={
+                values.situacao === SituacaoPropriedade.USUFRUTO
+                  ? "Usufrutuário"
+                  : "Proprietário"
+              }
+              error={errors.proprietarioId}
+              touched={touched.proprietarioId}
+              required
+              
+            >
+              <select
+                id="proprietarioId"
+                name="proprietarioId"
+                value={values.proprietarioId || ""}
+                onChange={(e) =>
+                  setValue("proprietarioId", Number(e.target.value))
+                }
+                onBlur={() => setFieldTouched("proprietarioId")}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">
+                  {loadingPessoas ? "Carregando..." : "Selecione"}
+                </option>
+                {pessoas.map((pessoa) => (
+                  <option key={pessoa.id} value={pessoa.id}>
+                    {pessoa.nome} - {pessoa.cpfCnpj}
+                  </option>
+                ))}
+              </select>
+            </FormField>
+
+            {/* CAMPO CONDICIONAL: Nu-Proprietário (apenas para Usufruto) */}
+            {values.situacao === SituacaoPropriedade.USUFRUTO && (
+              <div className="transition-all duration-300 ease-in-out">
+                <FormField
+                  name="nuProprietarioId"
+                  label="Nu-Proprietário"
+                  error={errors.nuProprietarioId}
+                  touched={touched.nuProprietarioId}
+                  required
+                >
+                  <select
+                    id="nuProprietarioId"
+                    name="nuProprietarioId"
+                    value={values.nuProprietarioId || ""}
+                    onChange={(e) =>
+                      setValue("nuProprietarioId", Number(e.target.value))
+                    }
+                    onBlur={() => setFieldTouched("nuProprietarioId")}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    disabled={!values.proprietarioId}
+                  >
+                    <option value="">
+                      {loadingPessoas
+                        ? "Carregando..."
+                        : !values.proprietarioId
+                        ? "Selecione primeiro o usufrutuário"
+                        : "Selecione o nu-proprietário"}
+                    </option>
+                    {pessoas
+                      .filter((pessoa) => pessoa.id !== values.proprietarioId) // Não mostrar o usufrutuário
+                      .map((pessoa) => (
+                        <option key={pessoa.id} value={pessoa.id}>
+                          {pessoa.nome} - {pessoa.cpfCnpj}
+                        </option>
+                      ))}
+                  </select>
+                </FormField>
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -294,10 +398,36 @@ const PropriedadeForm: React.FC<PropriedadeFormProps> = ({ id, onSave }) => {
 
           {/* Campos específicos para propriedades RURAIS */}
           {propriedadeService.isRural(values.tipoPropriedade) && (
-            <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-              <h4 className="font-medium text-green-900 mb-3">
-                Informações Específicas para Propriedade Rural
+            <div className="space-y-4 p-4 bg-green-50 rounded-lg border border-green-200">
+              <h4 className="text-sm font-medium text-green-900 mb-3">
+                Informações Rurais
               </h4>
+
+              {/* NOVO CAMPO: Atividade Produtiva */}
+              <FormField
+                name="atividadeProdutiva"
+                label="Atividade Produtiva Principal"
+                error={errors.atividadeProdutiva}
+                touched={touched.atividadeProdutiva}
+                required
+                helpText="Selecione a principal atividade produtiva desenvolvida na propriedade"
+              >
+                <select
+                  id="atividadeProdutiva"
+                  name="atividadeProdutiva"
+                  value={values.atividadeProdutiva || ""}
+                  onChange={handleChange}
+                  onBlur={() => setFieldTouched("atividadeProdutiva")}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Selecione a atividade produtiva</option>
+                  {propriedadeService.getAtividadesProdutivas().map((atividade) => (
+                    <option key={atividade.value} value={atividade.value}>
+                      {atividade.label}
+                    </option>
+                  ))}
+                </select>
+              </FormField>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* ITR */}
@@ -314,7 +444,7 @@ const PropriedadeForm: React.FC<PropriedadeFormProps> = ({ id, onSave }) => {
                     value={values.itr || ""}
                     onChange={handleChange}
                     onBlur={() => setFieldTouched("itr")}
-                    placeholder="Digite o código ITR"
+                    placeholder="Digite o número do ITR"
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </FormField>
@@ -322,7 +452,7 @@ const PropriedadeForm: React.FC<PropriedadeFormProps> = ({ id, onSave }) => {
                 {/* INCRA */}
                 <FormField
                   name="incra"
-                  label="INCRA"
+                  label="INCRA (Código do Imóvel)"
                   error={errors.incra}
                   touched={touched.incra}
                 >
@@ -341,7 +471,7 @@ const PropriedadeForm: React.FC<PropriedadeFormProps> = ({ id, onSave }) => {
             </div>
           )}
 
-          {/* Proprietário */}
+          {/* Proprietário 
           <FormField
             name="proprietarioId"
             label="Proprietário"
@@ -367,27 +497,27 @@ const PropriedadeForm: React.FC<PropriedadeFormProps> = ({ id, onSave }) => {
                 </option>
               ))}
             </select>
-          </FormField>
+          </FormField>*/}
 
           {/* Proprietário Residente */}
           <FormField
-            name="proprietarioResidente"
+            name="isproprietarioResidente"
             label="Proprietário Residente"
-            error={errors.proprietarioResidente}
-            touched={touched.proprietarioResidente}
+            error={errors.isproprietarioResidente}
+            touched={touched.isproprietarioResidente}
           >
             <div className="flex items-center">
               <input
-                id="proprietarioResidente"
-                name="proprietarioResidente"
+                id="isproprietarioResidente"
+                name="isproprietarioResidente"
                 type="checkbox"
-                checked={values.proprietarioResidente}
+                checked={values.isproprietarioResidente}
                 onChange={handleChange}
-                onBlur={() => setFieldTouched("proprietarioResidente")}
+                onBlur={() => setFieldTouched("isproprietarioResidente")}
                 className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
               />
               <label
-                htmlFor="proprietarioResidente"
+                htmlFor="isproprietarioResidente"
                 className="ml-2 text-sm text-gray-700"
               >
                 Marque se o proprietário reside na propriedade
