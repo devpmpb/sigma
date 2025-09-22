@@ -17,6 +17,18 @@ export enum SituacaoPropriedade {
   USUFRUTO = "USUFRUTO",
 }
 
+export enum AtividadeProdutiva {
+  AGRICULTURA = "AGRICULTURA",
+  PECUARIA = "PECUARIA",
+  AGRICULTURA_PECUARIA = "AGRICULTURA_PECUARIA",
+  SILVICULTURA = "SILVICULTURA",
+  AQUICULTURA = "AQUICULTURA",
+  HORTIFRUTI = "HORTIFRUTI",
+  AVICULTURA = "AVICULTURA",
+  SUINOCULTURA = "SUINOCULTURA",
+  OUTROS = "OUTROS",
+}
+
 // Interface para a entidade Propriedade ATUALIZADA
 export interface Propriedade {
   id: number;
@@ -45,16 +57,24 @@ export interface Propriedade {
   // Campos específicos para propriedades rurais
   itr?: string;
   incra?: string;
-
+  atividadeProdutiva?: AtividadeProdutiva;
+  
   // Novos campos obrigatórios
   situacao: SituacaoPropriedade;
-  proprietarioResidente: boolean;
+  isproprietarioResidente: boolean;
 
   // Campos existentes mantidos
   localizacao?: string;
   matricula?: string;
   proprietarioId: number;
   proprietario?: {
+    id: number;
+    nome: string;
+    cpfCnpj: string;
+    tipoPessoa: string;
+  };
+  nuProprietarioId?: number;
+  nuProprietario?: {
     id: number;
     nome: string;
     cpfCnpj: string;
@@ -83,15 +103,17 @@ export interface PropriedadeDTO {
   // Campos rurais (opcionais)
   itr?: string;
   incra?: string;
+  atividadeProdutiva?: AtividadeProdutiva;
 
   // Novos campos obrigatórios
   situacao: SituacaoPropriedade;
-  proprietarioResidente: boolean;
+  isproprietarioResidente: boolean;
 
   // Campos existentes
   localizacao?: string;
   matricula?: string;
   proprietarioId: number;
+  nuProprietarioId?: number
 }
 
 /**
@@ -227,7 +249,60 @@ class PropriedadeService extends BaseApiService<Propriedade, PropriedadeDTO> {
   isRural = (tipoPropriedade: TipoPropriedade): boolean => {
     return tipoPropriedade === TipoPropriedade.RURAL;
   };
+
+  /**
+   * Formata a exibição do proprietário/usufrutuário
+   */
+  formatarProprietarioDisplay = (propriedade: Propriedade): string => {
+    if (propriedade.situacao === SituacaoPropriedade.USUFRUTO) {
+      const usufruto = propriedade.proprietario?.nome || "Não informado";
+      const nu = propriedade.nuProprietario?.nome || "Não informado";
+      return `Usufrutuário: ${usufruto} | Nu-proprietário: ${nu}`;
+    }
+    return propriedade.proprietario?.nome || "Não informado";
+  };
+
+  /**
+   * Verifica se a propriedade tem usufruto
+   */
+  hasUsufruto = (propriedade: Propriedade): boolean => {
+    return propriedade.situacao === SituacaoPropriedade.USUFRUTO;
+  };
+
+  /**
+   * NOVO: Busca atividades produtivas disponíveis
+   */
+  getAtividadesProdutivas = (): Array<{
+    value: AtividadeProdutiva;
+    label: string;
+  }> => {
+    return [
+      { value: AtividadeProdutiva.AGRICULTURA, label: "Agricultura" },
+      { value: AtividadeProdutiva.PECUARIA, label: "Pecuária" },
+      { value: AtividadeProdutiva.AGRICULTURA_PECUARIA, label: "Agricultura e Pecuária" },
+      { value: AtividadeProdutiva.SILVICULTURA, label: "Silvicultura" },
+      { value: AtividadeProdutiva.AQUICULTURA, label: "Aquicultura" },
+      { value: AtividadeProdutiva.HORTIFRUTI, label: "Hortifrutigranjeiros" },
+      { value: AtividadeProdutiva.AVICULTURA, label: "Avicultura" },
+      { value: AtividadeProdutiva.SUINOCULTURA, label: "Suinocultura" },
+      { value: AtividadeProdutiva.OUTROS, label: "Outros" },
+    ];
+  };
+
+  /**
+   * NOVO: Formata atividade produtiva para exibição
+   */
+  formatarAtividadeProdutiva = (atividade?: AtividadeProdutiva): string => {
+    if (!atividade) return "-";
+    
+    const atividades = this.getAtividadesProdutivas();
+    const found = atividades.find(a => a.value === atividade);
+    return found?.label || atividade;
+  };
+
 }
+
+
 
 // Exporta uma instância singleton do serviço
 export default new PropriedadeService();

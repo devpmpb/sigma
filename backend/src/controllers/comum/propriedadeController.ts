@@ -3,61 +3,89 @@ import {
   PrismaClient,
   TipoPropriedade,
   SituacaoPropriedade,
+  AtividadeProdutiva,
 } from "@prisma/client";
 import { createGenericController } from "../GenericController";
 
 const prisma = new PrismaClient();
 
+const validate = (data: any) => {
+  const errors = [];
+
+  if (!data.nome || data.nome.trim() === "") {
+    errors.push("Nome é obrigatório");
+  }
+
+  if (!data.areaTotal || isNaN(Number(data.areaTotal))) {
+    errors.push("Área total é obrigatória e deve ser um número");
+  }
+
+  if (!data.proprietarioId) {
+    errors.push("Proprietário é obrigatório");
+  }
+
+  if (
+    data.tipoPropriedade &&
+    !Object.values(TipoPropriedade).includes(data.tipoPropriedade)
+  ) {
+    errors.push("Tipo de propriedade inválido");
+  }
+
+  // NOVA VALIDAÇÃO: Situação da propriedade
+  if (!data.situacao) {
+    errors.push("Situação da propriedade é obrigatória");
+  } else if (!Object.values(SituacaoPropriedade).includes(data.situacao)) {
+    errors.push("Situação da propriedade inválida");
+  }
+
+  // NOVAS VALIDAÇÕES: Campos rurais
+  if (data.tipoPropriedade === TipoPropriedade.RURAL) {
+    if (data.itr && typeof data.itr !== "string") {
+      errors.push("ITR deve ser um texto válido");
+    }
+
+    if (data.incra && typeof data.incra !== "string") {
+      errors.push("INCRA deve ser um texto válido");
+    }
+  }
+
+  if (data.situacao === SituacaoPropriedade.USUFRUTO) {
+    if (!data.nuProprietarioId) {
+      errors.push("Nu-proprietário é obrigatório quando a situação é Usufruto");
+    }
+    if (data.nuProprietarioId === data.proprietarioId) {
+      errors.push("Nu-proprietário deve ser diferente do usufrutuário");
+    }
+  } else {
+    // Limpar nu-proprietário se não for usufruto
+    data.nuProprietarioId = null;
+  }
+
+  if (data.tipoPropriedade === TipoPropriedade.RURAL) {
+    if (!data.atividadeProdutiva) {
+      errors.push("Atividade produtiva é obrigatória para propriedades rurais");
+    } else if (
+      !Object.values(AtividadeProdutiva).includes(data.atividadeProdutiva)
+    ) {
+      errors.push("Atividade produtiva inválida");
+    }
+  } else {
+    // Limpar atividade produtiva se não for rural
+    data.atividadeProdutiva = null;
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors: errors.length > 0 ? errors : undefined,
+  };
+};
 // Controlador com os métodos genéricos ATUALIZADO
 const genericController = createGenericController({
   modelName: "propriedade",
   displayName: "Propriedade",
   orderBy: { nome: "asc" },
-  validateCreate: (data: any) => {
-    const errors = [];
-
-    if (!data.nome || data.nome.trim() === "") {
-      errors.push("Nome é obrigatório");
-    }
-
-    if (!data.areaTotal || isNaN(Number(data.areaTotal))) {
-      errors.push("Área total é obrigatória e deve ser um número");
-    }
-
-    if (!data.proprietarioId) {
-      errors.push("Proprietário é obrigatório");
-    }
-
-    if (
-      data.tipoPropriedade &&
-      !Object.values(TipoPropriedade).includes(data.tipoPropriedade)
-    ) {
-      errors.push("Tipo de propriedade inválido");
-    }
-
-    // NOVA VALIDAÇÃO: Situação da propriedade
-    if (!data.situacao) {
-      errors.push("Situação da propriedade é obrigatória");
-    } else if (!Object.values(SituacaoPropriedade).includes(data.situacao)) {
-      errors.push("Situação da propriedade inválida");
-    }
-
-    // NOVAS VALIDAÇÕES: Campos rurais
-    if (data.tipoPropriedade === TipoPropriedade.RURAL) {
-      if (data.itr && typeof data.itr !== "string") {
-        errors.push("ITR deve ser um texto válido");
-      }
-
-      if (data.incra && typeof data.incra !== "string") {
-        errors.push("INCRA deve ser um texto válido");
-      }
-    }
-
-    return {
-      isValid: errors.length === 0,
-      errors: errors.length > 0 ? errors : undefined,
-    };
-  },
+  validateCreate: validate,
+  validateUpdate: validate,
 
   // NOVA FUNÇÃO: Transformar dados antes de salvar
   transformDataBeforeSave: (data: any) => {
@@ -76,7 +104,7 @@ const genericController = createGenericController({
     return {
       ...data,
       unidadeArea,
-      proprietarioResidente: Boolean(data.proprietarioResidente),
+      isproprietarioResidente: Boolean(data.isproprietarioResidente),
       areaTotal: Number(data.areaTotal),
     };
   },
@@ -89,7 +117,7 @@ export const propriedadeController = {
   // Sobrescrever create para usar transformação de dados
   create: async (req: Request, res: Response) => {
     try {
-      const validation = genericController.validateCreate(req.body);
+      const validation = validate(req.body);
 
       if (!validation.isValid) {
         return res.status(400).json({
@@ -119,8 +147,12 @@ export const propriedadeController = {
           req.body.tipoPropriedade === TipoPropriedade.RURAL
             ? req.body.incra || null
             : null,
+        atividadeProdutiva:
+          req.body.tipoPropriedade === TipoPropriedade.RURAL
+            ? req.body.atividadeProdutiva
+            : null,
         situacao: req.body.situacao,
-        proprietarioResidente: Boolean(req.body.proprietarioResidente),
+        isproprietarioResidente: Boolean(req.body.isproprietarioResidente),
         localizacao: req.body.localizacao || null,
         matricula: req.body.matricula || null,
         proprietarioId: Number(req.body.proprietarioId),
@@ -145,6 +177,14 @@ export const propriedadeController = {
               cep: true,
             },
           },
+          nuProprietario: {
+            select: {
+              id: true,
+              nome: true,
+              cpfCnpj: true,
+              tipoPessoa: true,
+            },
+          },
         },
       });
 
@@ -162,7 +202,7 @@ export const propriedadeController = {
     try {
       const { id } = req.params;
 
-      const validation = genericController.validateCreate(req.body);
+      const validation = validate(req.body);
 
       if (!validation.isValid) {
         return res.status(400).json({
@@ -193,7 +233,7 @@ export const propriedadeController = {
             ? req.body.incra || null
             : null,
         situacao: req.body.situacao,
-        proprietarioResidente: Boolean(req.body.proprietarioResidente),
+        isproprietarioResidente: Boolean(req.body.isproprietarioResidente),
         localizacao: req.body.localizacao || null,
         matricula: req.body.matricula || null,
         proprietarioId: Number(req.body.proprietarioId),
@@ -217,6 +257,14 @@ export const propriedadeController = {
               tipo: true,
               descricao: true,
               cep: true,
+            },
+          },
+          nuProprietario: {
+            select: {
+              id: true,
+              nome: true,
+              cpfCnpj: true,
+              tipoPessoa: true,
             },
           },
         },
@@ -250,6 +298,14 @@ export const propriedadeController = {
               tipo: true,
               descricao: true,
               cep: true,
+            },
+          },
+          nuProprietario: {
+            select: {
+              id: true,
+              nome: true,
+              cpfCnpj: true,
+              tipoPessoa: true,
             },
           },
         },
@@ -289,6 +345,14 @@ export const propriedadeController = {
               cep: true,
             },
           },
+          nuProprietario: {
+            select: {
+              id: true,
+              nome: true,
+              cpfCnpj: true,
+              tipoPessoa: true,
+            },
+          },
         },
       });
 
@@ -325,6 +389,14 @@ export const propriedadeController = {
               tipo: true,
               descricao: true,
               cep: true,
+            },
+          },
+          nuProprietario: {
+            select: {
+              id: true,
+              nome: true,
+              cpfCnpj: true,
+              tipoPessoa: true,
             },
           },
         },
@@ -608,7 +680,7 @@ export const propriedadeController = {
   findComProprietariosResidentes: async (req: Request, res: Response) => {
     try {
       const propriedades = await prisma.propriedade.findMany({
-        where: { proprietarioResidente: true },
+        where: { isproprietarioResidente: true },
         include: {
           proprietario: {
             select: {

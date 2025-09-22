@@ -74,6 +74,18 @@ enum TipoPrograma {
   ASSISTENCIA
 }
 
+enum AtividadeProdutiva {
+  AGRICULTURA
+  PECUARIA
+  AGRICULTURA_PECUARIA
+  SILVICULTURA
+  AQUICULTURA
+  HORTIFRUTI
+  AVICULTURA
+  SUINOCULTURA
+  OUTROS
+}
+
 // Modelos existentes
 model Bairro {
   id        Int        @id @default(autoincrement())
@@ -159,6 +171,7 @@ model Pessoa {
   ordensServico              OrdemServico[]
   arrendamentos              Arrendamento[]             @relation("arrendatario")
   arrendou                   Arrendamento[]             @relation("proprietario")
+  propriedadesComoNuProprietario Propriedade[]          @relation("NuProprietario")
 }
 
 model PessoaFisica {
@@ -226,7 +239,6 @@ model Propriedade {
   nome            String
   tipoPropriedade TipoPropriedade @default(RURAL)
 
-  // NOVOS CAMPOS ADICIONADOS
   logradouroId Int? // Referência à tabela Logradouro
   logradouro   Logradouro? @relation(fields: [logradouroId], references: [id])
   numero       String? // Número do lote/chácara
@@ -238,16 +250,17 @@ model Propriedade {
   // Campos específicos para propriedades RURAIS
   itr   String? // ITR (só para rural)
   incra String? // INCRA (só para rural) 
+  atividadeProdutiva AtividadeProdutiva?
 
-  // NOVOS CAMPOS OBRIGATÓRIOS
   situacao              SituacaoPropriedade // própria/condomínio/usufruto
   isproprietarioResidente Boolean             @default(false) // Se o proprietário reside na propriedade
-
-  // Campos existentes mantidos
   localizacao    String? // Descrição geral (mantido para compatibilidade)
   matricula      String?
   proprietarioId Int
   proprietario   Pessoa  @relation(fields: [proprietarioId], references: [id])
+
+  nuProprietarioId Int?
+  nuProprietario   Pessoa? @relation("NuProprietario", fields: [nuProprietarioId], references: [id])
 
   // Relacionamentos
   arrendamentos  Arrendamento[]
