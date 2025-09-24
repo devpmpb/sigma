@@ -1,8 +1,8 @@
-// frontend/src/pages/movimentos/agricultura/arrendamentos/ArrendamentoForm.tsx
+// frontend/src/pages/movimentos/agricultura/arrendamento/ArrendamentoForm.tsx
 import React, { useState, useEffect } from "react";
-import { FormBase } from "../../../../components/cadastro"; // 🔥 USANDO O EXISTENTE
+import { FormBase } from "../../../../components/cadastro";
 import FormField from "../../../../components/comum/FormField";
-import FormSection from "../../../../components/comum/FormSection"; //
+import FormSection from "../../../../components/comum/FormSection";
 import arrendamentoService, {
   ArrendamentoDTO,
   Arrendamento,
@@ -21,17 +21,13 @@ import { useParams } from "@tanstack/react-router";
 
 interface ArrendamentoFormProps {
   id?: string | number;
-  onSave?: () => void;
+  onSave: () => void;
 }
 
-/**
- * Formulário para cadastro e edição de arrendamentos
- * USA FormBase ESTENDIDO com FormSection ao invés de criar novo template
- */
 const ArrendamentoForm: React.FC<ArrendamentoFormProps> = ({ id, onSave }) => {
   const params = useParams({ strict: false });
   const arrendamentoId = id || params.id;
-  // Estados (mesmo código de antes)
+  
   const [propriedades, setPropriedades] = useState<Propriedade[]>([]);
   const [pessoasFisicas, setPessoasFisicas] = useState<Pessoa[]>([]);
   const [loadingPropriedades, setLoadingPropriedades] = useState(false);
@@ -39,7 +35,7 @@ const ArrendamentoForm: React.FC<ArrendamentoFormProps> = ({ id, onSave }) => {
   const [propriedadeSelecionada, setPropriedadeSelecionada] =
     useState<Propriedade | null>(null);
 
-  // Valores iniciais
+  // Valores iniciais com novos campos
   const initialValues: ArrendamentoDTO = {
     propriedadeId: 0,
     proprietarioId: 0,
@@ -53,7 +49,7 @@ const ArrendamentoForm: React.FC<ArrendamentoFormProps> = ({ id, onSave }) => {
     atividadeProdutiva: undefined
   };
 
-  // useEffects para carregar dados (mesmo código de antes)
+  // Carregar propriedades
   useEffect(() => {
     const fetchPropriedades = async () => {
       setLoadingPropriedades(true);
@@ -66,29 +62,28 @@ const ArrendamentoForm: React.FC<ArrendamentoFormProps> = ({ id, onSave }) => {
         setLoadingPropriedades(false);
       }
     };
-
     fetchPropriedades();
   }, []);
 
+  // Carregar pessoas
   useEffect(() => {
-    const fetchPessoasFisicas = async () => {
+    const fetchPessoas = async () => {
       setLoadingPessoas(true);
       try {
-        const pessoas = await pessoaService.getProdutores();
+        const pessoas = await pessoaService.getAll();
         setPessoasFisicas(pessoas);
       } catch (error) {
-        console.error("Erro ao carregar pessoas físicas:", error);
+        console.error("Erro ao carregar pessoas:", error);
       } finally {
         setLoadingPessoas(false);
       }
     };
-
-    fetchPessoasFisicas();
+    fetchPessoas();
   }, []);
 
-  // Validação (mesmo código de antes)
-  const validate = (values: ArrendamentoDTO): Record<string, string> | null => {
-    const errors: Record<string, string> = {};
+  // Validação do formulário
+  const validate = (values: ArrendamentoDTO) => {
+    const errors: any = {};
 
     if (!values.propriedadeId || values.propriedadeId === 0) {
       errors.propriedadeId = "Propriedade é obrigatória";
@@ -102,25 +97,12 @@ const ArrendamentoForm: React.FC<ArrendamentoFormProps> = ({ id, onSave }) => {
       errors.arrendatarioId = "Arrendatário é obrigatório";
     }
 
-    if (
-      values.proprietarioId === values.arrendatarioId &&
-      values.proprietarioId !== 0
-    ) {
+    if (values.proprietarioId === values.arrendatarioId && values.proprietarioId !== 0) {
       errors.arrendatarioId = "Arrendatário deve ser diferente do proprietário";
     }
 
-    const areaArrendada = Number(values.areaArrendada);
-    if (!areaArrendada || areaArrendada <= 0) {
+    if (!values.areaArrendada || values.areaArrendada <= 0) {
       errors.areaArrendada = "Área arrendada deve ser maior que zero";
-    }
-
-    if (
-      propriedadeSelecionada &&
-      areaArrendada > Number(propriedadeSelecionada.areaTotal)
-    ) {
-      errors.areaArrendada = `Área arrendada não pode ser maior que a área total da propriedade (${propriedadeService.formatarArea(
-        propriedadeSelecionada.areaTotal
-      )})`;
     }
 
     if (!values.dataInicio) {
@@ -128,25 +110,14 @@ const ArrendamentoForm: React.FC<ArrendamentoFormProps> = ({ id, onSave }) => {
     }
 
     if (values.dataFim && values.dataInicio) {
-      const dataInicio = new Date(values.dataInicio);
-      const dataFim = new Date(values.dataFim);
-
-      if (dataFim <= dataInicio) {
-        errors.dataFim = "Data fim deve ser posterior à data de início";
+      const inicio = new Date(values.dataInicio);
+      const fim = new Date(values.dataFim);
+      if (fim <= inicio) {
+        errors.dataFim = "Data de término deve ser posterior à data de início";
       }
     }
 
     return Object.keys(errors).length > 0 ? errors : null;
-  };
-
-  // Função para atualizar propriedade selecionada
-  const handlePropriedadeChange = (
-    propriedadeId: number,
-    setValue: (name: string, value: any) => void
-  ) => {
-    const propriedade = propriedades.find((p) => p.id === propriedadeId);
-    setPropriedadeSelecionada(propriedade || null);
-    setValue("propriedadeId", propriedadeId);
   };
 
   return (
@@ -157,20 +128,13 @@ const ArrendamentoForm: React.FC<ArrendamentoFormProps> = ({ id, onSave }) => {
       initialValues={initialValues}
       validate={validate}
       returnUrl="/movimentos/agricultura/arrendamentos"
-      //onSave={onSave}
     >
-      {({
-        values,
-        errors,
-        touched,
-        handleChange,
-        setValue,
-        setFieldTouched,
-      }) => (
+      {({ values, errors, touched, handleChange, setFieldValue, setFieldTouched }) => (
         <div className="space-y-6">
+          {/* Seção de Propriedade e Partes */}
           <FormSection
-            title="Informações da Propriedade"
-            description="Selecione a propriedade e defina a área a ser arrendada"
+            title="Propriedade e Partes Envolvidas"
+            description="Selecione a propriedade e as pessoas envolvidas no arrendamento"
           >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
@@ -185,50 +149,139 @@ const ArrendamentoForm: React.FC<ArrendamentoFormProps> = ({ id, onSave }) => {
                   name="propriedadeId"
                   value={values.propriedadeId}
                   onChange={(e) => {
-                    const value = Number(e.target.value);
                     handleChange(e);
-                    handlePropriedadeChange(value, setValue);
+                    const propId = parseInt(e.target.value);
+                    const prop = propriedades.find(p => p.id === propId);
+                    setPropriedadeSelecionada(prop || null);
+                    if (prop?.proprietarioId) {
+                      setFieldValue("proprietarioId", prop.proprietarioId);
+                    }
                   }}
                   onBlur={() => setFieldTouched("propriedadeId", true)}
-                  disabled={loadingPropriedades}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  disabled={loadingPropriedades}
                 >
-                  <option value={0}>
-                    {loadingPropriedades
-                      ? "Carregando..."
-                      : "Selecione uma propriedade"}
-                  </option>
-                  {propriedades.map((propriedade) => (
-                    <option key={propriedade.id} value={propriedade.id}>
-                      {propriedade.nome} -{" "}
-                      {propriedadeService.formatarArea(propriedade.areaTotal)}
-                      {propriedade.localizacao &&
-                        ` (${propriedade.localizacao})`}
+                  <option value={0}>Selecione uma propriedade</option>
+                  {propriedades.map((prop) => (
+                    <option key={prop.id} value={prop.id}>
+                      {prop.nome} - {prop.areaTotal} {prop.unidadeArea}
+                      {prop.localizacao && ` - ${prop.localizacao}`}
                     </option>
                   ))}
                 </select>
               </FormField>
 
               <FormField
+                name="proprietarioId"
+                label="Proprietário"
+                error={errors.proprietarioId}
+                touched={touched.proprietarioId}
+                required
+              >
+                <select
+                  id="proprietarioId"
+                  name="proprietarioId"
+                  value={values.proprietarioId}
+                  onChange={handleChange}
+                  onBlur={() => setFieldTouched("proprietarioId", true)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  disabled={loadingPessoas || !!propriedadeSelecionada?.proprietarioId}
+                >
+                  <option value={0}>Selecione o proprietário</option>
+                  {pessoasFisicas.map((pessoa) => (
+                    <option key={pessoa.id} value={pessoa.id}>
+                      {pessoa.nome} - {pessoa.cpfCnpj}
+                    </option>
+                  ))}
+                </select>
+              </FormField>
+            </div>
+
+            <FormField
+              name="arrendatarioId"
+              label="Arrendatário"
+              error={errors.arrendatarioId}
+              touched={touched.arrendatarioId}
+              required
+            >
+              <select
+                id="arrendatarioId"
+                name="arrendatarioId"
+                value={values.arrendatarioId}
+                onChange={handleChange}
+                onBlur={() => setFieldTouched("arrendatarioId", true)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                disabled={loadingPessoas}
+              >
+                <option value={0}>Selecione o arrendatário</option>
+                {pessoasFisicas
+                  .filter(p => p.id !== values.proprietarioId)
+                  .map((pessoa) => (
+                    <option key={pessoa.id} value={pessoa.id}>
+                      {pessoa.nome} - {pessoa.cpfCnpj}
+                    </option>
+                  ))}
+              </select>
+            </FormField>
+
+            {/* NOVO CAMPO: Residente */}
+            <FormField
+              name="residente"
+              label="Arrendatário será residente da terra?"
+              error={errors.residente}
+              touched={touched.residente}
+              helpText="Marque se o arrendatário irá residir na propriedade arrendada"
+            >
+              <div className="flex items-center space-x-4">
+                <label className="inline-flex items-center">
+                  <input
+                    type="checkbox"
+                    id="residente"
+                    name="residente"
+                    checked={values.residente}
+                    onChange={handleChange}
+                    className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <span className="ml-2 text-gray-700">
+                    Sim, o arrendatário será residente
+                  </span>
+                </label>
+              </div>
+            </FormField>
+          </FormSection>
+
+          {/* Seção de Detalhes do Arrendamento */}
+          <FormSection
+            title="Detalhes do Arrendamento"
+            description="Informações sobre área, atividade produtiva e período"
+          >
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
                 name="areaArrendada"
-                label="Área Arrendada (ha)"
+                label="Área Arrendada"
                 error={errors.areaArrendada}
                 touched={touched.areaArrendada}
                 required
+                helpText={propriedadeSelecionada ? 
+                  `Total disponível: ${propriedadeSelecionada.areaTotal} ${propriedadeSelecionada.unidadeArea}` : 
+                  "Selecione uma propriedade primeiro"
+                }
               >
                 <input
                   type="number"
-                  step="0.01"
                   id="areaArrendada"
                   name="areaArrendada"
-                  value={values.areaArrendada}
+                  value={values.areaArrendada || ""}
                   onChange={handleChange}
                   onBlur={() => setFieldTouched("areaArrendada", true)}
+                  step="0.01"
+                  min="0"
                   placeholder="0.00"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </FormField>
 
+              {/* NOVO CAMPO: Atividade Produtiva */}
               <FormField
                 name="atividadeProdutiva"
                 label="Atividade Produtiva"
@@ -252,211 +305,82 @@ const ArrendamentoForm: React.FC<ArrendamentoFormProps> = ({ id, onSave }) => {
                   ))}
                 </select>
               </FormField>
-
-              {propriedadeSelecionada && (
-                <div className="md:col-span-2 mt-4 p-3 bg-blue-50 border border-blue-200 rounded">
-                  <h4 className="font-medium text-blue-900">
-                    Detalhes da Propriedade
-                  </h4>
-                  <div className="mt-2 text-sm text-blue-800 grid grid-cols-1 md:grid-cols-2 gap-2">
-                    <p>
-                      <strong>Área Total:</strong>{" "}
-                      {propriedadeService.formatarArea(
-                        propriedadeSelecionada.areaTotal
-                      )}
-                    </p>
-                    <p>
-                      <strong>Tipo:</strong>{" "}
-                      {propriedadeSelecionada.tipoPropriedade}
-                    </p>
-                    {propriedadeSelecionada.matricula && (
-                      <p>
-                        <strong>Matrícula:</strong>{" "}
-                        {propriedadeSelecionada.matricula}
-                      </p>
-                    )}
-                    {propriedadeSelecionada.localizacao && (
-                      <p>
-                        <strong>Localização:</strong>{" "}
-                        {propriedadeSelecionada.localizacao}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              )}
             </div>
-          </FormSection>
 
-          <FormSection
-            title="Partes Envolvidas"
-            description="Defina proprietário e arrendatário do contrato"
-          >
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <FormField
-                name="proprietarioId"
-                label="Proprietário"
-                error={errors.proprietarioId}
-                touched={touched.proprietarioId}
+                name="dataInicio"
+                label="Data de Início"
+                error={errors.dataInicio}
+                touched={touched.dataInicio}
                 required
               >
-                <select
-                  id="proprietarioId"
-                  name="proprietarioId"
-                  value={values.proprietarioId}
-                  onChange={(e) =>
-                    setValue("proprietarioId", Number(e.target.value))
-                  }
-                  onBlur={() => setFieldTouched("proprietarioId", true)}
-                  disabled={loadingPessoas}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value={0}>
-                    {loadingPessoas
-                      ? "Carregando..."
-                      : "Selecione o proprietário"}
-                  </option>
-                  {pessoasFisicas.map((pessoa) => (
-                    <option key={pessoa.id} value={pessoa.id}>
-                      {pessoa.nome} - {pessoa.cpfCnpj}
-                    </option>
-                  ))}
-                </select>
-              </FormField>
-
-              <FormField
-                name="arrendatarioId"
-                label="Arrendatário"
-                error={errors.arrendatarioId}
-                touched={touched.arrendatarioId}
-                required
-              >
-                <select
-                  id="arrendatarioId"
-                  name="arrendatarioId"
-                  value={values.arrendatarioId}
-                  onChange={(e) =>
-                    setValue("arrendatarioId", Number(e.target.value))
-                  }
-                  onBlur={() => setFieldTouched("arrendatarioId", true)}
-                  disabled={loadingPessoas}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value={0}>
-                    {loadingPessoas
-                      ? "Carregando..."
-                      : "Selecione o arrendatário"}
-                  </option>
-                  {pessoasFisicas.map((pessoa) => (
-                    <option key={pessoa.id} value={pessoa.id}>
-                      {pessoa.nome} - {pessoa.cpfCnpj}
-                    </option>
-                  ))}
-                </select>
-              </FormField>
-              <FormField
-              name="residente"
-              label="Arrendatário será residente da terra?"
-              error={errors.residente}
-              touched={touched.residente}
-            >
-              <div className="flex items-center space-x-4">
-                <label className="inline-flex items-center">
-                  <input
-                    type="checkbox"
-                    id="residente"
-                    name="residente"
-                    checked={values.residente}
-                    onChange={handleChange}
-                    className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                  />
-                  <span className="ml-2 text-gray-700">
-                    Marque se o arrendatário irá residir na propriedade arrendada
-                  </span>
-                </label>
-              </div>
-            </FormField>
-            </div>
-          </FormSection>
-
-          <FormSection
-            title="Período do Arrendamento"
-            description="Configure as datas de início e término do contrato"
-          >
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <FormField
+                <input
+                  type="date"
+                  id="dataInicio"
                   name="dataInicio"
-                  label="Data de Início"
-                  error={errors.dataInicio}
-                  touched={touched.dataInicio}
-                  required
-                >
-                  <input
-                    type="date"
-                    id="dataInicio"
-                    name="dataInicio"
-                    value={values.dataInicio}
-                    onChange={handleChange}
-                    onBlur={() => setFieldTouched("dataInicio", true)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </FormField>
+                  value={values.dataInicio}
+                  onChange={handleChange}
+                  onBlur={() => setFieldTouched("dataInicio", true)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </FormField>
 
-                <FormField
+              <FormField
+                name="dataFim"
+                label="Data de Término"
+                error={errors.dataFim}
+                touched={touched.dataFim}
+                helpText="Deixe em branco para arrendamento por tempo indeterminado"
+              >
+                <input
+                  type="date"
+                  id="dataFim"
                   name="dataFim"
-                  label="Data de Término"
-                  error={errors.dataFim}
-                  touched={touched.dataFim}
-                  helpText="Deixe vazio para prazo indeterminado"
-                >
-                  <input
-                    type="date"
-                    id="dataFim"
-                    name="dataFim"
-                    value={values.dataFim || ""}
-                    onChange={handleChange}
-                    onBlur={() => setFieldTouched("dataFim", true)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </FormField>
+                  value={values.dataFim || ""}
+                  onChange={handleChange}
+                  onBlur={() => setFieldTouched("dataFim", true)}
+                  min={values.dataInicio}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </FormField>
 
-                <FormField
+              <FormField
+                name="status"
+                label="Status"
+                error={errors.status}
+                touched={touched.status}
+                required
+              >
+                <select
+                  id="status"
                   name="status"
-                  label="Status"
-                  error={errors.status}
-                  touched={touched.status}
+                  value={values.status}
+                  onChange={handleChange}
+                  onBlur={() => setFieldTouched("status", true)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  <select
-                    id="status"
-                    name="status"
-                    value={values.status}
-                    onChange={handleChange}
-                    onBlur={() => setFieldTouched("status", true)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    {arrendamentoService.getStatusOptions().map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </FormField>
-              </div>
-
-              {values.dataInicio && values.dataFim && (
-                <div className="p-3 bg-green-50 border border-green-200 rounded">
-                  <p className="text-sm text-green-800">
-                    <strong>Duração:</strong>{" "}
-                    {arrendamentoService.calcularDuracao(
-                      values.dataInicio,
-                      values.dataFim
-                    )}
-                  </p>
-                </div>
-              )}
+                  <option value={StatusArrendamento.ATIVO}>Ativo</option>
+                  <option value={StatusArrendamento.ENCERRADO}>Encerrado</option>
+                  <option value={StatusArrendamento.CANCELADO}>Cancelado</option>
+                </select>
+              </FormField>
             </div>
+
+            {values.dataInicio && values.dataFim && (
+              <div className="p-3 bg-green-50 border border-green-200 rounded">
+                <p className="text-sm text-green-800">
+                  <strong>Duração:</strong>{" "}
+                  {arrendamentoService.calcularDuracao(
+                    values.dataInicio,
+                    values.dataFim
+                  )}
+                </p>
+              </div>
+            )}
           </FormSection>
 
+          {/* Seção de Documentação */}
           <FormSection
             title="Documentação"
             description="Anexe documentos relacionados ao arrendamento"
