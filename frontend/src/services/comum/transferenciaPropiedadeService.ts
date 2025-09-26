@@ -63,10 +63,17 @@ class TransferenciaPropiedadeService extends BaseApiService<
     super("/transferencias-propriedade", "comum");
   }
 
+  create = async (
+    dados: TransferenciaPropiedadeDTO
+  ): Promise<TransferenciaPropriedade> => {
+    // Redireciona para o método transferir
+    return this.transferir(dados);
+  };
 
   transferir = async (
     data: TransferenciaPropiedadeDTO
   ): Promise<TransferenciaPropriedade> => {
+    console.log(`${this.baseUrl}/transferir`);
     const response = await apiClient.post(`${this.baseUrl}/transferir`, data);
     return response.data;
   };

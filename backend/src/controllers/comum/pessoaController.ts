@@ -119,7 +119,7 @@ export const pessoaController = {
           });
         }
       }
-      console.log(dadosPessoa);
+
       // Usar transação para garantir a consistência
       const result = await prisma.$transaction(async (tx) => {
         // Criar pessoa base

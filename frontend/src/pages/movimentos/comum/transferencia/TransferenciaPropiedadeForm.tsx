@@ -140,10 +140,6 @@ const TransferenciaPropiedadeForm: React.FC<
       validate={validate}
       onSave={onSave}
       returnUrl="/movimentos/comum/transferencias-propriedade"
-      customSubmit={async (data) => {
-        // Usar método específico de transferência ao invés do create genérico
-        return await transferenciaPropiedadeService.transferir(data);
-      }}
     >
       {({
         values,

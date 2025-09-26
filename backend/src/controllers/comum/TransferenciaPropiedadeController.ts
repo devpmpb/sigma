@@ -48,6 +48,7 @@ export const transferenciaPropiedadeController = {
    * POST /api/comum/transferencias-propriedade/transferir
    */
   transferir: async (req: Request, res: Response) => {
+    console.log("chegou aqui");
     try {
       const {
         propriedadeId,
@@ -153,6 +154,17 @@ export const transferenciaPropiedadeController = {
       });
 
       return res.status(200).json(transferencias);
+    } catch (error) {
+      console.error("Erro ao buscar histórico:", error);
+      return res.status(500).json({
+        erro: "Erro ao buscar histórico de transferências",
+      });
+    }
+  },
+
+  teste: async (req: Request, res: Response) => {
+    try {
+      return res.json({ message: "Rota de transferência OK!" });
     } catch (error) {
       console.error("Erro ao buscar histórico:", error);
       return res.status(500).json({

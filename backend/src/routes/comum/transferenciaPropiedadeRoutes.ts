@@ -4,6 +4,7 @@ import { transferenciaPropiedadeController } from "../../controllers/comum/Trans
 const router = Router();
 
 // Rotas específicas (devem vir antes das genéricas)
+router.get("/teste", transferenciaPropiedadeController.teste);
 router.post("/transferir", transferenciaPropiedadeController.transferir);
 router.get(
   "/historico/:propriedadeId",
@@ -18,7 +19,7 @@ router.get("/recentes", transferenciaPropiedadeController.getRecentes);
 // Rotas genéricas (CRUD básico)
 router.get("/", transferenciaPropiedadeController.findAll);
 router.get("/:id", transferenciaPropiedadeController.findById);
-router.post("/", transferenciaPropiedadeController.create);
+//router.post("/", transferenciaPropiedadeController.create);
 router.put("/:id", transferenciaPropiedadeController.update);
 router.delete("/:id", transferenciaPropiedadeController.delete);
 

@@ -66,7 +66,7 @@ router.use(
   regrasNegocioRoutes
 );
 router.use(
-  "/comum/transferencias-propriedade",
+  "/transferencias-propriedade",
   requireModuleAccess(ModuloSistema.COMUM),
   transferenciaPropiedadeRoutes
 );
@@ -111,5 +111,7 @@ router.use(
   requireModuleAccess(ModuloSistema.OBRAS),
   ordemServicoRoutes
 );
+
+console.log("📁 Arquivo de rotas transferenciaPropiedade.routes.ts carregado!");
 
 export default router;
