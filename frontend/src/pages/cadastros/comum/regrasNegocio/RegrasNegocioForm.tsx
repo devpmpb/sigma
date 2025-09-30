@@ -1,3 +1,4 @@
+// frontend/src/pages/cadastros/comum/regrasNegocio/RegrasNegocioForm.tsx
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "@tanstack/react-router";
 import regrasNegocioService, {
@@ -25,7 +26,7 @@ interface RegrasNegocioFormProps {
 
 /**
  * Componente de Formulário de Regras de Negócio
- * Suporta configuração dinâmica de parâmetros e limites
+ * Corrigido para carregar dados JSON corretamente
  */
 const RegrasNegocioForm: React.FC<RegrasNegocioFormProps> = ({
   id,
@@ -51,6 +52,10 @@ const RegrasNegocioForm: React.FC<RegrasNegocioFormProps> = ({
     leiNumero?: string;
   } | null>(null);
 
+  // Estado para dados carregados da regra existente
+  const [loadedRegra, setLoadedRegra] = useState<RegrasNegocio | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
   // Estados para parâmetros
   const [parametro, setParametro] = useState<ParametroRegra>({
     condicao: CondicaoRegra.MENOR_QUE,
@@ -71,15 +76,90 @@ const RegrasNegocioForm: React.FC<RegrasNegocioFormProps> = ({
   const [hasLimitePorPeriodo, setHasLimitePorPeriodo] = useState(false);
 
   // Valor inicial para o formulário
-  const initialValues: RegrasNegocioDTO = {
+  const [initialValues, setInitialValues] = useState<RegrasNegocioDTO>({
     programaId: finalProgramaId || 0,
     tipoRegra: TipoRegra.AREA_CONSTRUCAO,
     parametro: parametro,
     valorBeneficio: 0,
     limiteBeneficio: undefined,
-  };
+  });
 
-  // Carregar informações do programa - NOVO
+  // CORREÇÃO PRINCIPAL: Carregar dados da regra ao editar
+  useEffect(() => {
+    const loadRegraData = async () => {
+      if (regraId && regraId !== "novo") {
+        setIsLoading(true);
+        try {
+          const regra = await regrasNegocioService.getById(regraId);
+          setLoadedRegra(regra);
+
+          // Processar parametro JSON
+          let parametroData = regra.parametro;
+          if (typeof parametroData === "string") {
+            try {
+              parametroData = JSON.parse(parametroData);
+            } catch (e) {
+              console.error("Erro ao fazer parse do parametro:", e);
+            }
+          }
+
+          // Processar limiteBeneficio JSON
+          let limiteData = regra.limiteBeneficio;
+          if (typeof limiteData === "string") {
+            try {
+              limiteData = JSON.parse(limiteData);
+            } catch (e) {
+              console.error("Erro ao fazer parse do limiteBeneficio:", e);
+            }
+          }
+
+          // Atualizar estados com dados carregados
+          setParametro({
+            condicao: parametroData?.condicao || CondicaoRegra.MENOR_QUE,
+            valor: parametroData?.valor || "",
+            valorMinimo: parametroData?.valorMinimo,
+            valorMaximo: parametroData?.valorMaximo,
+            unidade: parametroData?.unidade || "",
+            descricao: parametroData?.descricao || "",
+            ...parametroData, // Incluir outros campos customizados
+          });
+
+          if (limiteData) {
+            setLimiteBeneficio({
+              tipo: limiteData.tipo || TipoLimite.VALOR,
+              limite: limiteData.limite || 0,
+              unidade: limiteData.unidade || "",
+              limitePorPeriodo: limiteData.limitePorPeriodo,
+              multiplicador: limiteData.multiplicador,
+              ...limiteData, // Incluir outros campos customizados
+            });
+            setHasLimite(true);
+            setHasMultiplicador(!!limiteData.multiplicador);
+            setHasLimitePorPeriodo(!!limiteData.limitePorPeriodo);
+          }
+
+          // Atualizar valores iniciais do formulário
+          setInitialValues({
+            programaId: regra.programaId,
+            tipoRegra: regra.tipoRegra as TipoRegra,
+            parametro: parametroData,
+            valorBeneficio: Number(regra.valorBeneficio),
+            limiteBeneficio: limiteData || undefined,
+          });
+
+          setSelectedTipoRegra(regra.tipoRegra);
+        } catch (error) {
+          console.error("Erro ao carregar regra:", error);
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadRegraData();
+  }, [regraId]);
+
+  // Carregar informações do programa
   useEffect(() => {
     const loadProgramaInfo = async () => {
       if (finalProgramaId) {
@@ -117,10 +197,11 @@ const RegrasNegocioForm: React.FC<RegrasNegocioFormProps> = ({
     loadInitialData();
   }, []);
 
-  // Carregar template quando tipo de regra mudar
+  // NÃO carregar template quando editando uma regra existente
   useEffect(() => {
     const loadTemplate = async () => {
-      if (selectedTipoRegra) {
+      // Só carregar template se for novo cadastro e tipo foi selecionado
+      if (selectedTipoRegra && !loadedRegra) {
         try {
           const template = await regrasNegocioService.getTemplateRegra(
             selectedTipoRegra
@@ -138,7 +219,7 @@ const RegrasNegocioForm: React.FC<RegrasNegocioFormProps> = ({
     };
 
     loadTemplate();
-  }, [selectedTipoRegra]);
+  }, [selectedTipoRegra, loadedRegra]);
 
   const getReturnUrl = () => {
     if (finalProgramaId) {
@@ -147,7 +228,7 @@ const RegrasNegocioForm: React.FC<RegrasNegocioFormProps> = ({
     return "/cadastros/comum/regrasNegocio";
   };
 
-  // Função personalizada para callback após salvar - NOVO
+  // Função personalizada para callback após salvar
   const handleSave = () => {
     navigate({ to: getReturnUrl() });
   };
@@ -192,12 +273,15 @@ const RegrasNegocioForm: React.FC<RegrasNegocioFormProps> = ({
   };
 
   // Função para atualizar parâmetro
-  const updateParametro = (field: keyof ParametroRegra, value: any) => {
+  const updateParametro = (
+    field: keyof ParametroRegra | string,
+    value: any
+  ) => {
     setParametro((prev) => ({ ...prev, [field]: value }));
   };
 
   // Função para atualizar limite
-  const updateLimite = (field: keyof LimiteBeneficio, value: any) => {
+  const updateLimite = (field: keyof LimiteBeneficio | string, value: any) => {
     setLimiteBeneficio((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -222,226 +306,173 @@ const RegrasNegocioForm: React.FC<RegrasNegocioFormProps> = ({
     return finalData;
   };
 
+  // Função para processar campos customizados do parametro
+  const renderCustomParametroFields = () => {
+    // Para regras das leis cadastradas, renderizar campos específicos
+    const tipoRegra = selectedTipoRegra || loadedRegra?.tipoRegra;
+
+    if (!tipoRegra) return null;
+
+    // Campos específicos por tipo de regra
+    if (tipoRegra.includes("area_propriedade")) {
+      return (
+        <FormField
+          name="parametro.incluiArrendamento"
+          label="Incluir Arrendamento?"
+        >
+          <input
+            type="checkbox"
+            checked={parametro.incluiArrendamento || false}
+            onChange={(e) =>
+              updateParametro("incluiArrendamento", e.target.checked)
+            }
+            className="mr-2"
+          />
+          <span>Somar área arrendada na validação</span>
+        </FormField>
+      );
+    }
+
+    if (tipoRegra.includes("equipamento")) {
+      return (
+        <FormField name="parametro.tipoEquipamento" label="Tipo de Equipamento">
+          <select
+            value={parametro.tipoEquipamento || ""}
+            onChange={(e) => updateParametro("tipoEquipamento", e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+          >
+            <option value="">Selecione...</option>
+            <option value="ordenhadeira">Ordenhadeira</option>
+            <option value="resfriador">Resfriador</option>
+          </select>
+        </FormField>
+      );
+    }
+
+    if (tipoRegra.includes("inseminacao")) {
+      return (
+        <>
+          <FormField name="parametro.tipoAnimal" label="Tipo de Animal">
+            <select
+              value={parametro.tipoAnimal || ""}
+              onChange={(e) => updateParametro("tipoAnimal", e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+            >
+              <option value="">Selecione...</option>
+              <option value="bovino">Bovino</option>
+              <option value="suino">Suíno</option>
+            </select>
+          </FormField>
+
+          <FormField name="parametro.modalidade" label="Modalidade">
+            <select
+              value={parametro.modalidade || ""}
+              onChange={(e) => updateParametro("modalidade", e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+            >
+              <option value="">Selecione...</option>
+              <option value="fornecimento_municipio">
+                Fornecimento pelo Município
+              </option>
+              <option value="retirada_secretaria">
+                Retirada na Secretaria
+              </option>
+              <option value="reembolso">Reembolso</option>
+            </select>
+          </FormField>
+        </>
+      );
+    }
+
+    return null;
+  };
+
+  if (isLoading) {
+    return <div className="p-8 text-center">Carregando dados...</div>;
+  }
+
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Breadcrumb - NOVO */}
-      <nav className="flex mb-6" aria-label="Breadcrumb">
-        <ol className="inline-flex items-center space-x-1 md:space-x-3">
-          <li className="inline-flex items-center">
-            <button
-              onClick={() => navigate({ to: "/cadastros/comum/programas" })}
-              className="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600"
-            >
-              <svg
-                className="w-4 h-4 mr-2"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-              >
-                <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path>
-              </svg>
-              Programas
-            </button>
-          </li>
-          {finalProgramaId && programaInfo && (
-            <li>
-              <div className="flex items-center">
-                <svg
-                  className="w-6 h-6 text-gray-400"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-                    clipRule="evenodd"
-                  ></path>
-                </svg>
-                <button
-                  onClick={() =>
-                    navigate({
-                      to: `/cadastros/comum/programas/${finalProgramaId}`,
-                    })
-                  }
-                  className="ml-1 text-sm font-medium text-gray-700 hover:text-blue-600 md:ml-2"
-                >
-                  {programaInfo.nome}
-                </button>
-              </div>
-            </li>
+    <FormBase<RegrasNegocio, RegrasNegocioDTO>
+      title="Regra de Negócio"
+      service={regrasNegocioService}
+      id={regraId}
+      initialValues={initialValues}
+      validate={validate}
+      returnUrl={getReturnUrl()}
+      onSave={handleSave}
+      transformBeforeSave={buildFinalData}
+    >
+      {({ values, errors, touched, handleChange, setValue }) => (
+        <>
+          {/* Informações do Programa */}
+          {programaInfo && (
+            <div className="mb-6 p-4 bg-blue-50 rounded-lg">
+              <h3 className="font-semibold text-blue-900">
+                {programaInfo.nome}
+              </h3>
+              {programaInfo.leiNumero && (
+                <p className="text-sm text-blue-700">
+                  {programaInfo.leiNumero}
+                </p>
+              )}
+            </div>
           )}
-          <li>
-            <div className="flex items-center">
-              <svg
-                className="w-6 h-6 text-gray-400"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-                  clipRule="evenodd"
-                ></path>
-              </svg>
-              <button
-                onClick={() => navigate({ to: getReturnUrl() })}
-                className="ml-1 text-sm font-medium text-gray-700 hover:text-blue-600 md:ml-2"
-              >
-                Regras de Negócio
-              </button>
-            </div>
-          </li>
-          <li aria-current="page">
-            <div className="flex items-center">
-              <svg
-                className="w-6 h-6 text-gray-400"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-                  clipRule="evenodd"
-                ></path>
-              </svg>
-              <span className="ml-1 text-sm font-medium text-gray-500 md:ml-2">
-                {regraId && regraId !== "novo" ? "Editar Regra" : "Nova Regra"}
-              </span>
-            </div>
-          </li>
-        </ol>
-      </nav>
 
-      {/* Cabeçalho do programa (se estiver editando regra de programa específico) - NOVO */}
-      {finalProgramaId && programaInfo && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-lg font-semibold text-blue-900">
-                {regraId && regraId !== "novo"
-                  ? "Editando regra do programa:"
-                  : "Criando nova regra para:"}
-              </h2>
-              <p className="text-blue-700 font-medium">
-                📋 {programaInfo.nome}
-                {programaInfo.leiNumero && (
-                  <span className="text-blue-600 ml-2">
-                    • {programaInfo.leiNumero}
-                  </span>
+          <div className="space-y-6">
+            {/* Seção de Identificação */}
+            <div className="border border-gray-200 rounded-lg p-4">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">
+                Identificação da Regra
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {!finalProgramaId && (
+                  <FormField name="programaId" label="Programa" required>
+                    <select
+                      value={values.programaId}
+                      onChange={(e) => {
+                        handleChange(e);
+                        setValue("programaId", Number(e.target.value));
+                      }}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Selecione um programa...</option>
+                      {programas.map((programa) => (
+                        <option key={programa.id} value={programa.id}>
+                          {programa.nome}
+                        </option>
+                      ))}
+                    </select>
+                  </FormField>
                 )}
-              </p>
+
+                <FormField name="tipoRegra" label="Tipo de Regra" required>
+                  <input
+                    type="text"
+                    value={values.tipoRegra || selectedTipoRegra}
+                    onChange={(e) => {
+                      handleChange(e);
+                      setSelectedTipoRegra(e.target.value);
+                    }}
+                    placeholder="Ex: area_propriedade, tipo_equipamento..."
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </FormField>
+
+                <FormField
+                  name="valorBeneficio"
+                  label="Valor do Benefício (R$)"
+                  required
+                >
+                  <input
+                    type="number"
+                    value={values.valorBeneficio}
+                    onChange={handleChange}
+                    step="0.01"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </FormField>
+              </div>
             </div>
-            <button
-              onClick={() => navigate({ to: getReturnUrl() })}
-              className="inline-flex items-center px-3 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <svg
-                className="w-4 h-4 mr-2"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M10 19l-7-7m0 0l7-7m-7 7h18"
-                />
-              </svg>
-              Voltar às Regras
-            </button>
-          </div>
-        </div>
-      )}
-
-      <FormBase<RegrasNegocio, RegrasNegocioDTO>
-        title="Regra de Negócio"
-        service={{
-          ...regrasNegocioService,
-          create: (data: RegrasNegocioDTO) =>
-            regrasNegocioService.create(buildFinalData(data)),
-          update: (id: number | string, data: RegrasNegocioDTO) =>
-            regrasNegocioService.update(id, buildFinalData(data)),
-        }}
-        id={regraId}
-        initialValues={initialValues}
-        validate={validate}
-        returnUrl={getReturnUrl()}
-        onSave={handleSave}
-      >
-        {({ values, errors, touched, handleChange, setValue }) => (
-          <>
-            {/* Campo Programa */}
-            <FormField
-              name="programaId"
-              label="Programa"
-              error={errors.programaId}
-              touched={touched.programaId}
-              required
-            >
-              <select
-                id="programaId"
-                name="programaId"
-                value={values.programaId}
-                onChange={handleChange}
-                disabled={!!finalProgramaId}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
-              >
-                <option value="">Selecione um programa...</option>
-                {programas.map((programa) => (
-                  <option key={programa.id} value={programa.id}>
-                    {programa.nome} ({programa.tipoPrograma})
-                  </option>
-                ))}
-              </select>
-            </FormField>
-
-            {/* Campo Tipo de Regra */}
-            <FormField
-              name="tipoRegra"
-              label="Tipo de Regra"
-              error={errors.tipoRegra}
-              touched={touched.tipoRegra}
-              required
-            >
-              <select
-                id="tipoRegra"
-                name="tipoRegra"
-                value={values.tipoRegra}
-                onChange={(e) => {
-                  handleChange(e);
-                  setSelectedTipoRegra(e.target.value);
-                }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Selecione um tipo...</option>
-                {tiposRegra.map((tipo) => (
-                  <option key={tipo.valor} value={tipo.valor}>
-                    {tipo.label}
-                  </option>
-                ))}
-              </select>
-            </FormField>
-
-            {/* Campo Valor do Benefício */}
-            <FormField
-              name="valorBeneficio"
-              label="Valor do Benefício (R$)"
-              error={errors.valorBeneficio}
-              touched={touched.valorBeneficio}
-              required
-            >
-              <input
-                type="number"
-                id="valorBeneficio"
-                name="valorBeneficio"
-                value={values.valorBeneficio}
-                onChange={handleChange}
-                step="0.01"
-                min="0"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="0.00"
-              />
-            </FormField>
 
             {/* Seção de Parâmetros */}
             <div className="border border-gray-200 rounded-lg p-4">
@@ -449,90 +480,104 @@ const RegrasNegocioForm: React.FC<RegrasNegocioFormProps> = ({
                 Parâmetros da Regra
               </h3>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField name="parametro.condicao" label="Condição">
-                  <select
-                    value={parametro.condicao}
-                    onChange={(e) =>
-                      updateParametro("condicao", e.target.value)
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    {regrasNegocioService.getCondicoes().map((condicao) => (
-                      <option key={condicao.value} value={condicao.value}>
-                        {condicao.label}
-                      </option>
-                    ))}
-                  </select>
-                </FormField>
-
-                <FormField name="parametro.unidade" label="Unidade">
-                  <input
-                    type="text"
-                    value={parametro.unidade || ""}
-                    onChange={(e) => updateParametro("unidade", e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Ex: alqueires, hectares..."
-                  />
-                </FormField>
-
-                {/* Campos condicionais baseados na condição */}
-                {parametro.condicao === CondicaoRegra.ENTRE && (
-                  <>
-                    <FormField
-                      name="parametro.valorMinimo"
-                      label="Valor Mínimo"
-                    >
-                      <input
-                        type="number"
-                        value={parametro.valorMinimo || ""}
-                        onChange={(e) =>
-                          updateParametro("valorMinimo", Number(e.target.value))
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                    </FormField>
-                    <FormField
-                      name="parametro.valorMaximo"
-                      label="Valor Máximo"
-                    >
-                      <input
-                        type="number"
-                        value={parametro.valorMaximo || ""}
-                        onChange={(e) =>
-                          updateParametro("valorMaximo", Number(e.target.value))
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                    </FormField>
-                  </>
-                )}
-
-                {[
-                  CondicaoRegra.MENOR_QUE,
-                  CondicaoRegra.MAIOR_QUE,
-                  CondicaoRegra.IGUAL_A,
-                ].includes(parametro.condicao) && (
-                  <FormField name="parametro.valor" label="Valor">
-                    <input
-                      type="number"
-                      value={parametro.valor || ""}
-                      onChange={(e) => updateParametro("valor", e.target.value)}
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField name="parametro.condicao" label="Condição">
+                    <select
+                      value={parametro.condicao}
+                      onChange={(e) =>
+                        updateParametro("condicao", e.target.value)
+                      }
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="menor_que">Menor que</option>
+                      <option value="maior_que">Maior que</option>
+                      <option value="igual_a">Igual a</option>
+                      <option value="entre">Entre</option>
+                      <option value="contem">Contém</option>
+                      <option value="nao_contem">Não contém</option>
+                    </select>
+                  </FormField>
+
+                  <FormField name="parametro.unidade" label="Unidade">
+                    <input
+                      type="text"
+                      value={parametro.unidade || ""}
+                      onChange={(e) =>
+                        updateParametro("unidade", e.target.value)
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Ex: alqueires, reais, toneladas..."
                     />
                   </FormField>
-                )}
-              </div>
+                </div>
 
-              <FormField name="parametro.descricao" label="Descrição">
-                <textarea
-                  value={parametro.descricao || ""}
-                  onChange={(e) => updateParametro("descricao", e.target.value)}
-                  rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Descrição detalhada da condição..."
-                />
-              </FormField>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {parametro.condicao === CondicaoRegra.ENTRE ? (
+                    <>
+                      <FormField
+                        name="parametro.valorMinimo"
+                        label="Valor Mínimo"
+                      >
+                        <input
+                          type="number"
+                          value={parametro.valorMinimo || ""}
+                          onChange={(e) =>
+                            updateParametro(
+                              "valorMinimo",
+                              Number(e.target.value)
+                            )
+                          }
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </FormField>
+
+                      <FormField
+                        name="parametro.valorMaximo"
+                        label="Valor Máximo"
+                      >
+                        <input
+                          type="number"
+                          value={parametro.valorMaximo || ""}
+                          onChange={(e) =>
+                            updateParametro(
+                              "valorMaximo",
+                              Number(e.target.value)
+                            )
+                          }
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </FormField>
+                    </>
+                  ) : (
+                    <FormField name="parametro.valor" label="Valor">
+                      <input
+                        type="text"
+                        value={parametro.valor || ""}
+                        onChange={(e) =>
+                          updateParametro("valor", e.target.value)
+                        }
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </FormField>
+                  )}
+                </div>
+
+                {/* Campos customizados por tipo de regra */}
+                {renderCustomParametroFields()}
+
+                <FormField name="parametro.descricao" label="Descrição">
+                  <textarea
+                    value={parametro.descricao || ""}
+                    onChange={(e) =>
+                      updateParametro("descricao", e.target.value)
+                    }
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Descrição detalhada da condição..."
+                  />
+                </FormField>
+              </div>
             </div>
 
             {/* Seção de Limites */}
@@ -561,11 +606,10 @@ const RegrasNegocioForm: React.FC<RegrasNegocioFormProps> = ({
                         onChange={(e) => updateLimite("tipo", e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
-                        {regrasNegocioService.getTiposLimite().map((tipo) => (
-                          <option key={tipo.value} value={tipo.value}>
-                            {tipo.label}
-                          </option>
-                        ))}
+                        <option value="quantidade">Quantidade</option>
+                        <option value="valor">Valor</option>
+                        <option value="percentual">Percentual</option>
+                        <option value="area">Área</option>
                       </select>
                     </FormField>
 
@@ -588,7 +632,7 @@ const RegrasNegocioForm: React.FC<RegrasNegocioFormProps> = ({
                           updateLimite("unidade", e.target.value)
                         }
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="Ex: toneladas, quilos..."
+                        placeholder="Ex: toneladas, reais, doses..."
                       />
                     </FormField>
                   </div>
@@ -632,17 +676,15 @@ const RegrasNegocioForm: React.FC<RegrasNegocioFormProps> = ({
                                 base: e.target.value,
                               })
                             }
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
                           >
-                            {regrasNegocioService
-                              .getBasesMultiplicador()
-                              .map((base) => (
-                                <option key={base.value} value={base.value}>
-                                  {base.label}
-                                </option>
-                              ))}
+                            <option value="">Selecione...</option>
+                            <option value="area">Área</option>
+                            <option value="renda">Renda</option>
+                            <option value="fixo">Fixo</option>
                           </select>
                         </FormField>
+
                         <FormField name="multiplicador.fator" label="Fator">
                           <input
                             type="number"
@@ -654,7 +696,7 @@ const RegrasNegocioForm: React.FC<RegrasNegocioFormProps> = ({
                               })
                             }
                             step="0.01"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
                           />
                         </FormField>
                       </div>
@@ -665,7 +707,10 @@ const RegrasNegocioForm: React.FC<RegrasNegocioFormProps> = ({
                     <div className="bg-gray-50 p-3 rounded-md">
                       <h4 className="font-medium mb-2">Limite por Período</h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <FormField name="periodo.periodo" label="Período">
+                        <FormField
+                          name="limitePorPeriodo.periodo"
+                          label="Período"
+                        >
                           <select
                             value={
                               limiteBeneficio.limitePorPeriodo?.periodo || ""
@@ -676,21 +721,19 @@ const RegrasNegocioForm: React.FC<RegrasNegocioFormProps> = ({
                                 periodo: e.target.value,
                               })
                             }
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
                           >
-                            {regrasNegocioService
-                              .getPeriodos()
-                              .map((periodo) => (
-                                <option
-                                  key={periodo.value}
-                                  value={periodo.value}
-                                >
-                                  {periodo.label}
-                                </option>
-                              ))}
+                            <option value="">Selecione...</option>
+                            <option value="mensal">Mensal</option>
+                            <option value="anual">Anual</option>
+                            <option value="bienal">Bienal (2 anos)</option>
                           </select>
                         </FormField>
-                        <FormField name="periodo.quantidade" label="Quantidade">
+
+                        <FormField
+                          name="limitePorPeriodo.quantidade"
+                          label="Quantidade"
+                        >
                           <input
                             type="number"
                             value={
@@ -702,7 +745,7 @@ const RegrasNegocioForm: React.FC<RegrasNegocioFormProps> = ({
                                 quantidade: Number(e.target.value),
                               })
                             }
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
                           />
                         </FormField>
                       </div>
@@ -711,10 +754,10 @@ const RegrasNegocioForm: React.FC<RegrasNegocioFormProps> = ({
                 </div>
               )}
             </div>
-          </>
-        )}
-      </FormBase>
-    </div>
+          </div>
+        </>
+      )}
+    </FormBase>
   );
 };
 

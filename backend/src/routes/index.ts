@@ -112,6 +112,4 @@ router.use(
   ordemServicoRoutes
 );
 
-console.log("📁 Arquivo de rotas transferenciaPropiedade.routes.ts carregado!");
-
 export default router;
