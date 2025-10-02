@@ -22,7 +22,7 @@ export async function seedProgramasLegais() {
       },
     });
 
-    // Regras do Pró-Orgânico
+    // Regras do Pró-Orgânico (APENAS CÁLCULO DE VALORES)
     await prisma.regrasNegocio.createMany({
       data: [
         // Regra 1: Propriedades até 6 alqueires
@@ -74,47 +74,10 @@ export async function seedProgramasLegais() {
             descricao: "Máximo 10 toneladas (pago 50% da NF) a cada 2 anos",
           },
         },
-        // Requisitos gerais
-        {
-          programaId: proOrganico.id,
-          tipoRegra: "requisitos_gerais",
-          parametro: {
-            requisitos: [
-              { tipo: "conservacao_solo", obrigatorio: true },
-              { tipo: "triplice_lavagem", obrigatorio: true },
-              { tipo: "local_embalagens", obrigatorio: true },
-              {
-                tipo: "nota_fiscal_origem",
-                valor: "Pato Bragado",
-                obrigatorio: true,
-              },
-              {
-                tipo: "cadastro_secretaria",
-                situacao: "em_dia",
-                obrigatorio: true,
-              },
-              {
-                tipo: "tributos_municipais",
-                situacao: "em_dia",
-                obrigatorio: true,
-              },
-              {
-                tipo: "vacinacao_aftosa",
-                situacao: "em_dia",
-                obrigatorio: true,
-              },
-              {
-                tipo: "renda_agropecuaria",
-                percentualMinimo: 80,
-                obrigatorio: true,
-              },
-            ],
-          },
-          valorBeneficio: 0,
-          limiteBeneficio: undefined,
-        },
       ],
     });
+
+    console.log("✅ Pró-Orgânico cadastrado");
 
     // ==================================================
     // LEI 829/2006 - ORDENHADEIRAS E RESFRIADORES
@@ -131,7 +94,7 @@ export async function seedProgramasLegais() {
       },
     });
 
-    // Regras dos Equipamentos
+    // Regras dos Equipamentos (APENAS CÁLCULO DE VALORES)
     await prisma.regrasNegocio.createMany({
       data: [
         // Ordenhadeira
@@ -188,30 +151,10 @@ export async function seedProgramasLegais() {
             descricao: "50% do valor, máximo R$ 3.000,00 - benefício único",
           },
         },
-        // Requisitos gerais
-        {
-          programaId: equipamentosLeite.id,
-          tipoRegra: "requisitos_gerais",
-          parametro: {
-            requisitos: [
-              { tipo: "nota_produtor", situacao: "regular", obrigatorio: true },
-              {
-                tipo: "tributos_municipais",
-                situacao: "em_dia",
-                obrigatorio: true,
-              },
-              { tipo: "nao_contemplado_anteriormente", obrigatorio: true },
-            ],
-            restricoes: [
-              { tipo: "transferencia_proibida", periodo: "5_anos" },
-              { tipo: "venda_fora_municipio", situacao: "proibida" },
-            ],
-          },
-          valorBeneficio: 0,
-          limiteBeneficio: undefined,
-        },
       ],
     });
+
+    console.log("✅ Ordenhadeiras/Resfriadores cadastrado");
 
     // ==================================================
     // LEI 1182/2011 - INSEMINAÇÃO ARTIFICIAL
@@ -229,7 +172,7 @@ export async function seedProgramasLegais() {
       },
     });
 
-    // Regras complexas da Inseminação
+    // Regras complexas da Inseminação (APENAS CÁLCULO DE VALORES)
     await prisma.regrasNegocio.createMany({
       data: [
         // BOVINOS - Opção 1: Fornecimento direto
@@ -347,46 +290,10 @@ export async function seedProgramasLegais() {
             descricao: "Até R$ 30,00/matriz/ano",
           },
         },
-        // Requisitos gerais para todos
-        {
-          programaId: inseminacaoArtificial.id,
-          tipoRegra: "requisitos_gerais",
-          parametro: {
-            requisitos: [
-              {
-                tipo: "exames_sanitarios",
-                exames: ["brucelose", "tuberculose"],
-                aplicavel: "bovinos",
-              },
-              {
-                tipo: "nota_fiscal_origem",
-                valor: "Pato Bragado",
-                obrigatorio: true,
-              },
-              {
-                tipo: "cadastro_secretaria",
-                situacao: "em_dia",
-                obrigatorio: true,
-              },
-              {
-                tipo: "tributos_municipais",
-                situacao: "em_dia",
-                obrigatorio: true,
-              },
-              {
-                tipo: "vacinacao_aftosa",
-                situacao: "em_dia",
-                obrigatorio: true,
-              },
-            ],
-          },
-          valorBeneficio: 0,
-          limiteBeneficio: undefined,
-        },
       ],
     });
 
-    console.log("✅ Programas e regras cadastrados com sucesso!");
+    console.log("✅ Inseminação Artificial cadastrado");
 
     // Relatório resumido
     const totalProgramas = await prisma.programa.count();
@@ -396,9 +303,10 @@ export async function seedProgramasLegais() {
     console.log(`   • ${totalProgramas} programas cadastrados`);
     console.log(`   • ${totalRegras} regras de negócio configuradas`);
     console.log(`\n📋 Programas cadastrados:`);
-    console.log(`   1. Pró-Orgânico (Lei 797/2006)`);
-    console.log(`   2. Ordenhadeiras/Resfriadores (Lei 829/2006)`);
-    console.log(`   3. Inseminação Artificial (Lei 1182/2011)`);
+    console.log(`   1. Pró-Orgânico (Lei 797/2006) - 2 regras`);
+    console.log(`   2. Ordenhadeiras/Resfriadores (Lei 829/2006) - 2 regras`);
+    console.log(`   3. Inseminação Artificial (Lei 1182/2011) - 5 regras`);
+    console.log(`\n✅ Total: ${totalRegras} regras funcionais de cálculo`);
   } catch (error) {
     console.error("❌ Erro ao cadastrar programas:", error);
     throw error;
