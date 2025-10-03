@@ -172,6 +172,10 @@ model Pessoa {
   arrendamentos              Arrendamento[]             @relation("arrendatario")
   arrendou                   Arrendamento[]             @relation("proprietario")
   propriedadesComoNuProprietario Propriedade[]          @relation("NuProprietario")
+  propriedadesCondominio                PropriedadeProprietario[]             @relation("ProprietariosCondominio")
+  transferenciasCondominioNovos         TransferenciaProprietarioCondominio[] @relation("TransferenciaCondominioNovos")
+  transferenciasUsufrutoUsufrutuario    TransferenciaUsufruto[]               @relation("TransferenciaUsufrutuario")
+  transferenciasUsufrutoNuProprietario  TransferenciaUsufruto[]               @relation("TransferenciaNuProprietario")
 }
 
 model PessoaFisica {
@@ -266,6 +270,7 @@ model Propriedade {
   arrendamentos  Arrendamento[]
   enderecos      Endereco[]
   transferencias TransferenciaPropriedade[]
+  proprietariosCondominio PropriedadeProprietario[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -274,21 +279,86 @@ model Propriedade {
 model TransferenciaPropriedade {
   id                     Int      @id @default(autoincrement())
   propriedadeId          Int      @map("propriedade_id")
-  proprietarioAnteriorId Int      @map("proprietario_anterior_id")
-  proprietarioNovoId     Int      @map("proprietario_novo_id")
+  
+  // ALTERAR PARA OPCIONAL (adicionar ?)
+  proprietarioAnteriorId Int?     @map("proprietario_anterior_id")
+  proprietarioNovoId     Int?     @map("proprietario_novo_id")
+  
+  // ADICIONAR:
+  situacaoPropriedade    SituacaoPropriedade @map("situacao_propriedade")
+  
   dataTransferencia      DateTime @map("data_transferencia") @db.Date
   observacoes            String?  @db.Text
   createdAt              DateTime @default(now()) @map("created_at")
   updatedAt              DateTime @updatedAt @map("updated_at")
 
-  // Relacionamentos
+  // Relacionamentos existentes
   propriedade          Propriedade @relation(fields: [propriedadeId], references: [id])
-  proprietarioAnterior Pessoa      @relation("TransferenciaProprietarioAnterior", fields: [proprietarioAnteriorId], references: [id])
-  proprietarioNovo     Pessoa      @relation("TransferenciaProprietarioNovo", fields: [proprietarioNovoId], references: [id])
+  proprietarioAnterior Pessoa?     @relation("TransferenciaProprietarioAnterior", fields: [proprietarioAnteriorId], references: [id])
+  proprietarioNovo     Pessoa?     @relation("TransferenciaProprietarioNovo", fields: [proprietarioNovoId], references: [id])
+  
+  // ADICIONAR NOVOS RELACIONAMENTOS:
+  novosProprietariosCondominio TransferenciaProprietarioCondominio[]
+  usufruto                     TransferenciaUsufruto?
 
   @@index([propriedadeId])
   @@index([dataTransferencia])
+  @@index([situacaoPropriedade]) // ADICIONAR
   @@map("transferencias_propriedade")
+}
+
+model PropriedadeProprietario {
+  id            Int         @id @default(autoincrement())
+  propriedadeId Int         @map("propriedade_id")
+  pessoaId      Int         @map("pessoa_id")
+  tipoVinculo   String      @map("tipo_vinculo") // "proprietario", "usufrutuario", "nu_proprietario"
+  percentual    Decimal?    @db.Decimal(5, 2) // Percentual de propriedade (para condomínios)
+  dataInicio    DateTime    @default(now()) @map("data_inicio")
+  dataFim       DateTime?   @map("data_fim") // Null se ainda for proprietário
+  ativo         Boolean     @default(true)
+  createdAt     DateTime    @default(now()) @map("created_at")
+  updatedAt     DateTime    @updatedAt @map("updated_at")
+
+  // Relacionamentos
+  propriedade Propriedade @relation(fields: [propriedadeId], references: [id], onDelete: Cascade)
+  pessoa      Pessoa      @relation("ProprietariosCondominio", fields: [pessoaId], references: [id])
+
+  @@unique([propriedadeId, pessoaId, tipoVinculo, ativo])
+  @@index([propriedadeId])
+  @@index([pessoaId])
+  @@index([tipoVinculo])
+  @@map("propriedades_proprietarios")
+}
+
+model TransferenciaProprietarioCondominio {
+  id                       Int                      @id @default(autoincrement())
+  transferenciaId          Int                      @map("transferencia_id")
+  pessoaId                 Int                      @map("pessoa_id")
+  percentual               Decimal                  @db.Decimal(5, 2)
+  createdAt                DateTime                 @default(now()) @map("created_at")
+
+  transferencia TransferenciaPropriedade @relation(fields: [transferenciaId], references: [id], onDelete: Cascade)
+  pessoa        Pessoa                   @relation("TransferenciaCondominioNovos", fields: [pessoaId], references: [id])
+
+  @@unique([transferenciaId, pessoaId])
+  @@index([transferenciaId])
+  @@map("transferencias_proprietarios_condominio")
+}
+
+model TransferenciaUsufruto {
+  id                  Int      @id @default(autoincrement())
+  transferenciaId     Int      @unique @map("transferencia_id")
+  usufrutuarioId      Int      @map("usufrutuario_id")
+  nuProprietarioId    Int      @map("nu_proprietario_id")
+  prazoUsufruto       DateTime? @map("prazo_usufruto") @db.Date
+  createdAt           DateTime @default(now()) @map("created_at")
+
+  transferencia   TransferenciaPropriedade @relation(fields: [transferenciaId], references: [id], onDelete: Cascade)
+  usufrutuario    Pessoa                   @relation("TransferenciaUsufrutuario", fields: [usufrutuarioId], references: [id])
+  nuProprietario  Pessoa                   @relation("TransferenciaNuProprietario", fields: [nuProprietarioId], references: [id])
+
+  @@index([transferenciaId])
+  @@map("transferencias_usufruto")
 }
 
 model Arrendamento {

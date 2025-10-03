@@ -25,6 +25,9 @@ CREATE TYPE "public"."AcaoPermissao" AS ENUM ('VIEW', 'CREATE', 'EDIT', 'DELETE'
 -- CreateEnum
 CREATE TYPE "public"."TipoPrograma" AS ENUM ('SUBSIDIO', 'MATERIAL', 'SERVICO', 'CREDITO', 'ASSISTENCIA');
 
+-- CreateEnum
+CREATE TYPE "public"."AtividadeProdutiva" AS ENUM ('AGRICULTURA', 'PECUARIA', 'AGRICULTURA_PECUARIA', 'SILVICULTURA', 'AQUICULTURA', 'HORTIFRUTI', 'AVICULTURA', 'SUINOCULTURA', 'OUTROS');
+
 -- CreateTable
 CREATE TABLE "public"."Bairro" (
     "id" SERIAL NOT NULL,
@@ -178,11 +181,13 @@ CREATE TABLE "public"."Propriedade" (
     "unidadeArea" TEXT NOT NULL DEFAULT 'alqueires',
     "itr" TEXT,
     "incra" TEXT,
+    "atividadeProdutiva" "public"."AtividadeProdutiva",
     "situacao" "public"."SituacaoPropriedade" NOT NULL,
     "isproprietarioResidente" BOOLEAN NOT NULL DEFAULT false,
     "localizacao" TEXT,
     "matricula" TEXT,
     "proprietarioId" INTEGER NOT NULL,
+    "nuProprietarioId" INTEGER,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -193,14 +198,54 @@ CREATE TABLE "public"."Propriedade" (
 CREATE TABLE "public"."transferencias_propriedade" (
     "id" SERIAL NOT NULL,
     "propriedade_id" INTEGER NOT NULL,
-    "proprietario_anterior_id" INTEGER NOT NULL,
-    "proprietario_novo_id" INTEGER NOT NULL,
+    "proprietario_anterior_id" INTEGER,
+    "proprietario_novo_id" INTEGER,
+    "situacao_propriedade" "public"."SituacaoPropriedade" NOT NULL,
     "data_transferencia" DATE NOT NULL,
     "observacoes" TEXT,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "transferencias_propriedade_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."propriedades_proprietarios" (
+    "id" SERIAL NOT NULL,
+    "propriedade_id" INTEGER NOT NULL,
+    "pessoa_id" INTEGER NOT NULL,
+    "tipo_vinculo" TEXT NOT NULL,
+    "percentual" DECIMAL(5,2),
+    "data_inicio" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "data_fim" TIMESTAMP(3),
+    "ativo" BOOLEAN NOT NULL DEFAULT true,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "propriedades_proprietarios_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."transferencias_proprietarios_condominio" (
+    "id" SERIAL NOT NULL,
+    "transferencia_id" INTEGER NOT NULL,
+    "pessoa_id" INTEGER NOT NULL,
+    "percentual" DECIMAL(5,2) NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "transferencias_proprietarios_condominio_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."transferencias_usufruto" (
+    "id" SERIAL NOT NULL,
+    "transferencia_id" INTEGER NOT NULL,
+    "usufrutuario_id" INTEGER NOT NULL,
+    "nu_proprietario_id" INTEGER NOT NULL,
+    "prazo_usufruto" DATE,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "transferencias_usufruto_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -214,6 +259,8 @@ CREATE TABLE "public"."Arrendamento" (
     "dataFim" TIMESTAMP(3),
     "status" TEXT NOT NULL DEFAULT 'ativo',
     "documentoUrl" TEXT,
+    "residente" BOOLEAN NOT NULL DEFAULT false,
+    "atividadeProdutiva" "public"."AtividadeProdutiva",
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -393,6 +440,33 @@ CREATE INDEX "transferencias_propriedade_propriedade_id_idx" ON "public"."transf
 CREATE INDEX "transferencias_propriedade_data_transferencia_idx" ON "public"."transferencias_propriedade"("data_transferencia");
 
 -- CreateIndex
+CREATE INDEX "transferencias_propriedade_situacao_propriedade_idx" ON "public"."transferencias_propriedade"("situacao_propriedade");
+
+-- CreateIndex
+CREATE INDEX "propriedades_proprietarios_propriedade_id_idx" ON "public"."propriedades_proprietarios"("propriedade_id");
+
+-- CreateIndex
+CREATE INDEX "propriedades_proprietarios_pessoa_id_idx" ON "public"."propriedades_proprietarios"("pessoa_id");
+
+-- CreateIndex
+CREATE INDEX "propriedades_proprietarios_tipo_vinculo_idx" ON "public"."propriedades_proprietarios"("tipo_vinculo");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "propriedades_proprietarios_propriedade_id_pessoa_id_tipo_vi_key" ON "public"."propriedades_proprietarios"("propriedade_id", "pessoa_id", "tipo_vinculo", "ativo");
+
+-- CreateIndex
+CREATE INDEX "transferencias_proprietarios_condominio_transferencia_id_idx" ON "public"."transferencias_proprietarios_condominio"("transferencia_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "transferencias_proprietarios_condominio_transferencia_id_pe_key" ON "public"."transferencias_proprietarios_condominio"("transferencia_id", "pessoa_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "transferencias_usufruto_transferencia_id_key" ON "public"."transferencias_usufruto"("transferencia_id");
+
+-- CreateIndex
+CREATE INDEX "transferencias_usufruto_transferencia_id_idx" ON "public"."transferencias_usufruto"("transferencia_id");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "ordens_servico_numeroOrdem_key" ON "public"."ordens_servico"("numeroOrdem");
 
 -- CreateIndex
@@ -447,13 +521,37 @@ ALTER TABLE "public"."Propriedade" ADD CONSTRAINT "Propriedade_logradouroId_fkey
 ALTER TABLE "public"."Propriedade" ADD CONSTRAINT "Propriedade_proprietarioId_fkey" FOREIGN KEY ("proprietarioId") REFERENCES "public"."Pessoa"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "public"."Propriedade" ADD CONSTRAINT "Propriedade_nuProprietarioId_fkey" FOREIGN KEY ("nuProprietarioId") REFERENCES "public"."Pessoa"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "public"."transferencias_propriedade" ADD CONSTRAINT "transferencias_propriedade_propriedade_id_fkey" FOREIGN KEY ("propriedade_id") REFERENCES "public"."Propriedade"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."transferencias_propriedade" ADD CONSTRAINT "transferencias_propriedade_proprietario_anterior_id_fkey" FOREIGN KEY ("proprietario_anterior_id") REFERENCES "public"."Pessoa"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "public"."transferencias_propriedade" ADD CONSTRAINT "transferencias_propriedade_proprietario_anterior_id_fkey" FOREIGN KEY ("proprietario_anterior_id") REFERENCES "public"."Pessoa"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."transferencias_propriedade" ADD CONSTRAINT "transferencias_propriedade_proprietario_novo_id_fkey" FOREIGN KEY ("proprietario_novo_id") REFERENCES "public"."Pessoa"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "public"."transferencias_propriedade" ADD CONSTRAINT "transferencias_propriedade_proprietario_novo_id_fkey" FOREIGN KEY ("proprietario_novo_id") REFERENCES "public"."Pessoa"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."propriedades_proprietarios" ADD CONSTRAINT "propriedades_proprietarios_propriedade_id_fkey" FOREIGN KEY ("propriedade_id") REFERENCES "public"."Propriedade"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."propriedades_proprietarios" ADD CONSTRAINT "propriedades_proprietarios_pessoa_id_fkey" FOREIGN KEY ("pessoa_id") REFERENCES "public"."Pessoa"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."transferencias_proprietarios_condominio" ADD CONSTRAINT "transferencias_proprietarios_condominio_transferencia_id_fkey" FOREIGN KEY ("transferencia_id") REFERENCES "public"."transferencias_propriedade"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."transferencias_proprietarios_condominio" ADD CONSTRAINT "transferencias_proprietarios_condominio_pessoa_id_fkey" FOREIGN KEY ("pessoa_id") REFERENCES "public"."Pessoa"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."transferencias_usufruto" ADD CONSTRAINT "transferencias_usufruto_transferencia_id_fkey" FOREIGN KEY ("transferencia_id") REFERENCES "public"."transferencias_propriedade"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."transferencias_usufruto" ADD CONSTRAINT "transferencias_usufruto_usufrutuario_id_fkey" FOREIGN KEY ("usufrutuario_id") REFERENCES "public"."Pessoa"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."transferencias_usufruto" ADD CONSTRAINT "transferencias_usufruto_nu_proprietario_id_fkey" FOREIGN KEY ("nu_proprietario_id") REFERENCES "public"."Pessoa"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "public"."Arrendamento" ADD CONSTRAINT "Arrendamento_propriedadeId_fkey" FOREIGN KEY ("propriedadeId") REFERENCES "public"."Propriedade"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
