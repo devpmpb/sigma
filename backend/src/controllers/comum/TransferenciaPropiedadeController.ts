@@ -57,6 +57,7 @@ export const transferenciaPropiedadeController = {
         nuProprietarioNovoId, // ✅ NOVO (para usufruto)
         dataTransferencia,
         observacoes,
+        condominos,
       } = req.body;
 
       // Validações básicas
@@ -71,18 +72,28 @@ export const transferenciaPropiedadeController = {
         });
       }
 
-      // ✅ NOVA VALIDAÇÃO: situacaoPropriedade
       if (!situacaoPropriedade) {
         return res.status(400).json({
           erro: "Situação da propriedade é obrigatória",
         });
       }
 
-      // ✅ NOVA VALIDAÇÃO: se for USUFRUTO, precisa do nu-proprietário
       if (situacaoPropriedade === "USUFRUTO" && !nuProprietarioNovoId) {
         return res.status(400).json({
           erro: "Para transferência de usufruto, o nu-proprietário é obrigatório",
         });
+      }
+
+      if (situacaoPropriedade === "CONDOMINIO") {
+        if (
+          !condominos ||
+          !Array.isArray(condominos) ||
+          condominos.length === 0
+        ) {
+          return res.status(400).json({
+            erro: "Para propriedade em condomínio, é necessário informar pelo menos um condômino",
+          });
+        }
       }
 
       const resultado = await prisma.$transaction(async (tx) => {
@@ -173,6 +184,52 @@ export const transferenciaPropiedadeController = {
           where: { id: Number(propriedadeId) },
           data: updateData,
         });
+
+        if (
+          situacaoPropriedade === "CONDOMINIO" &&
+          condominos &&
+          condominos.length > 0
+        ) {
+          for (const condomino of condominos) {
+            // Validar se pessoa existe
+            const pessoa = await tx.pessoa.findUnique({
+              where: { id: Number(condomino.condominoId) },
+            });
+
+            if (!pessoa) {
+              throw new Error(
+                `Condômino com ID ${condomino.condominoId} não encontrado`
+              );
+            }
+
+            // Verificar se já não é condômino ativo
+            const jaCondomino = await tx.propriedadeCondomino.findFirst({
+              where: {
+                propriedadeId: Number(propriedadeId),
+                condominoId: Number(condomino.condominoId),
+                dataFim: null,
+              },
+            });
+
+            if (jaCondomino) {
+              throw new Error(
+                `${pessoa.nome} já é condômino desta propriedade`
+              );
+            }
+
+            // Criar condômino
+            await tx.propriedadeCondomino.create({
+              data: {
+                propriedadeId: Number(propriedadeId),
+                condominoId: Number(condomino.condominoId),
+                percentual: condomino.percentual
+                  ? Number(condomino.percentual)
+                  : null,
+                observacoes: condomino.observacoes || null,
+              },
+            });
+          }
+        }
 
         return transferencia;
       });

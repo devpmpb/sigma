@@ -53,6 +53,8 @@ const TransferenciaPropiedadeForm: React.FC<
     observacoes: "",
   });
 
+  const formDataRef = React.useRef<TransferenciaPropiedadeDTO | null>(null);
+
   // Valores iniciais
   const initialValues: TransferenciaPropiedadeDTO = {
     propriedadeId: 0,
@@ -99,7 +101,7 @@ const TransferenciaPropiedadeForm: React.FC<
   }, []);
 
   // Função para atualizar propriedade selecionada
-  const handlePropriedadeChange = (
+  const handlePropriedadeChange = async (
     propriedadeId: number,
     setValue: (name: string, value: any) => void
   ) => {
@@ -107,17 +109,61 @@ const TransferenciaPropiedadeForm: React.FC<
     setPropriedadeSelecionada(propriedade || null);
     setValue("propriedadeId", propriedadeId);
 
-    // Preencher automaticamente o proprietário atual
-    if (propriedade && propriedade.proprietarioId) {
-      setValue("proprietarioAnteriorId", propriedade.proprietarioId);
+    if (!propriedade) {
+      // Limpar tudo se não encontrou propriedade
+      setValue("proprietarioAnteriorId", 0);
+      setValue("situacaoPropriedade", SituacaoPropriedade.PROPRIA);
+      setValue("nuProprietarioNovoId", undefined);
+      setCondominos([]);
+      return;
+    }
 
-      // ✅ Se a propriedade for USUFRUTO, preencher também o nu-proprietário anterior
-      if (
-        propriedade.situacao === SituacaoPropriedade.USUFRUTO &&
-        propriedade.nuProprietarioId
-      ) {
-        // Aqui poderíamos mostrar info do nu-proprietário anterior, se necessário
+    // 1. ✅ Preencher proprietário atual
+    if (propriedade.proprietarioId) {
+      setValue("proprietarioAnteriorId", propriedade.proprietarioId);
+    }
+
+    // 2. ✅ Preencher situação da propriedade
+    setValue("situacaoPropriedade", propriedade.situacao);
+
+    // 3. ✅ Se for USUFRUTO, preencher nu-proprietário atual
+    if (propriedade.situacao === SituacaoPropriedade.USUFRUTO) {
+      if (propriedade.nuProprietarioId) {
+        // Aqui podemos mostrar info do nu-proprietário anterior para referência
+        console.log("Nu-proprietário atual:", propriedade.nuProprietario?.nome);
       }
+    }
+
+    // 4. ✅ Se for CONDOMÍNIO, carregar condôminos atuais
+    if (propriedade.situacao === SituacaoPropriedade.CONDOMINIO) {
+      try {
+        setLoadingPessoas(true);
+        const condominosAtuais =
+          await propriedadeCondominoService.getCondominos(
+            propriedade.id,
+            true // Apenas ativos
+          );
+
+        // Mapear para o formato do formulário
+        const condominosFormatados: CondominoFormData[] = condominosAtuais.map(
+          (c) => ({
+            condominoId: c.condominoId,
+            percentual: c.percentual ? Number(c.percentual) : undefined,
+            observacoes: c.observacoes || "",
+          })
+        );
+
+        setCondominos(condominosFormatados);
+        console.log(`${condominosFormatados.length} condôminos carregados`);
+      } catch (error) {
+        console.error("Erro ao carregar condôminos:", error);
+        setCondominos([]);
+      } finally {
+        setLoadingPessoas(false);
+      }
+    } else {
+      // Se não for condomínio, limpar lista
+      setCondominos([]);
     }
   };
 
@@ -198,6 +244,8 @@ const TransferenciaPropiedadeForm: React.FC<
     if (values.situacaoPropriedade === SituacaoPropriedade.CONDOMINIO) {
       if (condominos.length === 0) {
         errors.condominos = "Adicione pelo menos um condômino";
+      } else {
+        (values as any).condominos = condominos;
       }
     }
 
@@ -305,7 +353,7 @@ const TransferenciaPropiedadeForm: React.FC<
               {/* Informações da propriedade selecionada */}
               {propriedadeSelecionada && (
                 <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
-                  <h4 className="font-medium text-blue-900 mb-2">
+                  <h4 className="font-medium text-blue-900 mb-3">
                     Detalhes da Propriedade
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
@@ -329,10 +377,70 @@ const TransferenciaPropiedadeForm: React.FC<
                       <span className="font-medium text-blue-800">
                         Situação Atual:
                       </span>{" "}
-                      {propriedadeService.formatarSituacaoPropriedade(
-                        propriedadeSelecionada.situacao
+                      <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-medium ml-1">
+                        {propriedadeService.formatarSituacaoPropriedade(
+                          propriedadeSelecionada.situacao
+                        )}
+                      </span>
+                    </div>
+
+                    {/* ✅ ADICIONAR: Mostrar proprietário atual */}
+                    <div className="col-span-2">
+                      <span className="font-medium text-blue-800">
+                        Proprietário Atual:
+                      </span>{" "}
+                      {propriedadeSelecionada.proprietario?.nome ||
+                        "Não informado"}
+                      {propriedadeSelecionada.proprietario?.cpfCnpj && (
+                        <span className="text-blue-600 ml-1">
+                          ({propriedadeSelecionada.proprietario.cpfCnpj})
+                        </span>
                       )}
                     </div>
+
+                    {/* ✅ ADICIONAR: Se for USUFRUTO, mostrar nu-proprietário */}
+                    {propriedadeSelecionada.situacao ===
+                      SituacaoPropriedade.USUFRUTO &&
+                      propriedadeSelecionada.nuProprietario && (
+                        <div className="col-span-2">
+                          <span className="font-medium text-blue-800">
+                            Nu-Proprietário Atual:
+                          </span>{" "}
+                          {propriedadeSelecionada.nuProprietario.nome}
+                          {propriedadeSelecionada.nuProprietario.cpfCnpj && (
+                            <span className="text-blue-600 ml-1">
+                              ({propriedadeSelecionada.nuProprietario.cpfCnpj})
+                            </span>
+                          )}
+                        </div>
+                      )}
+
+                    {/* ✅ ADICIONAR: Se for CONDOMÍNIO, mostrar condôminos */}
+                    {propriedadeSelecionada.situacao ===
+                      SituacaoPropriedade.CONDOMINIO &&
+                      condominos.length > 0 && (
+                        <div className="col-span-2">
+                          <span className="font-medium text-blue-800">
+                            Condôminos Atuais ({condominos.length}):
+                          </span>
+                          <ul className="mt-2 space-y-1">
+                            {condominos.map((c) => {
+                              const pessoa = pessoasFisicas.find(
+                                (p) => p.id === c.condominoId
+                              );
+                              return (
+                                <li
+                                  key={c.condominoId}
+                                  className="text-blue-700"
+                                >
+                                  • {pessoa?.nome || `ID: ${c.condominoId}`}
+                                  {c.percentual && ` - ${c.percentual}%`}
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        </div>
+                      )}
                   </div>
                 </div>
               )}
@@ -381,18 +489,25 @@ const TransferenciaPropiedadeForm: React.FC<
               </FormField>
 
               {/* Descrição da situação selecionada */}
+              {propriedadeSelecionada && (
+                <div className="bg-gray-50 border border-gray-200 rounded-md p-3 text-sm text-gray-700">
+                  <strong>Situação atual:</strong>{" "}
+                  {propriedadeService.formatarSituacaoPropriedade(
+                    propriedadeSelecionada.situacao
+                  )}
+                  <br />
+                  <span className="text-gray-600">
+                    Você pode manter ou alterar a situação da propriedade após a
+                    transferência.
+                  </span>
+                </div>
+              )}
+
               {values.situacaoPropriedade ===
                 SituacaoPropriedade.CONDOMINIO && (
                 <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3 text-sm text-yellow-800">
                   <strong>Condomínio:</strong> Você poderá adicionar múltiplos
                   condôminos após preencher os dados básicos.
-                </div>
-              )}
-              {values.situacaoPropriedade === SituacaoPropriedade.USUFRUTO && (
-                <div className="bg-purple-50 border border-purple-200 rounded-md p-3 text-sm text-purple-800">
-                  <strong>Usufruto:</strong> O usufrutuário tem direito de usar
-                  a propriedade, enquanto o nu-proprietário mantém a
-                  propriedade.
                 </div>
               )}
 

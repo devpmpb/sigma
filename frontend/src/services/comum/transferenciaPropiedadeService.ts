@@ -54,6 +54,11 @@ export interface TransferenciaPropiedadeDTO {
   nuProprietarioNovoId?: number;
   dataTransferencia: string;
   observacoes?: string;
+  condominos?: Array<{
+    condominoId: number;
+    percentual?: number;
+    observacoes?: string;
+  }>;
 }
 
 /**
@@ -69,16 +74,16 @@ class TransferenciaPropiedadeService extends BaseApiService<
   }
 
   create = async (
-    dados: TransferenciaPropiedadeDTO
+    data: TransferenciaPropiedadeDTO
   ): Promise<TransferenciaPropriedade> => {
-    // Redireciona para o método transferir
-    return this.transferir(dados);
+    // Usa o endpoint /transferir que já está implementado no backend
+    const response = await apiClient.post(`${this.baseUrl}/transferir`, data);
+    return response.data;
   };
 
   transferir = async (
     data: TransferenciaPropiedadeDTO
   ): Promise<TransferenciaPropriedade> => {
-    console.log(`${this.baseUrl}/transferir`);
     const response = await apiClient.post(`${this.baseUrl}/transferir`, data);
     return response.data;
   };
