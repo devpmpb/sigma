@@ -9,20 +9,30 @@ import transferenciaPropiedadeService, {
 } from "../../../../services/comum/transferenciaPropiedadeService";
 import propriedadeService, {
   Propriedade,
+  SituacaoPropriedade,
 } from "../../../../services/comum/propriedadeService";
 import pessoaService, {
   Pessoa,
-  TipoPessoa,
 } from "../../../../services/comum/pessoaService";
+import propriedadeCondominoService, {
+  PropriedadeCondominoDTO,
+} from "../../../../services/comum/propriedadeCondominoService";
 
 interface TransferenciaPropiedadeFormProps {
   id?: string | number;
   onSave: () => void;
 }
 
+// ✅ Interface para condôminos no formulário
+interface CondominoFormData {
+  condominoId: number;
+  percentual?: number;
+  observacoes?: string;
+}
+
 /**
  * Formulário para transferência de propriedade
- * Baseado no ArrendamentoForm mas simplificado
+ * Suporta 3 situações: PRÓPRIA, CONDOMÍNIO, USUFRUTO
  */
 const TransferenciaPropiedadeForm: React.FC<
   TransferenciaPropiedadeFormProps
@@ -35,11 +45,21 @@ const TransferenciaPropiedadeForm: React.FC<
   const [propriedadeSelecionada, setPropriedadeSelecionada] =
     useState<Propriedade | null>(null);
 
+  // ✅ NOVOS ESTADOS para condôminos
+  const [condominos, setCondominos] = useState<CondominoFormData[]>([]);
+  const [novoCondomino, setNovoCondomino] = useState<CondominoFormData>({
+    condominoId: 0,
+    percentual: undefined,
+    observacoes: "",
+  });
+
   // Valores iniciais
   const initialValues: TransferenciaPropiedadeDTO = {
     propriedadeId: 0,
     proprietarioAnteriorId: 0,
     proprietarioNovoId: 0,
+    situacaoPropriedade: SituacaoPropriedade.PROPRIA, // ✅ NOVO
+    nuProprietarioNovoId: undefined, // ✅ NOVO
     dataTransferencia: new Date().toISOString().split("T")[0],
     observacoes: "",
   };
@@ -61,7 +81,7 @@ const TransferenciaPropiedadeForm: React.FC<
     fetchPropriedades();
   }, []);
 
-  // Carregar pessoas físicas e jurídicas
+  // Carregar pessoas
   useEffect(() => {
     const fetchPessoas = async () => {
       setLoadingPessoas(true);
@@ -77,6 +97,60 @@ const TransferenciaPropiedadeForm: React.FC<
 
     fetchPessoas();
   }, []);
+
+  // Função para atualizar propriedade selecionada
+  const handlePropriedadeChange = (
+    propriedadeId: number,
+    setValue: (name: string, value: any) => void
+  ) => {
+    const propriedade = propriedades.find((p) => p.id === propriedadeId);
+    setPropriedadeSelecionada(propriedade || null);
+    setValue("propriedadeId", propriedadeId);
+
+    // Preencher automaticamente o proprietário atual
+    if (propriedade && propriedade.proprietarioId) {
+      setValue("proprietarioAnteriorId", propriedade.proprietarioId);
+
+      // ✅ Se a propriedade for USUFRUTO, preencher também o nu-proprietário anterior
+      if (
+        propriedade.situacao === SituacaoPropriedade.USUFRUTO &&
+        propriedade.nuProprietarioId
+      ) {
+        // Aqui poderíamos mostrar info do nu-proprietário anterior, se necessário
+      }
+    }
+  };
+
+  // ✅ NOVA FUNÇÃO: Adicionar condômino à lista
+  const adicionarCondomino = () => {
+    if (novoCondomino.condominoId === 0) {
+      alert("Selecione um condômino");
+      return;
+    }
+
+    // Verificar se já existe
+    const existe = condominos.find(
+      (c) => c.condominoId === novoCondomino.condominoId
+    );
+    if (existe) {
+      alert("Este condômino já foi adicionado");
+      return;
+    }
+
+    setCondominos([...condominos, novoCondomino]);
+
+    // Limpar formulário
+    setNovoCondomino({
+      condominoId: 0,
+      percentual: undefined,
+      observacoes: "",
+    });
+  };
+
+  // ✅ NOVA FUNÇÃO: Remover condômino da lista
+  const removerCondomino = (condominoId: number) => {
+    setCondominos(condominos.filter((c) => c.condominoId !== condominoId));
+  };
 
   // Validação do formulário
   const validate = (values: TransferenciaPropiedadeDTO) => {
@@ -102,6 +176,31 @@ const TransferenciaPropiedadeForm: React.FC<
         "O novo proprietário deve ser diferente do atual";
     }
 
+    // ✅ NOVA VALIDAÇÃO: Situação da propriedade
+    if (!values.situacaoPropriedade) {
+      errors.situacaoPropriedade = "Situação da propriedade é obrigatória";
+    }
+
+    // ✅ NOVA VALIDAÇÃO: Se for USUFRUTO, validar nu-proprietário
+    if (values.situacaoPropriedade === SituacaoPropriedade.USUFRUTO) {
+      if (!values.nuProprietarioNovoId || values.nuProprietarioNovoId === 0) {
+        errors.nuProprietarioNovoId =
+          "Nu-proprietário é obrigatório para usufruto";
+      }
+
+      if (values.nuProprietarioNovoId === values.proprietarioNovoId) {
+        errors.nuProprietarioNovoId =
+          "Nu-proprietário deve ser diferente do usufrutuário";
+      }
+    }
+
+    // ✅ NOVA VALIDAÇÃO: Se for CONDOMÍNIO, validar lista de condôminos
+    if (values.situacaoPropriedade === SituacaoPropriedade.CONDOMINIO) {
+      if (condominos.length === 0) {
+        errors.condominos = "Adicione pelo menos um condômino";
+      }
+    }
+
     if (!values.dataTransferencia) {
       errors.dataTransferencia = "Data da transferência é obrigatória";
     } else {
@@ -116,18 +215,30 @@ const TransferenciaPropiedadeForm: React.FC<
     return Object.keys(errors).length > 0 ? errors : null;
   };
 
-  // Função para atualizar propriedade selecionada e preencher proprietário atual
-  const handlePropriedadeChange = (
-    propriedadeId: number,
-    setValue: (name: string, value: any) => void
-  ) => {
-    const propriedade = propriedades.find((p) => p.id === propriedadeId);
-    setPropriedadeSelecionada(propriedade || null);
-    setValue("propriedadeId", propriedadeId);
+  // ✅ ATUALIZAR função onSave para incluir condôminos
+  const handleSave = async (data: TransferenciaPropiedadeDTO) => {
+    try {
+      // 1. Realizar a transferência
+      const response = await transferenciaPropiedadeService.transferir(data);
 
-    // Preencher automaticamente o proprietário atual
-    if (propriedade && propriedade.proprietarioId) {
-      setValue("proprietarioAnteriorId", propriedade.proprietarioId);
+      // 2. Se for CONDOMÍNIO, cadastrar os condôminos
+      if (
+        data.situacaoPropriedade === SituacaoPropriedade.CONDOMINIO &&
+        condominos.length > 0
+      ) {
+        for (const condomino of condominos) {
+          await propriedadeCondominoService.addCondomino(data.propriedadeId, {
+            condominoId: condomino.condominoId,
+            percentual: condomino.percentual,
+            observacoes: condomino.observacoes,
+          });
+        }
+      }
+
+      onSave();
+    } catch (error) {
+      console.error("Erro ao salvar transferência:", error);
+      throw error;
     }
   };
 
@@ -138,7 +249,7 @@ const TransferenciaPropiedadeForm: React.FC<
       id={id}
       initialValues={initialValues}
       validate={validate}
-      //onSave={onSave}
+      //onSave={handleSave}
       returnUrl="/movimentos/comum/transferencias-propriedade"
     >
       {({
@@ -214,14 +325,14 @@ const TransferenciaPropiedadeForm: React.FC<
                         {propriedadeSelecionada.matricula}
                       </div>
                     )}
-                    {propriedadeSelecionada.localizacao && (
-                      <div>
-                        <span className="font-medium text-blue-800">
-                          Localização:
-                        </span>{" "}
-                        {propriedadeSelecionada.localizacao}
-                      </div>
-                    )}
+                    <div>
+                      <span className="font-medium text-blue-800">
+                        Situação Atual:
+                      </span>{" "}
+                      {propriedadeService.formatarSituacaoPropriedade(
+                        propriedadeSelecionada.situacao
+                      )}
+                    </div>
                   </div>
                 </div>
               )}
@@ -231,9 +342,61 @@ const TransferenciaPropiedadeForm: React.FC<
           {/* Seção 2 - Transferência */}
           <FormSection
             title="Dados da Transferência"
-            description="Defina o proprietário atual, novo proprietário e data da transferência"
+            description="Defina a situação e os responsáveis pela propriedade"
           >
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-4">
+              {/* ✅ NOVO CAMPO: Situação da Propriedade */}
+              <FormField
+                name="situacaoPropriedade"
+                label="Situação da Propriedade após Transferência"
+                error={errors.situacaoPropriedade}
+                touched={touched.situacaoPropriedade}
+                required
+              >
+                <select
+                  id="situacaoPropriedade"
+                  name="situacaoPropriedade"
+                  value={values.situacaoPropriedade}
+                  onChange={(e) => {
+                    handleChange(e);
+                    // Limpar campos condicionais ao mudar situação
+                    if (e.target.value !== SituacaoPropriedade.USUFRUTO) {
+                      setValue("nuProprietarioNovoId", undefined);
+                    }
+                    if (e.target.value !== SituacaoPropriedade.CONDOMINIO) {
+                      setCondominos([]);
+                    }
+                  }}
+                  onBlur={() => setFieldTouched("situacaoPropriedade", true)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  {propriedadeService
+                    .getSituacoesPropriedade()
+                    .map((situacao) => (
+                      <option key={situacao.value} value={situacao.value}>
+                        {situacao.label}
+                      </option>
+                    ))}
+                </select>
+              </FormField>
+
+              {/* Descrição da situação selecionada */}
+              {values.situacaoPropriedade ===
+                SituacaoPropriedade.CONDOMINIO && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3 text-sm text-yellow-800">
+                  <strong>Condomínio:</strong> Você poderá adicionar múltiplos
+                  condôminos após preencher os dados básicos.
+                </div>
+              )}
+              {values.situacaoPropriedade === SituacaoPropriedade.USUFRUTO && (
+                <div className="bg-purple-50 border border-purple-200 rounded-md p-3 text-sm text-purple-800">
+                  <strong>Usufruto:</strong> O usufrutuário tem direito de usar
+                  a propriedade, enquanto o nu-proprietário mantém a
+                  propriedade.
+                </div>
+              )}
+
+              {/* Proprietário Anterior */}
               <FormField
                 name="proprietarioAnteriorId"
                 label="Proprietário Atual"
@@ -265,9 +428,14 @@ const TransferenciaPropiedadeForm: React.FC<
                 </select>
               </FormField>
 
+              {/* ✅ Proprietário Novo - label muda conforme situação */}
               <FormField
                 name="proprietarioNovoId"
-                label="Novo Proprietário"
+                label={
+                  values.situacaoPropriedade === SituacaoPropriedade.USUFRUTO
+                    ? "Usufrutuário (Novo)"
+                    : "Novo Proprietário"
+                }
                 error={errors.proprietarioNovoId}
                 touched={touched.proprietarioNovoId}
                 required
@@ -284,9 +452,7 @@ const TransferenciaPropiedadeForm: React.FC<
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value={0}>
-                    {loadingPessoas
-                      ? "Carregando..."
-                      : "Selecione o novo proprietário"}
+                    {loadingPessoas ? "Carregando..." : "Selecione"}
                   </option>
                   {pessoasFisicas.map((pessoa) => (
                     <option key={pessoa.id} value={pessoa.id}>
@@ -295,9 +461,40 @@ const TransferenciaPropiedadeForm: React.FC<
                   ))}
                 </select>
               </FormField>
-            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* ✅ CAMPO CONDICIONAL: Nu-Proprietário (só aparece se USUFRUTO) */}
+              {values.situacaoPropriedade === SituacaoPropriedade.USUFRUTO && (
+                <FormField
+                  name="nuProprietarioNovoId"
+                  label="Nu-Proprietário (Novo)"
+                  error={errors.nuProprietarioNovoId}
+                  touched={touched.nuProprietarioNovoId}
+                  required
+                >
+                  <select
+                    id="nuProprietarioNovoId"
+                    name="nuProprietarioNovoId"
+                    value={values.nuProprietarioNovoId || 0}
+                    onChange={(e) =>
+                      setValue("nuProprietarioNovoId", Number(e.target.value))
+                    }
+                    onBlur={() => setFieldTouched("nuProprietarioNovoId", true)}
+                    disabled={loadingPessoas}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value={0}>
+                      {loadingPessoas ? "Carregando..." : "Selecione"}
+                    </option>
+                    {pessoasFisicas.map((pessoa) => (
+                      <option key={pessoa.id} value={pessoa.id}>
+                        {pessoa.nome} - {pessoa.cpfCnpj}
+                      </option>
+                    ))}
+                  </select>
+                </FormField>
+              )}
+
+              {/* Data da Transferência */}
               <FormField
                 name="dataTransferencia"
                 label="Data da Transferência"
@@ -312,10 +509,12 @@ const TransferenciaPropiedadeForm: React.FC<
                   value={values.dataTransferencia}
                   onChange={handleChange}
                   onBlur={() => setFieldTouched("dataTransferencia", true)}
+                  max={new Date().toISOString().split("T")[0]}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </FormField>
 
+              {/* Observações */}
               <FormField
                 name="observacoes"
                 label="Observações"
@@ -325,16 +524,167 @@ const TransferenciaPropiedadeForm: React.FC<
                 <textarea
                   id="observacoes"
                   name="observacoes"
+                  rows={3}
                   value={values.observacoes || ""}
                   onChange={handleChange}
                   onBlur={() => setFieldTouched("observacoes", true)}
-                  rows={3}
-                  placeholder="Observações sobre a transferência (opcional)"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                  placeholder="Informações adicionais sobre a transferência"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </FormField>
             </div>
           </FormSection>
+
+          {/* ✅ SEÇÃO CONDICIONAL: Condôminos (só aparece se CONDOMÍNIO) */}
+          {values.situacaoPropriedade === SituacaoPropriedade.CONDOMINIO && (
+            <FormSection
+              title="Condôminos"
+              description="Adicione as pessoas que serão condôminas da propriedade"
+            >
+              <div className="space-y-4">
+                {/* Formulário para adicionar condômino */}
+                <div className="bg-gray-50 border border-gray-200 rounded-md p-4">
+                  <h4 className="font-medium text-gray-900 mb-3">
+                    Adicionar Condômino
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Condômino *
+                      </label>
+                      <select
+                        value={novoCondomino.condominoId}
+                        onChange={(e) =>
+                          setNovoCondomino({
+                            ...novoCondomino,
+                            condominoId: Number(e.target.value),
+                          })
+                        }
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value={0}>Selecione</option>
+                        {pessoasFisicas.map((pessoa) => (
+                          <option key={pessoa.id} value={pessoa.id}>
+                            {pessoa.nome}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Percentual (%)
+                      </label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        max="100"
+                        value={novoCondomino.percentual || ""}
+                        onChange={(e) =>
+                          setNovoCondomino({
+                            ...novoCondomino,
+                            percentual: e.target.value
+                              ? Number(e.target.value)
+                              : undefined,
+                          })
+                        }
+                        placeholder="Ex: 50.00"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Observações
+                      </label>
+                      <input
+                        type="text"
+                        value={novoCondomino.observacoes || ""}
+                        onChange={(e) =>
+                          setNovoCondomino({
+                            ...novoCondomino,
+                            observacoes: e.target.value,
+                          })
+                        }
+                        placeholder="Informações adicionais"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                  </div>
+                  <div className="mt-3">
+                    <button
+                      type="button"
+                      onClick={adicionarCondomino}
+                      className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+                    >
+                      + Adicionar Condômino
+                    </button>
+                  </div>
+                </div>
+
+                {/* Lista de condôminos adicionados */}
+                {condominos.length > 0 && (
+                  <div className="bg-white border border-gray-200 rounded-md overflow-hidden">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            Condômino
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            Percentual
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            Observações
+                          </th>
+                          <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                            Ações
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200">
+                        {condominos.map((condomino) => {
+                          const pessoa = pessoasFisicas.find(
+                            (p) => p.id === condomino.condominoId
+                          );
+                          return (
+                            <tr key={condomino.condominoId}>
+                              <td className="px-4 py-3 text-sm text-gray-900">
+                                {pessoa?.nome || `ID: ${condomino.condominoId}`}
+                              </td>
+                              <td className="px-4 py-3 text-sm text-gray-900">
+                                {condomino.percentual
+                                  ? `${condomino.percentual}%`
+                                  : "-"}
+                              </td>
+                              <td className="px-4 py-3 text-sm text-gray-900">
+                                {condomino.observacoes || "-"}
+                              </td>
+                              <td className="px-4 py-3 text-right">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    removerCondomino(condomino.condominoId)
+                                  }
+                                  className="text-red-600 hover:text-red-900 text-sm font-medium"
+                                >
+                                  Remover
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+
+                {/* Mensagem de erro se nenhum condômino foi adicionado */}
+                {errors.condominos && touched.situacaoPropriedade && (
+                  <p className="text-sm text-red-600">{errors.condominos}</p>
+                )}
+              </div>
+            </FormSection>
+          )}
         </div>
       )}
     </FormBase>
