@@ -78,6 +78,22 @@ class PropriedadeCondominoService {
     );
     return response.data;
   };
+
+  transferirCondomino = async (
+    propriedadeId: number,
+    data: {
+      condominoSaiId: number;
+      condominoEntraId: number;
+      dataTransferencia?: string;
+      observacoes?: string;
+    }
+  ): Promise<PropriedadeCondomino> => {
+    const response = await apiClient.post(
+      `/propriedades/${propriedadeId}/condominos/transferir`,
+      data
+    );
+    return response.data;
+  };
 }
 
 export default new PropriedadeCondominoService();

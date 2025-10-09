@@ -22,4 +22,9 @@ router.patch(
   propriedadeCondominoController.updateCondomino
 );
 
+router.post(
+  "/:propriedadeId/condominos/transferir",
+  propriedadeCondominoController.transferirCondomino
+);
+
 export default router;

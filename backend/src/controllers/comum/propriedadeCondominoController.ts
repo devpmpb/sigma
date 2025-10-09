@@ -81,6 +81,144 @@ export const propriedadeCondominoController = {
     }
   },
 
+  transferirCondomino: async (req: Request, res: Response) => {
+    try {
+      const { propriedadeId } = req.params;
+      const {
+        condominoSaiId,
+        condominoEntraId,
+        dataTransferencia,
+        observacoes,
+      } = req.body;
+
+      // Validações
+      if (!condominoSaiId || !condominoEntraId) {
+        return res.status(400).json({
+          erro: "Condômino que sai e condômino que entra são obrigatórios",
+        });
+      }
+
+      if (condominoSaiId === condominoEntraId) {
+        return res.status(400).json({
+          erro: "Condômino que sai deve ser diferente do que entra",
+        });
+      }
+
+      const resultado = await prisma.$transaction(async (tx) => {
+        // 1. Verificar se propriedade existe e é CONDOMINIO
+        const propriedade = await tx.propriedade.findUnique({
+          where: { id: Number(propriedadeId) },
+        });
+
+        if (!propriedade) {
+          throw new Error("Propriedade não encontrada");
+        }
+
+        if (propriedade.situacao !== "CONDOMINIO") {
+          throw new Error(
+            "Apenas propriedades em condomínio permitem transferência entre condôminos"
+          );
+        }
+
+        // 2. Verificar se condômino que sai existe e está ativo
+        const condominoAtual = await tx.propriedadeCondomino.findFirst({
+          where: {
+            propriedadeId: Number(propriedadeId),
+            condominoId: Number(condominoSaiId),
+            dataFim: null,
+          },
+          include: {
+            condomino: true,
+          },
+        });
+
+        if (!condominoAtual) {
+          throw new Error("Condômino que sai não encontrado ou já inativo");
+        }
+
+        // 3. Verificar se nova pessoa existe
+        const novaPessoa = await tx.pessoa.findUnique({
+          where: { id: Number(condominoEntraId) },
+        });
+
+        if (!novaPessoa) {
+          throw new Error("Pessoa que entra não encontrada");
+        }
+
+        // 4. Verificar se nova pessoa já não é condômina ativa
+        const jaCondomino = await tx.propriedadeCondomino.findFirst({
+          where: {
+            propriedadeId: Number(propriedadeId),
+            condominoId: Number(condominoEntraId),
+            dataFim: null,
+          },
+        });
+
+        if (jaCondomino) {
+          throw new Error(
+            "A pessoa que entra já é condômina desta propriedade"
+          );
+        }
+
+        // 5. Remover condômino atual (marcar data fim)
+        const dataFim = dataTransferencia
+          ? new Date(dataTransferencia)
+          : new Date();
+
+        await tx.propriedadeCondomino.update({
+          where: { id: condominoAtual.id },
+          data: {
+            dataFim,
+            observacoes: observacoes
+              ? `${condominoAtual.observacoes || ""}\nTransferido para ${novaPessoa.nome} em ${dataFim.toLocaleDateString()}: ${observacoes}`.trim()
+              : condominoAtual.observacoes,
+          },
+        });
+
+        // 6. Adicionar novo condômino com mesmos dados
+        const novoCondomino = await tx.propriedadeCondomino.create({
+          data: {
+            propriedadeId: Number(propriedadeId),
+            condominoId: Number(condominoEntraId),
+            percentual: condominoAtual.percentual, // Mantém mesmo percentual
+            dataInicio: dataFim, // Data início = data saída do anterior
+            observacoes: observacoes
+              ? `Recebido de ${condominoAtual.condomino.nome}: ${observacoes}`
+              : `Recebido de ${condominoAtual.condomino.nome}`,
+          },
+          include: {
+            condomino: true,
+          },
+        });
+
+        return {
+          condominoRemovido: condominoAtual,
+          condominoAdicionado: novoCondomino,
+        };
+      });
+
+      return res.status(200).json({
+        mensagem: "Transferência entre condôminos realizada com sucesso",
+        ...resultado,
+      });
+    } catch (error: any) {
+      console.error("Erro ao transferir entre condôminos:", error);
+
+      if (
+        error.message.includes("não encontrada") ||
+        error.message.includes("não encontrado") ||
+        error.message.includes("Apenas propriedades") ||
+        error.message.includes("já é condômina")
+      ) {
+        return res.status(400).json({ erro: error.message });
+      }
+
+      return res.status(500).json({
+        erro: "Erro ao transferir entre condôminos",
+      });
+    }
+  },
+
   /**
    * Listar condôminos de uma propriedade
    * GET /api/comum/propriedades/:propriedadeId/condominos
