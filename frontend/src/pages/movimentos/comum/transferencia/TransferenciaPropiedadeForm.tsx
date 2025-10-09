@@ -138,7 +138,7 @@ const TransferenciaPropiedadeForm: React.FC<
       id={id}
       initialValues={initialValues}
       validate={validate}
-      onSave={onSave}
+      //onSave={onSave}
       returnUrl="/movimentos/comum/transferencias-propriedade"
     >
       {({

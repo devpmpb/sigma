@@ -109,6 +109,18 @@ class TransferenciaPropiedadeService extends BaseApiService<
     const response = await apiClient.get(`${this.baseUrl}/recentes`);
     return response.data;
   };
+
+  searchByTerm = async (termo: string): Promise<TransferenciaPropriedade[]> => {
+    try {
+      const response = await apiClient.get(`${this.baseUrl}`, {
+        params: { search: termo },
+      });
+      return response.data;
+    } catch (error) {
+      console.error("Erro ao buscar transferências:", error);
+      throw error;
+    }
+  };
 }
 
 const transferenciaPropiedadeService = new TransferenciaPropiedadeService();

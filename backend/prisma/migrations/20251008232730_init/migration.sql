@@ -25,6 +25,9 @@ CREATE TYPE "public"."AcaoPermissao" AS ENUM ('VIEW', 'CREATE', 'EDIT', 'DELETE'
 -- CreateEnum
 CREATE TYPE "public"."TipoPrograma" AS ENUM ('SUBSIDIO', 'MATERIAL', 'SERVICO', 'CREDITO', 'ASSISTENCIA');
 
+-- CreateEnum
+CREATE TYPE "public"."AtividadeProdutiva" AS ENUM ('AGRICULTURA', 'PECUARIA', 'AGRICULTURA_PECUARIA', 'SILVICULTURA', 'AQUICULTURA', 'HORTIFRUTI', 'AVICULTURA', 'SUINOCULTURA', 'OUTROS');
+
 -- CreateTable
 CREATE TABLE "public"."Bairro" (
     "id" SERIAL NOT NULL,
@@ -178,11 +181,13 @@ CREATE TABLE "public"."Propriedade" (
     "unidadeArea" TEXT NOT NULL DEFAULT 'alqueires',
     "itr" TEXT,
     "incra" TEXT,
+    "atividadeProdutiva" "public"."AtividadeProdutiva",
     "situacao" "public"."SituacaoPropriedade" NOT NULL,
     "isproprietarioResidente" BOOLEAN NOT NULL DEFAULT false,
     "localizacao" TEXT,
     "matricula" TEXT,
     "proprietarioId" INTEGER NOT NULL,
+    "nuProprietarioId" INTEGER,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -214,6 +219,8 @@ CREATE TABLE "public"."Arrendamento" (
     "dataFim" TIMESTAMP(3),
     "status" TEXT NOT NULL DEFAULT 'ativo',
     "documentoUrl" TEXT,
+    "residente" BOOLEAN NOT NULL DEFAULT false,
+    "atividadeProdutiva" "public"."AtividadeProdutiva",
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -445,6 +452,9 @@ ALTER TABLE "public"."Propriedade" ADD CONSTRAINT "Propriedade_logradouroId_fkey
 
 -- AddForeignKey
 ALTER TABLE "public"."Propriedade" ADD CONSTRAINT "Propriedade_proprietarioId_fkey" FOREIGN KEY ("proprietarioId") REFERENCES "public"."Pessoa"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."Propriedade" ADD CONSTRAINT "Propriedade_nuProprietarioId_fkey" FOREIGN KEY ("nuProprietarioId") REFERENCES "public"."Pessoa"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "public"."transferencias_propriedade" ADD CONSTRAINT "transferencias_propriedade_propriedade_id_fkey" FOREIGN KEY ("propriedade_id") REFERENCES "public"."Propriedade"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

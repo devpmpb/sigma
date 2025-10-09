@@ -40,6 +40,11 @@ const UsuarioForm = lazy(
 );
 
 // Componentes de movimentos
+
+const TransferenciasPage = lazy(
+  () =>
+    import("../../../pages/movimentos/comum/transferencia/TransferenciasPage")
+);
 const TransferenciaPropiedadeForm = lazy(
   () =>
     import(
@@ -223,10 +228,22 @@ export const comunRouteConfig = [
   },
   // Movimentos
   {
-    path: "/movimentos/comum/transferencia-propriedade",
+    path: "/movimentos/comum/transferencias-propriedade", // PLURAL agora
+    component: TransferenciasPage, // MUDOU para a página de listagem
+    module: "comum",
+    action: "view",
+  },
+  {
+    path: "/movimentos/comum/transferencias-propriedade/novo", // NOVA ROTA para formulário
     component: TransferenciaPropiedadeForm,
     module: "comum",
     action: "create",
+  },
+  {
+    path: "/movimentos/comum/transferencias-propriedade/:id", // NOVA ROTA para edição (se necessário)
+    component: TransferenciaPropiedadeForm,
+    module: "comum",
+    action: "edit",
   },
   {
     path: "/movimentos/comum/solicitacoesBeneficios",

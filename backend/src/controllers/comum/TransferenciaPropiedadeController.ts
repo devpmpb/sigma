@@ -162,13 +162,63 @@ export const transferenciaPropiedadeController = {
     }
   },
 
-  teste: async (req: Request, res: Response) => {
+  findAll: async (req: Request, res: Response) => {
     try {
-      return res.json({ message: "Rota de transferência OK!" });
+      const { search } = req.query;
+
+      let transferencias;
+
+      if (search) {
+        // Busca com filtro
+        transferencias = await prisma.transferenciaPropriedade.findMany({
+          where: {
+            OR: [
+              {
+                propriedade: {
+                  nome: { contains: String(search), mode: "insensitive" },
+                },
+              },
+              {
+                propriedade: {
+                  matricula: { contains: String(search), mode: "insensitive" },
+                },
+              },
+              {
+                proprietarioAnterior: {
+                  nome: { contains: String(search), mode: "insensitive" },
+                },
+              },
+              {
+                proprietarioNovo: {
+                  nome: { contains: String(search), mode: "insensitive" },
+                },
+              },
+            ],
+          },
+          include: {
+            propriedade: true,
+            proprietarioAnterior: true,
+            proprietarioNovo: true,
+          },
+          orderBy: { dataTransferencia: "desc" },
+        });
+      } else {
+        // Busca sem filtro
+        transferencias = await prisma.transferenciaPropriedade.findMany({
+          include: {
+            propriedade: true,
+            proprietarioAnterior: true,
+            proprietarioNovo: true,
+          },
+          orderBy: { dataTransferencia: "desc" },
+        });
+      }
+
+      return res.status(200).json(transferencias);
     } catch (error) {
-      console.error("Erro ao buscar histórico:", error);
+      console.error("Erro ao buscar transferências:", error);
       return res.status(500).json({
-        erro: "Erro ao buscar histórico de transferências",
+        erro: "Erro ao buscar transferências",
       });
     }
   },

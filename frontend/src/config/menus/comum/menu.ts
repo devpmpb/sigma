@@ -72,8 +72,8 @@ export const movimentosComunMenu: MenuGroup = {
   items: [
     {
       id: "movimento-transferencia-propriedade",
-      title: "Transferência de Propriedade",
-      path: "/movimentos/comum/transferencia-propriedade",
+      title: "Transferências de Propriedade",
+      path: "/movimentos/comum/transferencias-propriedade",
       module: "comum",
     },
     {
