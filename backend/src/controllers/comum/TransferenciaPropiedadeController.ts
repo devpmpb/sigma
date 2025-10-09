@@ -48,34 +48,57 @@ export const transferenciaPropiedadeController = {
    * POST /api/comum/transferencias-propriedade/transferir
    */
   transferir: async (req: Request, res: Response) => {
-    console.log("chegou aqui");
     try {
       const {
         propriedadeId,
         proprietarioAnteriorId,
         proprietarioNovoId,
+        situacaoPropriedade, // ✅ NOVO
+        nuProprietarioNovoId, // ✅ NOVO (para usufruto)
         dataTransferencia,
         observacoes,
       } = req.body;
 
-      // Usar transação para garantir consistência
+      // Validações básicas
+      if (
+        !propriedadeId ||
+        !proprietarioAnteriorId ||
+        !proprietarioNovoId ||
+        !dataTransferencia
+      ) {
+        return res.status(400).json({
+          erro: "Propriedade, proprietários e data são obrigatórios",
+        });
+      }
+
+      // ✅ NOVA VALIDAÇÃO: situacaoPropriedade
+      if (!situacaoPropriedade) {
+        return res.status(400).json({
+          erro: "Situação da propriedade é obrigatória",
+        });
+      }
+
+      // ✅ NOVA VALIDAÇÃO: se for USUFRUTO, precisa do nu-proprietário
+      if (situacaoPropriedade === "USUFRUTO" && !nuProprietarioNovoId) {
+        return res.status(400).json({
+          erro: "Para transferência de usufruto, o nu-proprietário é obrigatório",
+        });
+      }
+
       const resultado = await prisma.$transaction(async (tx) => {
-        // 1. Buscar propriedade atual
+        // 1. Verificar se propriedade existe
         const propriedade = await tx.propriedade.findUnique({
           where: { id: Number(propriedadeId) },
-          include: {
-            proprietario: true,
-          },
         });
 
         if (!propriedade) {
           throw new Error("Propriedade não encontrada");
         }
 
-        // 2. Validar se o proprietário atual está correto
+        // 2. Verificar se proprietário anterior é o atual
         if (propriedade.proprietarioId !== Number(proprietarioAnteriorId)) {
           throw new Error(
-            "O proprietário informado não é o atual proprietário da propriedade"
+            "O proprietário anterior informado não é o atual proprietário"
           );
         }
 
@@ -89,12 +112,37 @@ export const transferenciaPropiedadeController = {
           where: { id: Number(proprietarioNovoId) },
         });
 
-        // 5. Criar registro de transferência
+        if (!novoProprietario) {
+          throw new Error("Novo proprietário não encontrado");
+        }
+
+        // ✅ 5. Se for USUFRUTO, verificar nu-proprietário
+        if (situacaoPropriedade === "USUFRUTO") {
+          const nuProprietario = await tx.pessoa.findUnique({
+            where: { id: Number(nuProprietarioNovoId) },
+          });
+
+          if (!nuProprietario) {
+            throw new Error("Nu-proprietário não encontrado");
+          }
+
+          if (Number(nuProprietarioNovoId) === Number(proprietarioNovoId)) {
+            throw new Error(
+              "Nu-proprietário deve ser diferente do usufrutuário"
+            );
+          }
+        }
+
+        // 6. Criar registro de transferência
         const transferencia = await tx.transferenciaPropriedade.create({
           data: {
             propriedadeId: Number(propriedadeId),
             proprietarioAnteriorId: Number(proprietarioAnteriorId),
             proprietarioNovoId: Number(proprietarioNovoId),
+            situacaoPropriedade, // ✅ NOVO
+            nuProprietarioNovoId: nuProprietarioNovoId
+              ? Number(nuProprietarioNovoId)
+              : null, // ✅ NOVO
             dataTransferencia: new Date(dataTransferencia),
             observacoes: observacoes || null,
           },
@@ -102,16 +150,28 @@ export const transferenciaPropiedadeController = {
             propriedade: true,
             proprietarioAnterior: true,
             proprietarioNovo: true,
+            nuProprietarioNovo: true, // ✅ NOVO
           },
         });
 
-        // 6. Atualizar proprietário da propriedade
+        // 7. Atualizar propriedade conforme situação
+        const updateData: any = {
+          proprietarioId: Number(proprietarioNovoId),
+          situacao: situacaoPropriedade, // ✅ ATUALIZAR SITUAÇÃO
+          updatedAt: new Date(),
+        };
+
+        // ✅ Se for USUFRUTO, atualizar nu-proprietário
+        if (situacaoPropriedade === "USUFRUTO") {
+          updateData.nuProprietarioId = Number(nuProprietarioNovoId);
+        } else {
+          // Se não for usufruto, limpar nu-proprietário
+          updateData.nuProprietarioId = null;
+        }
+
         await tx.propriedade.update({
           where: { id: Number(propriedadeId) },
-          data: {
-            proprietarioId: Number(proprietarioNovoId),
-            updatedAt: new Date(),
-          },
+          data: updateData,
         });
 
         return transferencia;
@@ -121,7 +181,6 @@ export const transferenciaPropiedadeController = {
     } catch (error: any) {
       console.error("Erro ao realizar transferência:", error);
 
-      // Tratar erros específicos
       if (
         error.message.includes("não encontrada") ||
         error.message.includes("não é o atual proprietário") ||

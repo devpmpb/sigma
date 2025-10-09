@@ -1,12 +1,15 @@
 // frontend/src/services/comum/transferenciaPropiedadeService.ts
 import apiClient from "../apiConfig";
 import BaseApiService from "../baseApiService";
+import { SituacaoPropriedade } from "./propriedadeService";
 
 export interface TransferenciaPropriedade {
   id: number;
   propriedadeId: number;
   proprietarioAnteriorId: number;
   proprietarioNovoId: number;
+  situacaoPropriedade: SituacaoPropriedade;
+  nuProprietarioNovoId?: number;
   dataTransferencia: string;
   observacoes?: string;
   createdAt: string;
@@ -47,6 +50,8 @@ export interface TransferenciaPropiedadeDTO {
   propriedadeId: number;
   proprietarioAnteriorId: number;
   proprietarioNovoId: number;
+  situacaoPropriedade: SituacaoPropriedade;
+  nuProprietarioNovoId?: number;
   dataTransferencia: string;
   observacoes?: string;
 }
