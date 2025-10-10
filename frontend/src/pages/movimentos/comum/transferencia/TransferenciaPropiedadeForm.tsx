@@ -214,20 +214,13 @@ const TransferenciaPropiedadeForm: React.FC<
       errors.proprietarioNovoId = "Novo proprietário é obrigatório";
     }
 
-    if (
-      values.proprietarioAnteriorId === values.proprietarioNovoId &&
-      values.proprietarioAnteriorId !== 0
-    ) {
-      errors.proprietarioNovoId =
-        "O novo proprietário deve ser diferente do atual";
-    }
+    // ✅ REMOVIDO: Validação que impedia proprietário igual
+    // Agora pode ser igual se for adicionar apenas condôminos
 
-    // ✅ NOVA VALIDAÇÃO: Situação da propriedade
     if (!values.situacaoPropriedade) {
       errors.situacaoPropriedade = "Situação da propriedade é obrigatória";
     }
 
-    // ✅ NOVA VALIDAÇÃO: Se for USUFRUTO, validar nu-proprietário
     if (values.situacaoPropriedade === SituacaoPropriedade.USUFRUTO) {
       if (!values.nuProprietarioNovoId || values.nuProprietarioNovoId === 0) {
         errors.nuProprietarioNovoId =
@@ -240,11 +233,26 @@ const TransferenciaPropiedadeForm: React.FC<
       }
     }
 
-    // ✅ NOVA VALIDAÇÃO: Se for CONDOMÍNIO, validar lista de condôminos
+    // ✅ NOVO: Validar se há pelo menos uma mudança
+    const mudaProprietario =
+      values.proprietarioAnteriorId !== values.proprietarioNovoId;
+    const temCondominos = condominos.length > 0;
+
+    if (!mudaProprietario && !temCondominos) {
+      errors.proprietarioNovoId =
+        "É necessário alterar o proprietário ou adicionar condôminos";
+    }
+
+    // ✅ MODIFICADO: Validação de condôminos
     if (values.situacaoPropriedade === SituacaoPropriedade.CONDOMINIO) {
-      if (condominos.length === 0) {
-        errors.condominos = "Adicione pelo menos um condômino";
-      } else {
+      // Se está mudando proprietário para situação CONDOMINIO, precisa ter condôminos
+      if (mudaProprietario && condominos.length === 0) {
+        errors.condominos =
+          "Para situação CONDOMÍNIO, adicione pelo menos um condômino";
+      }
+
+      // Se tem condôminos, incluir no objeto
+      if (condominos.length > 0) {
         (values as any).condominos = condominos;
       }
     }
@@ -542,6 +550,14 @@ const TransferenciaPropiedadeForm: React.FC<
                   ))}
                 </select>
               </FormField>
+
+              <div className="bg-blue-50 border-l-4 border-blue-400 p-3 text-sm">
+                <p className="text-blue-800">
+                  <strong>Dica:</strong> Você pode manter o mesmo proprietário e
+                  adicionar apenas condôminos, ou alterar o proprietário sem
+                  mexer nos condôminos existentes.
+                </p>
+              </div>
 
               {/* ✅ Proprietário Novo - label muda conforme situação */}
               <FormField

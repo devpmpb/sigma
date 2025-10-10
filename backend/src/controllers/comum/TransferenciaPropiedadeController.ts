@@ -53,8 +53,8 @@ export const transferenciaPropiedadeController = {
         propriedadeId,
         proprietarioAnteriorId,
         proprietarioNovoId,
-        situacaoPropriedade, // ✅ NOVO
-        nuProprietarioNovoId, // ✅ NOVO (para usufruto)
+        situacaoPropriedade,
+        nuProprietarioNovoId,
         dataTransferencia,
         observacoes,
         condominos,
@@ -78,22 +78,34 @@ export const transferenciaPropiedadeController = {
         });
       }
 
+      // ✅ NOVO: Verificar se há mudança no proprietário
+      const mudaProprietario =
+        Number(proprietarioAnteriorId) !== Number(proprietarioNovoId);
+      const temCondominos =
+        condominos && Array.isArray(condominos) && condominos.length > 0;
+
+      // ✅ NOVO: Pelo menos uma coisa precisa mudar
+      if (!mudaProprietario && !temCondominos) {
+        return res.status(400).json({
+          erro: "É necessário alterar o proprietário ou adicionar condôminos",
+        });
+      }
+
+      // ✅ MODIFICADO: Validação de condôminos apenas se situação for CONDOMINIO E adicionar condôminos
+      if (
+        situacaoPropriedade === "CONDOMINIO" &&
+        mudaProprietario &&
+        !temCondominos
+      ) {
+        return res.status(400).json({
+          erro: "Para alterar situação para CONDOMÍNIO, é necessário informar condôminos",
+        });
+      }
+
       if (situacaoPropriedade === "USUFRUTO" && !nuProprietarioNovoId) {
         return res.status(400).json({
           erro: "Para transferência de usufruto, o nu-proprietário é obrigatório",
         });
-      }
-
-      if (situacaoPropriedade === "CONDOMINIO") {
-        if (
-          !condominos ||
-          !Array.isArray(condominos) ||
-          condominos.length === 0
-        ) {
-          return res.status(400).json({
-            erro: "Para propriedade em condomínio, é necessário informar pelo menos um condômino",
-          });
-        }
       }
 
       const resultado = await prisma.$transaction(async (tx) => {
@@ -106,28 +118,24 @@ export const transferenciaPropiedadeController = {
           throw new Error("Propriedade não encontrada");
         }
 
-        // 2. Verificar se proprietário anterior é o atual
-        if (propriedade.proprietarioId !== Number(proprietarioAnteriorId)) {
-          throw new Error(
-            "O proprietário anterior informado não é o atual proprietário"
-          );
+        // 2. ✅ MODIFICADO: Verificar proprietário apenas se for mudar
+        if (mudaProprietario) {
+          if (propriedade.proprietarioId !== Number(proprietarioAnteriorId)) {
+            throw new Error(
+              "O proprietário anterior informado não é o atual proprietário"
+            );
+          }
+
+          const novoProprietario = await tx.pessoa.findUnique({
+            where: { id: Number(proprietarioNovoId) },
+          });
+
+          if (!novoProprietario) {
+            throw new Error("Novo proprietário não encontrado");
+          }
         }
 
-        // 3. Validar se o novo proprietário é diferente
-        if (Number(proprietarioAnteriorId) === Number(proprietarioNovoId)) {
-          throw new Error("O novo proprietário deve ser diferente do atual");
-        }
-
-        // 4. Verificar se novo proprietário existe
-        const novoProprietario = await tx.pessoa.findUnique({
-          where: { id: Number(proprietarioNovoId) },
-        });
-
-        if (!novoProprietario) {
-          throw new Error("Novo proprietário não encontrado");
-        }
-
-        // ✅ 5. Se for USUFRUTO, verificar nu-proprietário
+        // 3. Validar nu-proprietário se for usufruto
         if (situacaoPropriedade === "USUFRUTO") {
           const nuProprietario = await tx.pessoa.findUnique({
             where: { id: Number(nuProprietarioNovoId) },
@@ -144,16 +152,16 @@ export const transferenciaPropiedadeController = {
           }
         }
 
-        // 6. Criar registro de transferência
+        // 4. Criar registro de transferência
         const transferencia = await tx.transferenciaPropriedade.create({
           data: {
             propriedadeId: Number(propriedadeId),
             proprietarioAnteriorId: Number(proprietarioAnteriorId),
             proprietarioNovoId: Number(proprietarioNovoId),
-            situacaoPropriedade, // ✅ NOVO
+            situacaoPropriedade,
             nuProprietarioNovoId: nuProprietarioNovoId
               ? Number(nuProprietarioNovoId)
-              : null, // ✅ NOVO
+              : null,
             dataTransferencia: new Date(dataTransferencia),
             observacoes: observacoes || null,
           },
@@ -161,37 +169,44 @@ export const transferenciaPropiedadeController = {
             propriedade: true,
             proprietarioAnterior: true,
             proprietarioNovo: true,
-            nuProprietarioNovo: true, // ✅ NOVO
+            nuProprietarioNovo: true,
           },
         });
 
-        // 7. Atualizar propriedade conforme situação
-        const updateData: any = {
-          proprietarioId: Number(proprietarioNovoId),
-          situacao: situacaoPropriedade, // ✅ ATUALIZAR SITUAÇÃO
-          updatedAt: new Date(),
-        };
+        // 5. ✅ MODIFICADO: Atualizar propriedade apenas se proprietário mudou
+        if (mudaProprietario) {
+          const updateData: any = {
+            proprietarioId: Number(proprietarioNovoId),
+            situacao: situacaoPropriedade,
+            updatedAt: new Date(),
+          };
 
-        // ✅ Se for USUFRUTO, atualizar nu-proprietário
-        if (situacaoPropriedade === "USUFRUTO") {
-          updateData.nuProprietarioId = Number(nuProprietarioNovoId);
+          if (situacaoPropriedade === "USUFRUTO") {
+            updateData.nuProprietarioId = Number(nuProprietarioNovoId);
+          } else {
+            updateData.nuProprietarioId = null;
+          }
+
+          await tx.propriedade.update({
+            where: { id: Number(propriedadeId) },
+            data: updateData,
+          });
         } else {
-          // Se não for usufruto, limpar nu-proprietário
-          updateData.nuProprietarioId = null;
+          // Se não muda proprietário, apenas atualizar situação se necessário
+          if (propriedade.situacao !== situacaoPropriedade) {
+            await tx.propriedade.update({
+              where: { id: Number(propriedadeId) },
+              data: {
+                situacao: situacaoPropriedade,
+                updatedAt: new Date(),
+              },
+            });
+          }
         }
 
-        await tx.propriedade.update({
-          where: { id: Number(propriedadeId) },
-          data: updateData,
-        });
-
-        if (
-          situacaoPropriedade === "CONDOMINIO" &&
-          condominos &&
-          condominos.length > 0
-        ) {
+        // 6. Cadastrar condôminos se houver
+        if (temCondominos) {
           for (const condomino of condominos) {
-            // Validar se pessoa existe
             const pessoa = await tx.pessoa.findUnique({
               where: { id: Number(condomino.condominoId) },
             });
@@ -202,7 +217,6 @@ export const transferenciaPropiedadeController = {
               );
             }
 
-            // Verificar se já não é condômino ativo
             const jaCondomino = await tx.propriedadeCondomino.findFirst({
               where: {
                 propriedadeId: Number(propriedadeId),
@@ -211,14 +225,13 @@ export const transferenciaPropiedadeController = {
               },
             });
 
-            if (jaCondomino) {
+            /*if (jaCondomino) {
               throw new Error(
                 `${pessoa.nome} já é condômino desta propriedade`
               );
-            }
+            }*/
 
-            // Criar condômino
-            await tx.propriedadeCondomino.create({
+            if(!jaCondomino) {await tx.propriedadeCondomino.create({
               data: {
                 propriedadeId: Number(propriedadeId),
                 condominoId: Number(condomino.condominoId),
@@ -228,7 +241,7 @@ export const transferenciaPropiedadeController = {
                 observacoes: condomino.observacoes || null,
               },
             });
-          }
+          }}
         }
 
         return transferencia;
@@ -240,8 +253,11 @@ export const transferenciaPropiedadeController = {
 
       if (
         error.message.includes("não encontrada") ||
+        error.message.includes("não encontrado") ||
         error.message.includes("não é o atual proprietário") ||
-        error.message.includes("deve ser diferente")
+        error.message.includes("deve ser diferente") ||
+        error.message.includes("já é condômino") ||
+        error.message.includes("É necessário alterar")
       ) {
         return res.status(400).json({ erro: error.message });
       }
