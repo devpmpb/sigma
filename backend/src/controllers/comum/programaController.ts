@@ -1,9 +1,8 @@
 // backend/src/controllers/comum/programaController.ts - ARQUIVO ATUALIZADO
 import { Request, Response } from "express";
-import { PrismaClient, TipoPerfil } from "@prisma/client";
+import prisma from "../../utils/prisma";
+import { TipoPerfil } from "@prisma/client";
 import { createGenericController } from "../GenericController";
-
-const prisma = new PrismaClient();
 
 // Interface para dados do programa - ATUALIZADA
 export interface ProgramaData {

@@ -1,8 +1,7 @@
 // backend/src/controllers/admin/perfilController.ts - ARQUIVO COMPLETO
 import { Request, Response } from "express";
-import { PrismaClient, TipoPerfil } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import prisma from "../../utils/prisma";
+import { TipoPerfil } from "@prisma/client";
 
 export const perfilController = {
   // Listar todos os perfis

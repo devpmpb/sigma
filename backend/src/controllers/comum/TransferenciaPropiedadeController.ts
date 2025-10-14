@@ -1,8 +1,6 @@
 import { Request, Response } from "express";
-import { PrismaClient } from "@prisma/client";
+import prisma from "../../utils/prisma";
 import { createGenericController } from "../GenericController";
-
-const prisma = new PrismaClient();
 
 // Controlador com métodos genéricos
 const genericController = createGenericController({

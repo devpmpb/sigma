@@ -7,8 +7,6 @@ import {
 } from "@prisma/client";
 import { createGenericController } from "../GenericController";
 
-const prisma = new PrismaClient();
-
 const validate = (data: any) => {
   const errors = [];
 

@@ -1,9 +1,7 @@
 // backend/src/controllers/comum/solicitacaoBeneficioController.ts
 import { Request, Response } from "express";
-import { PrismaClient } from "@prisma/client";
+import prisma from "../../utils/prisma";
 import { createGenericController } from "../GenericController";
-
-const prisma = new PrismaClient();
 
 // Status das solicitações
 export enum StatusSolicitacao {

@@ -1,9 +1,7 @@
 import { Request, Response } from "express";
-import { PrismaClient } from "@prisma/client";
+import prisma from "../../utils/prisma";
 import { createGenericController } from "../GenericController";
 import { convertArrendamentoDateFields } from "../../utils/formatters";
-
-const prisma = new PrismaClient();
 
 // Validação para criação de arrendamento
 const validateArrendamentoCreate = (data: any) => {

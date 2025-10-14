@@ -1,9 +1,8 @@
 import { Request, Response } from "express";
-import { PrismaClient, TipoPerfil } from "@prisma/client";
+import prisma from "../../utils/prisma";
+import { TipoPerfil } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
-
-const prisma = new PrismaClient();
 
 // Schemas de validação com ENUMs
 const createUserSchema = z.object({

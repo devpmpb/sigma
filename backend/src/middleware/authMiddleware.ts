@@ -1,8 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
-import { PrismaClient, ModuloSistema, AcaoPermissao } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { ModuloSistema, AcaoPermissao } from "@prisma/client";
+import prisma from "../utils/prisma";
 
 // Estender a interface Request para incluir dados do usuário
 declare global {
