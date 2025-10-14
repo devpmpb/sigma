@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { FormBase } from "../../../../components/cadastro";
 import FormField from "../../../../components/comum/FormField";
+import FormSection from "../../../../components/comum/FormSection";
 import propriedadeService, {
   PropriedadeDTO,
   TipoPropriedade,
@@ -13,11 +14,19 @@ import pessoaService, {
 import logradouroService, {
   Logradouro,
 } from "../../../../services/comum/logradouroService";
+import propriedadeCondominoService from "../../../../services/comum/propriedadeCondominoService";
 import { useParams } from "@tanstack/react-router";
 
 interface PropriedadeFormProps {
   id?: string | number;
   onSave?: () => void;
+}
+
+// Interface para condôminos no formulário
+interface CondominoFormData {
+  condominoId: number;
+  percentual?: number;
+  observacoes?: string;
 }
 
 /**
@@ -31,6 +40,14 @@ const PropriedadeForm: React.FC<PropriedadeFormProps> = ({ id, onSave }) => {
   const [logradouros, setLogradouros] = useState<Logradouro[]>([]);
   const [loadingPessoas, setLoadingPessoas] = useState(false);
   const [loadingLogradouros, setLoadingLogradouros] = useState(false);
+
+  // Estados para condôminos
+  const [condominos, setCondominos] = useState<CondominoFormData[]>([]);
+  const [novoCondomino, setNovoCondomino] = useState<CondominoFormData>({
+    condominoId: 0,
+    percentual: undefined,
+    observacoes: "",
+  });
 
   // Valores iniciais do formulário
   const initialValues: PropriedadeDTO = {
@@ -84,6 +101,65 @@ const PropriedadeForm: React.FC<PropriedadeFormProps> = ({ id, onSave }) => {
     fetchLogradouros();
   }, []);
 
+  // Carregar condôminos existentes quando estiver editando
+  useEffect(() => {
+    const fetchCondominos = async () => {
+      if (propriedadeId && propriedadeId !== "new") {
+        try {
+          const condominosAtuais = await propriedadeCondominoService.getCondominos(
+            Number(propriedadeId),
+            true // Apenas ativos
+          );
+
+          const condominosFormatados: CondominoFormData[] = condominosAtuais.map(
+            (c) => ({
+              condominoId: c.condominoId,
+              percentual: c.percentual ? Number(c.percentual) : undefined,
+              observacoes: c.observacoes || "",
+            })
+          );
+
+          setCondominos(condominosFormatados);
+        } catch (error) {
+          console.error("Erro ao carregar condôminos:", error);
+        }
+      }
+    };
+
+    fetchCondominos();
+  }, [propriedadeId]);
+
+  // Adicionar condômino à lista
+  const adicionarCondomino = () => {
+    if (novoCondomino.condominoId === 0) {
+      alert("Selecione um condômino");
+      return;
+    }
+
+    // Verificar se já existe
+    const existe = condominos.find(
+      (c) => c.condominoId === novoCondomino.condominoId
+    );
+    if (existe) {
+      alert("Este condômino já foi adicionado");
+      return;
+    }
+
+    setCondominos([...condominos, novoCondomino]);
+
+    // Limpar formulário
+    setNovoCondomino({
+      condominoId: 0,
+      percentual: undefined,
+      observacoes: "",
+    });
+  };
+
+  // Remover condômino da lista
+  const removerCondomino = (condominoId: number) => {
+    setCondominos(condominos.filter((c) => c.condominoId !== condominoId));
+  };
+
   // Validação do formulário
   const validate = (values: PropriedadeDTO): Record<string, string> | null => {
     const errors: Record<string, string> = {};
@@ -125,6 +201,12 @@ const PropriedadeForm: React.FC<PropriedadeFormProps> = ({ id, onSave }) => {
       }
     }
 
+    // Validação de condôminos
+    if (values.situacao === SituacaoPropriedade.CONDOMINIO && condominos.length === 0) {
+      errors.condominos =
+        "Para situação CONDOMÍNIO, adicione pelo menos um condômino";
+    }
+
     // Validações específicas para propriedades rurais
     if (propriedadeService.isRural(values.tipoPropriedade)) {
       if (values.itr && values.itr.length > 0 && values.itr.length < 3) {
@@ -139,10 +221,29 @@ const PropriedadeForm: React.FC<PropriedadeFormProps> = ({ id, onSave }) => {
     return Object.keys(errors).length > 0 ? errors : null;
   };
 
+  // Service wrapper que adiciona condôminos ao payload
+  const propriedadeServiceWithCondominos = {
+    ...propriedadeService,
+    create: async (data: PropriedadeDTO) => {
+      const payload: any = { ...data };
+      if (data.situacao === SituacaoPropriedade.CONDOMINIO && condominos.length > 0) {
+        payload.condominos = condominos;
+      }
+      return propriedadeService.create(payload);
+    },
+    update: async (id: string | number, data: PropriedadeDTO) => {
+      const payload: any = { ...data };
+      if (data.situacao === SituacaoPropriedade.CONDOMINIO && condominos.length > 0) {
+        payload.condominos = condominos;
+      }
+      return propriedadeService.update(id, payload);
+    },
+  };
+
   return (
     <FormBase<Propriedade, PropriedadeDTO>
       title="Propriedade"
-      service={propriedadeService}
+      service={propriedadeServiceWithCondominos}
       id={propriedadeId}
       initialValues={initialValues}
       validate={validate}
@@ -562,6 +663,157 @@ const PropriedadeForm: React.FC<PropriedadeFormProps> = ({ id, onSave }) => {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </FormField>
+
+          {/* SEÇÃO CONDICIONAL: Condôminos (só aparece se CONDOMÍNIO) */}
+          {values.situacao === SituacaoPropriedade.CONDOMINIO && (
+            <FormSection
+              title="Condôminos"
+              description="Adicione as pessoas que serão condôminas da propriedade"
+            >
+              <div className="space-y-4">
+                {/* Formulário para adicionar condômino */}
+                <div className="bg-gray-50 border border-gray-200 rounded-md p-4">
+                  <h4 className="font-medium text-gray-900 mb-3">
+                    Adicionar Condômino
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Condômino *
+                      </label>
+                      <select
+                        value={novoCondomino.condominoId}
+                        onChange={(e) =>
+                          setNovoCondomino({
+                            ...novoCondomino,
+                            condominoId: Number(e.target.value),
+                          })
+                        }
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value={0}>Selecione</option>
+                        {pessoas.map((pessoa) => (
+                          <option key={pessoa.id} value={pessoa.id}>
+                            {pessoa.nome}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Percentual (%)
+                      </label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        max="100"
+                        value={novoCondomino.percentual || ""}
+                        onChange={(e) =>
+                          setNovoCondomino({
+                            ...novoCondomino,
+                            percentual: e.target.value
+                              ? Number(e.target.value)
+                              : undefined,
+                          })
+                        }
+                        placeholder="Ex: 50.00"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Observações
+                      </label>
+                      <input
+                        type="text"
+                        value={novoCondomino.observacoes || ""}
+                        onChange={(e) =>
+                          setNovoCondomino({
+                            ...novoCondomino,
+                            observacoes: e.target.value,
+                          })
+                        }
+                        placeholder="Informações adicionais"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                  </div>
+                  <div className="mt-3">
+                    <button
+                      type="button"
+                      onClick={adicionarCondomino}
+                      className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+                    >
+                      + Adicionar Condômino
+                    </button>
+                  </div>
+                </div>
+
+                {/* Lista de condôminos adicionados */}
+                {condominos.length > 0 && (
+                  <div className="bg-white border border-gray-200 rounded-md overflow-hidden">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            Condômino
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            Percentual
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            Observações
+                          </th>
+                          <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                            Ações
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200">
+                        {condominos.map((condomino) => {
+                          const pessoa = pessoas.find(
+                            (p) => p.id === condomino.condominoId
+                          );
+                          return (
+                            <tr key={condomino.condominoId}>
+                              <td className="px-4 py-3 text-sm text-gray-900">
+                                {pessoa?.nome || `ID: ${condomino.condominoId}`}
+                              </td>
+                              <td className="px-4 py-3 text-sm text-gray-900">
+                                {condomino.percentual
+                                  ? `${condomino.percentual}%`
+                                  : "-"}
+                              </td>
+                              <td className="px-4 py-3 text-sm text-gray-900">
+                                {condomino.observacoes || "-"}
+                              </td>
+                              <td className="px-4 py-3 text-right">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    removerCondomino(condomino.condominoId)
+                                  }
+                                  className="text-red-600 hover:text-red-900 text-sm font-medium"
+                                >
+                                  Remover
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+
+                {/* Mensagem de erro se nenhum condômino foi adicionado */}
+                {errors.condominos && touched.situacao && (
+                  <p className="text-sm text-red-600">{errors.condominos}</p>
+                )}
+              </div>
+            </FormSection>
+          )}
         </>
       )}
     </FormBase>

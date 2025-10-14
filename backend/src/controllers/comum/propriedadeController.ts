@@ -6,6 +6,7 @@ import {
   AtividadeProdutiva,
 } from "@prisma/client";
 import { createGenericController } from "../GenericController";
+import prisma from "../../utils/prisma";
 
 const validate = (data: any) => {
   const errors = [];
@@ -112,7 +113,7 @@ const genericController = createGenericController({
 export const propriedadeController = {
   ...genericController,
 
-  // Sobrescrever create para usar transformação de dados
+  // Sobrescrever create para usar transformação de dados e processar condôminos
   create: async (req: Request, res: Response) => {
     try {
       const validation = validate(req.body);
@@ -124,69 +125,102 @@ export const propriedadeController = {
         });
       }
 
+      const { condominos, ...proprietyData } = req.body;
+
       // Transformar dados antes de salvar
       const transformedData = {
-        nome: req.body.nome,
-        tipoPropriedade: req.body.tipoPropriedade,
-        logradouroId: req.body.logradouroId
-          ? Number(req.body.logradouroId)
+        nome: proprietyData.nome,
+        tipoPropriedade: proprietyData.tipoPropriedade,
+        logradouroId: proprietyData.logradouroId
+          ? Number(proprietyData.logradouroId)
           : null,
-        numero: req.body.numero || null,
-        areaTotal: Number(req.body.areaTotal),
+        numero: proprietyData.numero || null,
+        areaTotal: Number(proprietyData.areaTotal),
         unidadeArea:
-          req.body.tipoPropriedade === TipoPropriedade.RURAL
+          proprietyData.tipoPropriedade === TipoPropriedade.RURAL
             ? "alqueires"
             : "metros_quadrados",
         itr:
-          req.body.tipoPropriedade === TipoPropriedade.RURAL
-            ? req.body.itr || null
+          proprietyData.tipoPropriedade === TipoPropriedade.RURAL
+            ? proprietyData.itr || null
             : null,
         incra:
-          req.body.tipoPropriedade === TipoPropriedade.RURAL
-            ? req.body.incra || null
+          proprietyData.tipoPropriedade === TipoPropriedade.RURAL
+            ? proprietyData.incra || null
             : null,
         atividadeProdutiva:
-          req.body.tipoPropriedade === TipoPropriedade.RURAL
-            ? req.body.atividadeProdutiva
+          proprietyData.tipoPropriedade === TipoPropriedade.RURAL
+            ? proprietyData.atividadeProdutiva
             : null,
-        situacao: req.body.situacao,
-        isproprietarioResidente: Boolean(req.body.isproprietarioResidente),
-        localizacao: req.body.localizacao || null,
-        matricula: req.body.matricula || null,
-        proprietarioId: Number(req.body.proprietarioId),
+        situacao: proprietyData.situacao,
+        isproprietarioResidente: Boolean(proprietyData.isproprietarioResidente),
+        localizacao: proprietyData.localizacao || null,
+        matricula: proprietyData.matricula || null,
+        proprietarioId: Number(proprietyData.proprietarioId),
+        nuProprietarioId: proprietyData.nuProprietarioId
+          ? Number(proprietyData.nuProprietarioId)
+          : null,
       };
 
-      const propriedade = await prisma.propriedade.create({
-        data: transformedData,
-        include: {
-          proprietario: {
-            select: {
-              id: true,
-              nome: true,
-              cpfCnpj: true,
-              tipoPessoa: true,
+      // Usar transação para criar propriedade e condôminos
+      const resultado = await prisma.$transaction(async (tx) => {
+        // 1. Criar propriedade
+        const propriedade = await tx.propriedade.create({
+          data: transformedData,
+          include: {
+            proprietario: {
+              select: {
+                id: true,
+                nome: true,
+                cpfCnpj: true,
+                tipoPessoa: true,
+              },
+            },
+            logradouro: {
+              select: {
+                id: true,
+                tipo: true,
+                descricao: true,
+                cep: true,
+              },
+            },
+            nuProprietario: {
+              select: {
+                id: true,
+                nome: true,
+                cpfCnpj: true,
+                tipoPessoa: true,
+              },
             },
           },
-          logradouro: {
-            select: {
-              id: true,
-              tipo: true,
-              descricao: true,
-              cep: true,
-            },
-          },
-          nuProprietario: {
-            select: {
-              id: true,
-              nome: true,
-              cpfCnpj: true,
-              tipoPessoa: true,
-            },
-          },
-        },
+        });
+
+        // 2. Se for CONDOMÍNIO e tiver condôminos, cadastrá-los
+        if (
+          proprietyData.situacao === SituacaoPropriedade.CONDOMINIO &&
+          condominos &&
+          Array.isArray(condominos) &&
+          condominos.length > 0
+        ) {
+          for (const condomino of condominos) {
+            await tx.propriedadeCondomino.create({
+              data: {
+                propriedadeId: propriedade.id,
+                condominoId: Number(condomino.condominoId),
+                percentual: condomino.percentual
+                  ? Number(condomino.percentual)
+                  : null,
+                dataInicio: new Date(),
+                observacoes: condomino.observacoes || null,
+              },
+            });
+          }
+        }
+
+        return propriedade;
       });
 
-      return res.status(201).json(propriedade);
+      return res.status(201).json(resultado);
     } catch (error) {
       console.error("Erro ao criar propriedade:", error);
       return res.status(500).json({
@@ -195,7 +229,7 @@ export const propriedadeController = {
     }
   },
 
-  // Sobrescrever update para usar transformação de dados
+  // Sobrescrever update para usar transformação de dados e processar condôminos
   update: async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
@@ -209,66 +243,141 @@ export const propriedadeController = {
         });
       }
 
+      const { condominos, ...proprietyData } = req.body;
+
       // Transformar dados antes de atualizar
       const transformedData = {
-        nome: req.body.nome,
-        tipoPropriedade: req.body.tipoPropriedade,
-        logradouroId: req.body.logradouroId
-          ? Number(req.body.logradouroId)
+        nome: proprietyData.nome,
+        tipoPropriedade: proprietyData.tipoPropriedade,
+        logradouroId: proprietyData.logradouroId
+          ? Number(proprietyData.logradouroId)
           : null,
-        numero: req.body.numero || null,
-        areaTotal: Number(req.body.areaTotal),
+        numero: proprietyData.numero || null,
+        areaTotal: Number(proprietyData.areaTotal),
         unidadeArea:
-          req.body.tipoPropriedade === TipoPropriedade.RURAL
+          proprietyData.tipoPropriedade === TipoPropriedade.RURAL
             ? "alqueires"
             : "metros_quadrados",
         itr:
-          req.body.tipoPropriedade === TipoPropriedade.RURAL
-            ? req.body.itr || null
+          proprietyData.tipoPropriedade === TipoPropriedade.RURAL
+            ? proprietyData.itr || null
             : null,
         incra:
-          req.body.tipoPropriedade === TipoPropriedade.RURAL
-            ? req.body.incra || null
+          proprietyData.tipoPropriedade === TipoPropriedade.RURAL
+            ? proprietyData.incra || null
             : null,
-        situacao: req.body.situacao,
-        isproprietarioResidente: Boolean(req.body.isproprietarioResidente),
-        localizacao: req.body.localizacao || null,
-        matricula: req.body.matricula || null,
-        proprietarioId: Number(req.body.proprietarioId),
+        atividadeProdutiva:
+          proprietyData.tipoPropriedade === TipoPropriedade.RURAL
+            ? proprietyData.atividadeProdutiva
+            : null,
+        situacao: proprietyData.situacao,
+        isproprietarioResidente: Boolean(proprietyData.isproprietarioResidente),
+        localizacao: proprietyData.localizacao || null,
+        matricula: proprietyData.matricula || null,
+        proprietarioId: Number(proprietyData.proprietarioId),
+        nuProprietarioId: proprietyData.nuProprietarioId
+          ? Number(proprietyData.nuProprietarioId)
+          : null,
       };
 
-      const propriedade = await prisma.propriedade.update({
-        where: { id: Number(id) },
-        data: transformedData,
-        include: {
-          proprietario: {
-            select: {
-              id: true,
-              nome: true,
-              cpfCnpj: true,
-              tipoPessoa: true,
+      // Usar transação para atualizar propriedade e condôminos
+      const resultado = await prisma.$transaction(async (tx) => {
+        // 1. Atualizar propriedade
+        const propriedade = await tx.propriedade.update({
+          where: { id: Number(id) },
+          data: transformedData,
+          include: {
+            proprietario: {
+              select: {
+                id: true,
+                nome: true,
+                cpfCnpj: true,
+                tipoPessoa: true,
+              },
+            },
+            logradouro: {
+              select: {
+                id: true,
+                tipo: true,
+                descricao: true,
+                cep: true,
+              },
+            },
+            nuProprietario: {
+              select: {
+                id: true,
+                nome: true,
+                cpfCnpj: true,
+                tipoPessoa: true,
+              },
             },
           },
-          logradouro: {
-            select: {
-              id: true,
-              tipo: true,
-              descricao: true,
-              cep: true,
+        });
+
+        // 2. Gerenciar condôminos (se for CONDOMÍNIO)
+        if (proprietyData.situacao === SituacaoPropriedade.CONDOMINIO) {
+          // 2.1 Buscar condôminos ativos atuais
+          const condominosAtuais = await tx.propriedadeCondomino.findMany({
+            where: {
+              propriedadeId: Number(id),
+              dataFim: null,
             },
-          },
-          nuProprietario: {
-            select: {
-              id: true,
-              nome: true,
-              cpfCnpj: true,
-              tipoPessoa: true,
-            },
-          },
-        },
+          });
+
+          // 2.2 IDs dos condôminos que devem permanecer/ser adicionados
+          const condominoIdsNovos =
+            condominos && Array.isArray(condominos)
+              ? condominos.map((c: any) => Number(c.condominoId))
+              : [];
+
+          // 2.3 Remover condôminos que não estão mais na lista (marcar dataFim)
+          for (const condominoAtual of condominosAtuais) {
+            if (!condominoIdsNovos.includes(condominoAtual.condominoId)) {
+              await tx.propriedadeCondomino.update({
+                where: { id: condominoAtual.id },
+                data: {
+                  dataFim: new Date(),
+                  observacoes: condominoAtual.observacoes
+                    ? `${condominoAtual.observacoes}\nRemovido na edição em ${new Date().toLocaleDateString()}`
+                    : `Removido na edição em ${new Date().toLocaleDateString()}`,
+                },
+              });
+            }
+          }
+
+          // 2.4 Adicionar novos condôminos
+          if (condominos && Array.isArray(condominos)) {
+            for (const condomino of condominos) {
+              const jaCondomino = await tx.propriedadeCondomino.findFirst({
+                where: {
+                  propriedadeId: Number(id),
+                  condominoId: Number(condomino.condominoId),
+                  dataFim: null,
+                },
+              });
+
+              // Se não existe, criar
+              if (!jaCondomino) {
+                await tx.propriedadeCondomino.create({
+                  data: {
+                    propriedadeId: Number(id),
+                    condominoId: Number(condomino.condominoId),
+                    percentual: condomino.percentual
+                      ? Number(condomino.percentual)
+                      : null,
+                    dataInicio: new Date(),
+                    observacoes: condomino.observacoes || null,
+                  },
+                });
+              }
+            }
+          }
+        }
+
+        return propriedade;
       });
 
-      return res.status(200).json(propriedade);
+      return res.status(200).json(resultado);
     } catch (error) {
       console.error("Erro ao atualizar propriedade:", error);
       return res.status(500).json({
