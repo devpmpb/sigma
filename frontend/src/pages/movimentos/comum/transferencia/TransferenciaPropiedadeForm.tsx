@@ -118,9 +118,11 @@ const TransferenciaPropiedadeForm: React.FC<
       return;
     }
 
-    // 1. ✅ Preencher proprietário atual
+    // 1. ✅ Preencher proprietário atual E novo (por padrão)
     if (propriedade.proprietarioId) {
       setValue("proprietarioAnteriorId", propriedade.proprietarioId);
+      // ✅ Auto-preencher novo proprietário com o atual (usuário pode mudar se quiser)
+      setValue("proprietarioNovoId", propriedade.proprietarioId);
     }
 
     // 2. ✅ Preencher situação da propriedade
@@ -535,8 +537,8 @@ const TransferenciaPropiedadeForm: React.FC<
                     setValue("proprietarioAnteriorId", Number(e.target.value))
                   }
                   onBlur={() => setFieldTouched("proprietarioAnteriorId", true)}
-                  disabled={loadingPessoas}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50"
+                  disabled={true}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-100 cursor-not-allowed"
                 >
                   <option value={0}>
                     {loadingPessoas
