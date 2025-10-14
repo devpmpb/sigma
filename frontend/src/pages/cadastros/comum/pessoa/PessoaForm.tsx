@@ -657,11 +657,16 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
                       id="dataNascimento"
                       name="pessoaFisica.dataNascimento"
                       value={values.pessoaFisica?.dataNascimento || ""}
-                      onChange={(e) =>
-                        updatePessoaFisica("dataNascimento", e.target.value)
-                      }
+                      onChange={(e) => {
+                        console.log("Data alterada para:", e.target.value);
+                        updatePessoaFisica("dataNascimento", e.target.value);
+                      }}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
+                    {/* Debug - Mostrar valor atual */}
+                    <div className="text-xs text-gray-500 mt-1">
+                      Valor atual: {values.pessoaFisica?.dataNascimento || "(vazio)"}
+                    </div>
                   </FormField>
                 </div>
               )}
