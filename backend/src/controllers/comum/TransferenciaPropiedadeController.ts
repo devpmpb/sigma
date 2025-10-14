@@ -202,44 +202,75 @@ export const transferenciaPropiedadeController = {
           }
         }
 
-        // 6. Cadastrar condôminos se houver
-        if (temCondominos) {
-          for (const condomino of condominos) {
-            const pessoa = await tx.pessoa.findUnique({
-              where: { id: Number(condomino.condominoId) },
-            });
+        // 6. Gerenciar condôminos (adicionar novos e remover excluídos)
+        if (situacaoPropriedade === "CONDOMINIO") {
+          // 6.1 Buscar condôminos ativos atuais
+          const condominosAtuais = await tx.propriedadeCondomino.findMany({
+            where: {
+              propriedadeId: Number(propriedadeId),
+              dataFim: null, // Apenas ativos
+            },
+          });
 
-            if (!pessoa) {
-              throw new Error(
-                `Condômino com ID ${condomino.condominoId} não encontrado`
-              );
+          // 6.2 IDs dos condôminos que devem permanecer/ser adicionados
+          const condominoIdsNovos = temCondominos
+            ? condominos.map((c: any) => Number(c.condominoId))
+            : [];
+
+          // 6.3 Remover condôminos que não estão mais na lista (marcar dataFim)
+          for (const condominoAtual of condominosAtuais) {
+            if (!condominoIdsNovos.includes(condominoAtual.condominoId)) {
+              // Este condômino foi removido, marcar como inativo
+              await tx.propriedadeCondomino.update({
+                where: { id: condominoAtual.id },
+                data: {
+                  dataFim: new Date(dataTransferencia),
+                  observacoes: condominoAtual.observacoes
+                    ? `${condominoAtual.observacoes}\nRemovido na transferência em ${new Date(dataTransferencia).toLocaleDateString()}`
+                    : `Removido na transferência em ${new Date(dataTransferencia).toLocaleDateString()}`,
+                },
+              });
             }
+          }
 
-            const jaCondomino = await tx.propriedadeCondomino.findFirst({
-              where: {
-                propriedadeId: Number(propriedadeId),
-                condominoId: Number(condomino.condominoId),
-                dataFim: null,
-              },
-            });
+          // 6.4 Adicionar novos condôminos
+          if (temCondominos) {
+            for (const condomino of condominos) {
+              const pessoa = await tx.pessoa.findUnique({
+                where: { id: Number(condomino.condominoId) },
+              });
 
-            /*if (jaCondomino) {
-              throw new Error(
-                `${pessoa.nome} já é condômino desta propriedade`
-              );
-            }*/
+              if (!pessoa) {
+                throw new Error(
+                  `Condômino com ID ${condomino.condominoId} não encontrado`
+                );
+              }
 
-            if(!jaCondomino) {await tx.propriedadeCondomino.create({
-              data: {
-                propriedadeId: Number(propriedadeId),
-                condominoId: Number(condomino.condominoId),
-                percentual: condomino.percentual
-                  ? Number(condomino.percentual)
-                  : null,
-                observacoes: condomino.observacoes || null,
-              },
-            });
-          }}
+              // Verificar se já é condômino ativo
+              const jaCondomino = await tx.propriedadeCondomino.findFirst({
+                where: {
+                  propriedadeId: Number(propriedadeId),
+                  condominoId: Number(condomino.condominoId),
+                  dataFim: null,
+                },
+              });
+
+              // Se não existe, criar
+              if (!jaCondomino) {
+                await tx.propriedadeCondomino.create({
+                  data: {
+                    propriedadeId: Number(propriedadeId),
+                    condominoId: Number(condomino.condominoId),
+                    percentual: condomino.percentual
+                      ? Number(condomino.percentual)
+                      : null,
+                    dataInicio: new Date(dataTransferencia),
+                    observacoes: condomino.observacoes || null,
+                  },
+                });
+              }
+            }
+          }
         }
 
         return transferencia;
