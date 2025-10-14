@@ -387,6 +387,48 @@ export const pessoaController = {
     }
   },
 
+  // Buscar pessoas por termo (nome ou CPF/CNPJ)
+  buscarPorTermo: async (req: Request, res: Response) => {
+    try {
+      const { termo } = req.query;
+
+      if (!termo) {
+        return res.status(400).json({ erro: "Termo de busca é obrigatório" });
+      }
+
+      const pessoas = await prisma.pessoa.findMany({
+        where: {
+          OR: [
+            {
+              nome: {
+                contains: termo as string,
+                mode: "insensitive",
+              },
+            },
+            {
+              cpfCnpj: {
+                contains: termo as string,
+                mode: "insensitive",
+              },
+            },
+          ],
+        },
+        include: {
+          pessoaFisica: true,
+          pessoaJuridica: true,
+        },
+        orderBy: { nome: "asc" },
+      });
+
+      return res.status(200).json(pessoas);
+    } catch (error) {
+      console.error("Erro ao buscar pessoas por termo:", error);
+      return res.status(500).json({
+        erro: "Erro ao buscar pessoas",
+      });
+    }
+  },
+
   findProdutores: async (req: Request, res: Response) => {
     try {
       const registros = await prisma.pessoa.findMany({

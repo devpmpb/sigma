@@ -152,6 +152,13 @@ class PropriedadeService extends BaseApiService<Propriedade, PropriedadeDTO> {
     return response.data;
   };
 
+  buscarPorTermo = async (termo: string): Promise<Propriedade[]> => {
+    const response = await apiClient.get(`${this.baseUrl}/busca`, {
+      params: { termo },
+    });
+    return response.data;
+  };
+
   /**
    * Busca tipos de propriedade disponíveis
    */
