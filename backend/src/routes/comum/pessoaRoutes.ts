@@ -22,6 +22,11 @@ router.get(
   pessoaController.findProdutores
 );
 router.get(
+  "/buscar",
+  requirePermission(ModuloSistema.COMUM, AcaoPermissao.VIEW),
+  pessoaController.buscarPorTermo
+);
+router.get(
   "/tipo/:tipo",
   requirePermission(ModuloSistema.COMUM, AcaoPermissao.VIEW),
   pessoaController.findByTipo

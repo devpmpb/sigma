@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { FormBase } from "../../../../components/cadastro";
 import FormField from "../../../../components/comum/FormField";
 import FormSection from "../../../../components/comum/FormSection";
+import AsyncSearchSelect from "../../../../components/comum/AsyncSearchSelect";
 import propriedadeService, {
   PropriedadeDTO,
   TipoPropriedade,
@@ -27,6 +28,8 @@ interface CondominoFormData {
   condominoId: number;
   percentual?: number;
   observacoes?: string;
+  nome?: string; // Para exibição na tabela
+  cpfCnpj?: string; // Para exibição na tabela
 }
 
 /**
@@ -35,10 +38,8 @@ interface CondominoFormData {
 const PropriedadeForm: React.FC<PropriedadeFormProps> = ({ id, onSave }) => {
   const params = useParams({ strict: false });
   const propriedadeId = id || params.id;
-  
-  const [pessoas, setPessoas] = useState<Pessoa[]>([]);
+
   const [logradouros, setLogradouros] = useState<Logradouro[]>([]);
-  const [loadingPessoas, setLoadingPessoas] = useState(false);
   const [loadingLogradouros, setLoadingLogradouros] = useState(false);
 
   // Estados para condôminos
@@ -48,6 +49,19 @@ const PropriedadeForm: React.FC<PropriedadeFormProps> = ({ id, onSave }) => {
     percentual: undefined,
     observacoes: "",
   });
+
+  // Busca de pessoas para AsyncSearchSelect
+  const searchPessoas = async (termo: string): Promise<Pessoa[]> => {
+    if (!termo || termo.length < 2) {
+      return [];
+    }
+    try {
+      return await pessoaService.buscarPorTermo(termo);
+    } catch (error) {
+      console.error("Erro ao buscar pessoas:", error);
+      return [];
+    }
+  };
 
   // Valores iniciais do formulário
   const initialValues: PropriedadeDTO = {
@@ -66,23 +80,6 @@ const PropriedadeForm: React.FC<PropriedadeFormProps> = ({ id, onSave }) => {
     proprietarioId: 0,
     nuProprietarioId: undefined,
   };
-
-  // Carregar pessoas para seleção
-  useEffect(() => {
-    const fetchPessoas = async () => {
-      setLoadingPessoas(true);
-      try {
-        const data = await pessoaService.getAll();
-        setPessoas(data);
-      } catch (error) {
-        console.error("Erro ao carregar pessoas:", error);
-      } finally {
-        setLoadingPessoas(false);
-      }
-    };
-
-    fetchPessoas();
-  }, []);
 
   // Carregar logradouros para seleção
   useEffect(() => {
@@ -116,6 +113,8 @@ const PropriedadeForm: React.FC<PropriedadeFormProps> = ({ id, onSave }) => {
               condominoId: c.condominoId,
               percentual: c.percentual ? Number(c.percentual) : undefined,
               observacoes: c.observacoes || "",
+              nome: c.condomino?.nome,
+              cpfCnpj: c.condomino?.cpfCnpj,
             })
           );
 
@@ -152,6 +151,8 @@ const PropriedadeForm: React.FC<PropriedadeFormProps> = ({ id, onSave }) => {
       condominoId: 0,
       percentual: undefined,
       observacoes: "",
+      nome: undefined,
+      cpfCnpj: undefined,
     });
   };
 
@@ -344,76 +345,49 @@ const PropriedadeForm: React.FC<PropriedadeFormProps> = ({ id, onSave }) => {
             </FormField>
 
             {/* Campo Proprietário - Renomear conforme situação */}
-            <FormField
-              name="proprietarioId"
+            <AsyncSearchSelect<Pessoa>
               label={
                 values.situacao === SituacaoPropriedade.USUFRUTO
                   ? "Usufrutuário"
                   : "Proprietário"
               }
-              error={errors.proprietarioId}
-              touched={touched.proprietarioId}
+              value={values.proprietarioId || null}
+              onChange={(value) => {
+                setValue("proprietarioId", value || 0);
+                setFieldTouched("proprietarioId");
+              }}
+              searchFunction={searchPessoas}
+              getOptionLabel={(pessoa) => pessoa.nome}
+              getOptionSubLabel={(pessoa) => pessoa.cpfCnpj}
+              getId={(pessoa) => pessoa.id}
+              placeholder="Digite o nome ou CPF/CNPJ..."
               required
-              
-            >
-              <select
-                id="proprietarioId"
-                name="proprietarioId"
-                value={values.proprietarioId || ""}
-                onChange={(e) =>
-                  setValue("proprietarioId", Number(e.target.value))
-                }
-                onBlur={() => setFieldTouched("proprietarioId")}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">
-                  {loadingPessoas ? "Carregando..." : "Selecione"}
-                </option>
-                {pessoas.map((pessoa) => (
-                  <option key={pessoa.id} value={pessoa.id}>
-                    {pessoa.nome} - {pessoa.cpfCnpj}
-                  </option>
-                ))}
-              </select>
-            </FormField>
+              error={errors.proprietarioId}
+            />
 
             {/* CAMPO CONDICIONAL: Nu-Proprietário (apenas para Usufruto) */}
             {values.situacao === SituacaoPropriedade.USUFRUTO && (
               <div className="transition-all duration-300 ease-in-out">
-                <FormField
-                  name="nuProprietarioId"
+                <AsyncSearchSelect<Pessoa>
                   label="Nu-Proprietário"
-                  error={errors.nuProprietarioId}
-                  touched={touched.nuProprietarioId}
+                  value={values.nuProprietarioId || null}
+                  onChange={(value) => {
+                    setValue("nuProprietarioId", value || undefined);
+                    setFieldTouched("nuProprietarioId");
+                  }}
+                  searchFunction={searchPessoas}
+                  getOptionLabel={(pessoa) => pessoa.nome}
+                  getOptionSubLabel={(pessoa) => pessoa.cpfCnpj}
+                  getId={(pessoa) => pessoa.id}
+                  placeholder={
+                    !values.proprietarioId
+                      ? "Selecione primeiro o usufrutuário"
+                      : "Digite o nome ou CPF/CNPJ..."
+                  }
+                  disabled={!values.proprietarioId}
                   required
-                >
-                  <select
-                    id="nuProprietarioId"
-                    name="nuProprietarioId"
-                    value={values.nuProprietarioId || ""}
-                    onChange={(e) =>
-                      setValue("nuProprietarioId", Number(e.target.value))
-                    }
-                    onBlur={() => setFieldTouched("nuProprietarioId")}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    disabled={!values.proprietarioId}
-                  >
-                    <option value="">
-                      {loadingPessoas
-                        ? "Carregando..."
-                        : !values.proprietarioId
-                        ? "Selecione primeiro o usufrutuário"
-                        : "Selecione o nu-proprietário"}
-                    </option>
-                    {pessoas
-                      .filter((pessoa) => pessoa.id !== values.proprietarioId) // Não mostrar o usufrutuário
-                      .map((pessoa) => (
-                        <option key={pessoa.id} value={pessoa.id}>
-                          {pessoa.nome} - {pessoa.cpfCnpj}
-                        </option>
-                      ))}
-                  </select>
-                </FormField>
+                  error={errors.nuProprietarioId}
+                />
               </div>
             )}
           </div>
@@ -678,26 +652,33 @@ const PropriedadeForm: React.FC<PropriedadeFormProps> = ({ id, onSave }) => {
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Condômino *
-                      </label>
-                      <select
-                        value={novoCondomino.condominoId}
-                        onChange={(e) =>
-                          setNovoCondomino({
-                            ...novoCondomino,
-                            condominoId: Number(e.target.value),
-                          })
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      >
-                        <option value={0}>Selecione</option>
-                        {pessoas.map((pessoa) => (
-                          <option key={pessoa.id} value={pessoa.id}>
-                            {pessoa.nome}
-                          </option>
-                        ))}
-                      </select>
+                      <AsyncSearchSelect<Pessoa>
+                        label="Condômino"
+                        value={novoCondomino.condominoId || null}
+                        onChange={(value, pessoa) => {
+                          if (value && pessoa) {
+                            setNovoCondomino({
+                              ...novoCondomino,
+                              condominoId: value,
+                              nome: pessoa.nome,
+                              cpfCnpj: pessoa.cpfCnpj,
+                            });
+                          } else {
+                            setNovoCondomino({
+                              ...novoCondomino,
+                              condominoId: 0,
+                              nome: undefined,
+                              cpfCnpj: undefined,
+                            });
+                          }
+                        }}
+                        searchFunction={searchPessoas}
+                        getOptionLabel={(pessoa) => pessoa.nome}
+                        getOptionSubLabel={(pessoa) => pessoa.cpfCnpj}
+                        getId={(pessoa) => pessoa.id}
+                        placeholder="Digite o nome ou CPF/CNPJ..."
+                        required
+                      />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -771,37 +752,31 @@ const PropriedadeForm: React.FC<PropriedadeFormProps> = ({ id, onSave }) => {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-200">
-                        {condominos.map((condomino) => {
-                          const pessoa = pessoas.find(
-                            (p) => p.id === condomino.condominoId
-                          );
-                          return (
-                            <tr key={condomino.condominoId}>
-                              <td className="px-4 py-3 text-sm text-gray-900">
-                                {pessoa?.nome || `ID: ${condomino.condominoId}`}
-                              </td>
-                              <td className="px-4 py-3 text-sm text-gray-900">
-                                {condomino.percentual
-                                  ? `${condomino.percentual}%`
-                                  : "-"}
-                              </td>
-                              <td className="px-4 py-3 text-sm text-gray-900">
-                                {condomino.observacoes || "-"}
-                              </td>
-                              <td className="px-4 py-3 text-right">
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    removerCondomino(condomino.condominoId)
-                                  }
-                                  className="text-red-600 hover:text-red-900 text-sm font-medium"
-                                >
-                                  Remover
-                                </button>
-                              </td>
-                            </tr>
-                          );
-                        })}
+                        {condominos.map((condomino) => (
+                          <tr key={condomino.condominoId}>
+                            <td className="px-4 py-3 text-sm text-gray-900">
+                              <div>{condomino.nome || `ID: ${condomino.condominoId}`}</div>
+                              {condomino.cpfCnpj && (
+                                <div className="text-xs text-gray-500">{condomino.cpfCnpj}</div>
+                              )}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-900">
+                              {condomino.percentual ? `${condomino.percentual}%` : "-"}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-900">
+                              {condomino.observacoes || "-"}
+                            </td>
+                            <td className="px-4 py-3 text-right">
+                              <button
+                                type="button"
+                                onClick={() => removerCondomino(condomino.condominoId)}
+                                className="text-red-600 hover:text-red-900 text-sm font-medium"
+                              >
+                                Remover
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
                       </tbody>
                     </table>
                   </div>

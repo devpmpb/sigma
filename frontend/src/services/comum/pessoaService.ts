@@ -127,6 +127,13 @@ class PessoaService extends BaseApiService<Pessoa, PessoaDTO> {
     return response.data;
   };
 
+  buscarPorTermo = async (termo: string): Promise<Pessoa[]> => {
+    const response = await apiClient.get(`${this.baseUrl}/buscar`, {
+      params: { termo },
+    });
+    return response.data;
+  };
+
   getPessoasWithEnderecos = async (tipo?: TipoPessoa): Promise<Pessoa[]> => {
     const params = tipo ? { tipo } : {};
     const response = await apiClient.get(`${this.baseUrl}/enderecos`, {
