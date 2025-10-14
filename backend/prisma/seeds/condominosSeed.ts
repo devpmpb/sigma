@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, TipoPessoa } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -14,35 +14,35 @@ export default async function seedCondominos() {
       {
         nome: "Carlos Eduardo Silva",
         cpfCnpj: "123.456.789-01",
-        tipoPessoa: "FISICA",
+        tipoPessoa: TipoPessoa.FISICA,
         telefone: "(51) 99999-0001",
         email: "carlos.silva@email.com",
       },
       {
         nome: "Ana Paula Oliveira",
         cpfCnpj: "234.567.890-12",
-        tipoPessoa: "FISICA",
+        tipoPessoa: TipoPessoa.FISICA,
         telefone: "(51) 99999-0002",
         email: "ana.oliveira@email.com",
       },
       {
         nome: "Roberto Ferreira",
         cpfCnpj: "345.678.901-23",
-        tipoPessoa: "FISICA",
+        tipoPessoa: TipoPessoa.FISICA,
         telefone: "(51) 99999-0003",
         email: "roberto.ferreira@email.com",
       },
       {
         nome: "Mariana Costa Santos",
         cpfCnpj: "456.789.012-34",
-        tipoPessoa: "FISICA",
+        tipoPessoa: TipoPessoa.FISICA,
         telefone: "(51) 99999-0004",
         email: "mariana.santos@email.com",
       },
       {
         nome: "José Antônio Pereira",
         cpfCnpj: "567.890.123-45",
-        tipoPessoa: "FISICA",
+        tipoPessoa: TipoPessoa.FISICA,
         telefone: "(51) 99999-0005",
         email: "jose.pereira@email.com",
       },
@@ -51,70 +51,70 @@ export default async function seedCondominos() {
       {
         nome: "Fernanda Lima",
         cpfCnpj: "678.901.234-56",
-        tipoPessoa: "FISICA",
+        tipoPessoa: TipoPessoa.FISICA,
         telefone: "(51) 99999-0006",
         email: "fernanda.lima@email.com",
       },
       {
         nome: "Ricardo Gomes",
         cpfCnpj: "789.012.345-67",
-        tipoPessoa: "FISICA",
+        tipoPessoa: TipoPessoa.FISICA,
         telefone: "(51) 99999-0007",
         email: "ricardo.gomes@email.com",
       },
       {
         nome: "Juliana Almeida",
         cpfCnpj: "890.123.456-78",
-        tipoPessoa: "FISICA",
+        tipoPessoa: TipoPessoa.FISICA,
         telefone: "(51) 99999-0008",
         email: "juliana.almeida@email.com",
       },
       {
         nome: "Pedro Henrique Souza",
         cpfCnpj: "901.234.567-89",
-        tipoPessoa: "FISICA",
+        tipoPessoa: TipoPessoa.FISICA,
         telefone: "(51) 99999-0009",
         email: "pedro.souza@email.com",
       },
       {
         nome: "Camila Rodrigues",
         cpfCnpj: "012.345.678-90",
-        tipoPessoa: "FISICA",
+        tipoPessoa: TipoPessoa.FISICA,
         telefone: "(51) 99999-0010",
         email: "camila.rodrigues@email.com",
       },
       {
         nome: "Lucas Martins",
         cpfCnpj: "111.222.333-44",
-        tipoPessoa: "FISICA",
+        tipoPessoa: TipoPessoa.FISICA,
         telefone: "(51) 99999-0011",
         email: "lucas.martins@email.com",
       },
       {
         nome: "Patrícia Andrade",
         cpfCnpj: "222.333.444-55",
-        tipoPessoa: "FISICA",
+        tipoPessoa: TipoPessoa.FISICA,
         telefone: "(51) 99999-0012",
         email: "patricia.andrade@email.com",
       },
       {
         nome: "Marcos Vinícius",
         cpfCnpj: "333.444.555-66",
-        tipoPessoa: "FISICA",
+        tipoPessoa: TipoPessoa.FISICA,
         telefone: "(51) 99999-0013",
         email: "marcos.vinicius@email.com",
       },
       {
         nome: "Gabriela Nunes",
         cpfCnpj: "444.555.666-77",
-        tipoPessoa: "FISICA",
+        tipoPessoa: TipoPessoa.FISICA,
         telefone: "(51) 99999-0014",
         email: "gabriela.nunes@email.com",
       },
       {
         nome: "Rafael Castro",
         cpfCnpj: "555.666.777-88",
-        tipoPessoa: "FISICA",
+        tipoPessoa: TipoPessoa.FISICA,
         telefone: "(51) 99999-0015",
         email: "rafael.castro@email.com",
       },
@@ -133,7 +133,16 @@ export default async function seedCondominos() {
         pessoasCriadas.push(pessoaExistente);
       } else {
         const pessoa = await prisma.pessoa.create({
-          data: pessoaData as any,
+          data: {
+            ...pessoaData,
+            pessoaFisica: {
+              create: {
+                // Criar registro PessoaFisica com id igual ao da Pessoa
+                rg: null,
+                dataNascimento: null,
+              },
+            },
+          },
         });
         console.log(`  ✅ Criada pessoa: ${pessoa.nome}`);
         pessoasCriadas.push(pessoa);

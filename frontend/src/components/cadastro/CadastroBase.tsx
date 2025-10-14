@@ -263,12 +263,23 @@ function CadastroBase<T extends Record<string, any>, R>({
 
     if (!statusOption) return status;
 
+    // Para status customizado, vamos usar um badge simples sem toggle
     return (
-      <StatusBadge
-        status={status}
-        activeText={statusOption.label}
-        color={statusOption.color}
-      />
+      <span
+        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+          statusOption.color === "green"
+            ? "bg-green-100 text-green-800"
+            : statusOption.color === "red"
+            ? "bg-red-100 text-red-800"
+            : statusOption.color === "yellow"
+            ? "bg-yellow-100 text-yellow-800"
+            : statusOption.color === "blue"
+            ? "bg-blue-100 text-blue-800"
+            : "bg-gray-100 text-gray-800"
+        }`}
+      >
+        {statusOption.label}
+      </span>
     );
   };
 
@@ -299,9 +310,11 @@ function CadastroBase<T extends Record<string, any>, R>({
               className={canEdit ? "cursor-pointer" : ""}
             >
               <StatusBadge
-                status={item.ativo}
-                activeText={statusColumn.activeText || "Ativo"}
-                inactiveText={statusColumn.inactiveText || "Inativo"}
+                ativo={item.ativo}
+                textoAtivo={statusColumn.activeText || "Ativo"}
+                textoInativo={statusColumn.inactiveText || "Inativo"}
+                onToggle={canEdit ? (e) => handleToggleStatus(item, e) : undefined}
+                showToggle={canEdit}
               />
             </div>
           ),

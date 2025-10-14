@@ -426,9 +426,11 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
                     dataNascimento
                   );
 
-                  // Usar a função helper para atualizar os campos
-                  updatePessoaFisica("rg", rg);
-                  updatePessoaFisica("dataNascimento", dataNascimento);
+                  // Setar os campos diretamente no objeto pessoaFisica
+                  setValue("pessoaFisica", {
+                    rg: rg,
+                    dataNascimento: dataNascimento,
+                  });
                 }
 
                 // Preencher dados específicos de pessoa jurídica
@@ -448,18 +450,14 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
                   const representanteLegal =
                     pessoaData.pessoaJuridica.representanteLegal || "";
 
-                  // Usar a função helper para atualizar os campos
-                  updatePessoaJuridica("nomeFantasia", nomeFantasia);
-                  updatePessoaJuridica("inscricaoEstadual", inscricaoEstadual);
-                  updatePessoaJuridica(
-                    "inscricaoMunicipal",
-                    inscricaoMunicipal
-                  );
-                  updatePessoaJuridica("dataFundacao", dataFundacao);
-                  updatePessoaJuridica(
-                    "representanteLegal",
-                    representanteLegal
-                  );
+                  // Setar os campos diretamente no objeto pessoaJuridica
+                  setValue("pessoaJuridica", {
+                    nomeFantasia: nomeFantasia,
+                    inscricaoEstadual: inscricaoEstadual,
+                    inscricaoMunicipal: inscricaoMunicipal,
+                    dataFundacao: dataFundacao,
+                    representanteLegal: representanteLegal,
+                  });
                 }
 
                 // Preencher dados do endereço se existir
