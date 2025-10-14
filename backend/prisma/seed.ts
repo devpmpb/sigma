@@ -5,6 +5,7 @@ import seedAuth from "./seeds/authSeed";
 import seedProgramasLegais from "./seeds/programasLegaisCompleto";
 
 import seedCondominos from "./seeds/condominosSeed";
+import seedLogradouros from "./seeds/logradourosSeed";
 
 const prisma = new PrismaClient();
 
@@ -18,6 +19,9 @@ async function main() {
 
   await seedCondominos();
   //wait seedSolicitacoesBeneficio();
+
+  // Seed de logradouros
+  await seedLogradouros();
 
   // Cadastrar bairros iniciais de Pato Bragado
   console.log("🏘️ Criando bairros iniciais...");
@@ -106,6 +110,7 @@ async function main() {
   console.log("   • Permissões do sistema (16 permissões)");
   console.log("   • Perfis de usuário (ADMIN, OBRAS, AGRICULTURA)");
   console.log("   • Usuários iniciais com senhas");
+  console.log("   • Logradouros de Pato Bragado (45 logradouros)");
   console.log("   • Bairros de exemplo");
   console.log("   • Áreas rurais de exemplo");
   console.log("   • Grupos de produtos iniciais");
