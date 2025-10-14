@@ -4,6 +4,8 @@ import seedAuth from "./seeds/authSeed";
 
 import seedProgramasLegais from "./seeds/programasLegaisCompleto";
 
+import seedCondominos from "./seeds/condominosSeed";
+
 const prisma = new PrismaClient();
 
 async function main() {
@@ -13,6 +15,8 @@ async function main() {
   await seedAuth();
 
   await seedProgramasLegais();
+
+  await seedCondominos();
   //wait seedSolicitacoesBeneficio();
 
   // Cadastrar bairros iniciais de Pato Bragado

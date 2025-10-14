@@ -1,12 +1,15 @@
 // frontend/src/services/comum/transferenciaPropiedadeService.ts
 import apiClient from "../apiConfig";
 import BaseApiService from "../baseApiService";
+import { SituacaoPropriedade } from "./propriedadeService";
 
 export interface TransferenciaPropriedade {
   id: number;
   propriedadeId: number;
   proprietarioAnteriorId: number;
   proprietarioNovoId: number;
+  situacaoPropriedade: SituacaoPropriedade;
+  nuProprietarioNovoId?: number;
   dataTransferencia: string;
   observacoes?: string;
   createdAt: string;
@@ -47,8 +50,15 @@ export interface TransferenciaPropiedadeDTO {
   propriedadeId: number;
   proprietarioAnteriorId: number;
   proprietarioNovoId: number;
+  situacaoPropriedade: SituacaoPropriedade;
+  nuProprietarioNovoId?: number;
   dataTransferencia: string;
   observacoes?: string;
+  condominos?: Array<{
+    condominoId: number;
+    percentual?: number;
+    observacoes?: string;
+  }>;
 }
 
 /**
@@ -64,16 +74,16 @@ class TransferenciaPropiedadeService extends BaseApiService<
   }
 
   create = async (
-    dados: TransferenciaPropiedadeDTO
+    data: TransferenciaPropiedadeDTO
   ): Promise<TransferenciaPropriedade> => {
-    // Redireciona para o método transferir
-    return this.transferir(dados);
+    // Usa o endpoint /transferir que já está implementado no backend
+    const response = await apiClient.post(`${this.baseUrl}/transferir`, data);
+    return response.data;
   };
 
   transferir = async (
     data: TransferenciaPropiedadeDTO
   ): Promise<TransferenciaPropriedade> => {
-    console.log(`${this.baseUrl}/transferir`);
     const response = await apiClient.post(`${this.baseUrl}/transferir`, data);
     return response.data;
   };
@@ -108,6 +118,18 @@ class TransferenciaPropiedadeService extends BaseApiService<
   getRecentes = async (): Promise<TransferenciaPropriedade[]> => {
     const response = await apiClient.get(`${this.baseUrl}/recentes`);
     return response.data;
+  };
+
+  searchByTerm = async (termo: string): Promise<TransferenciaPropriedade[]> => {
+    try {
+      const response = await apiClient.get(`${this.baseUrl}`, {
+        params: { search: termo },
+      });
+      return response.data;
+    } catch (error) {
+      console.error("Erro ao buscar transferências:", error);
+      throw error;
+    }
   };
 }
 

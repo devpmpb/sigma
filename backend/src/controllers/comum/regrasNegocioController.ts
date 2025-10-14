@@ -1,9 +1,7 @@
 // backend/src/controllers/agricultura/regrasNegocioController.ts
 import { Request, Response } from "express";
-import { PrismaClient } from "@prisma/client";
+import prisma from "../../utils/prisma";
 import { createGenericController } from "../GenericController";
-
-const prisma = new PrismaClient();
 
 // Tipos de regras disponíveis
 export enum TipoRegra {

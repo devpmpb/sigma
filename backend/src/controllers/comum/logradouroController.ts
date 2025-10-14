@@ -1,8 +1,7 @@
 import { Request, Response } from "express";
-import { PrismaClient, TipoLogradouro } from "@prisma/client";
+import prisma from "../../utils/prisma";
+import { TipoLogradouro } from "@prisma/client";
 import { createGenericController } from "../GenericController";
-
-const prisma = new PrismaClient();
 
 const genericController = createGenericController({
   modelName: "logradouro",

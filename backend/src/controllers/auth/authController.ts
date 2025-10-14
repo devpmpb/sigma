@@ -1,7 +1,7 @@
 // backend/src/controllers/auth/authController.ts - ARQUIVO COMPLETO
 import { Request, Response } from "express";
+import prisma from "../../utils/prisma";
 import {
-  PrismaClient,
   TipoPerfil,
   ModuloSistema,
   AcaoPermissao,
@@ -9,8 +9,6 @@ import {
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
-
-const prisma = new PrismaClient();
 
 // Schemas de validação
 const loginSchema = z.object({

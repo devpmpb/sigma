@@ -172,6 +172,8 @@ model Pessoa {
   arrendamentos              Arrendamento[]             @relation("arrendatario")
   arrendou                   Arrendamento[]             @relation("proprietario")
   propriedadesComoNuProprietario Propriedade[]          @relation("NuProprietario")
+  condominios                PropriedadeCondomino[]     @relation("PropriedadeCondominos")
+  transferenciasComoNuNovo   TransferenciaPropriedade[] @relation("TransferenciaNuProprietarioNovo")
 }
 
 model PessoaFisica {
@@ -239,25 +241,23 @@ model Propriedade {
   nome            String
   tipoPropriedade TipoPropriedade @default(RURAL)
 
-  logradouroId Int? // Referência à tabela Logradouro
+  logradouroId Int?
   logradouro   Logradouro? @relation(fields: [logradouroId], references: [id])
-  numero       String? // Número do lote/chácara
+  numero       String?
 
-  // Área total - lógica será: rural = alqueires, outros = metros quadrados
   areaTotal   Decimal @db.Decimal(10, 2)
-  unidadeArea String  @default("alqueires") // "alqueires" ou "metros_quadrados"
+  unidadeArea String  @default("alqueires")
 
-  // Campos específicos para propriedades RURAIS
-  itr   String? // ITR (só para rural)
-  incra String? // INCRA (só para rural) 
+  itr                String?
+  incra              String?
   atividadeProdutiva AtividadeProdutiva?
 
-  situacao              SituacaoPropriedade // própria/condomínio/usufruto
-  isproprietarioResidente Boolean             @default(false) // Se o proprietário reside na propriedade
-  localizacao    String? // Descrição geral (mantido para compatibilidade)
-  matricula      String?
-  proprietarioId Int
-  proprietario   Pessoa  @relation(fields: [proprietarioId], references: [id])
+  situacao                SituacaoPropriedade
+  isproprietarioResidente Boolean             @default(false)
+  localizacao             String?
+  matricula               String?
+  proprietarioId          Int
+  proprietario            Pessoa              @relation(fields: [proprietarioId], references: [id])
 
   nuProprietarioId Int?
   nuProprietario   Pessoa? @relation("NuProprietario", fields: [nuProprietarioId], references: [id])
@@ -266,6 +266,7 @@ model Propriedade {
   arrendamentos  Arrendamento[]
   enderecos      Endereco[]
   transferencias TransferenciaPropriedade[]
+  condominos     PropriedadeCondomino[] // ✅ ADICIONAR ESTA LINHA
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -276,6 +277,11 @@ model TransferenciaPropriedade {
   propriedadeId          Int      @map("propriedade_id")
   proprietarioAnteriorId Int      @map("proprietario_anterior_id")
   proprietarioNovoId     Int      @map("proprietario_novo_id")
+  
+  // ✅ ADICIONAR ESTES CAMPOS
+  situacaoPropriedade    SituacaoPropriedade @default(PROPRIA) @map("situacao_propriedade")
+  nuProprietarioNovoId   Int?     @map("nu_proprietario_novo_id") // Para transferência de usufruto
+  
   dataTransferencia      DateTime @map("data_transferencia") @db.Date
   observacoes            String?  @db.Text
   createdAt              DateTime @default(now()) @map("created_at")
@@ -285,10 +291,33 @@ model TransferenciaPropriedade {
   propriedade          Propriedade @relation(fields: [propriedadeId], references: [id])
   proprietarioAnterior Pessoa      @relation("TransferenciaProprietarioAnterior", fields: [proprietarioAnteriorId], references: [id])
   proprietarioNovo     Pessoa      @relation("TransferenciaProprietarioNovo", fields: [proprietarioNovoId], references: [id])
+  
+  nuProprietarioNovo   Pessoa?     @relation("TransferenciaNuProprietarioNovo", fields: [nuProprietarioNovoId], references: [id])
 
   @@index([propriedadeId])
   @@index([dataTransferencia])
   @@map("transferencias_propriedade")
+}
+
+model PropriedadeCondomino {
+  id            Int         @id @default(autoincrement())
+  propriedadeId Int         @map("propriedade_id")
+  condominoId   Int         @map("condomino_id")
+  percentual    Decimal?    @db.Decimal(5, 2) // Percentual de participação (opcional)
+  dataInicio    DateTime    @default(now()) @map("data_inicio")
+  dataFim       DateTime?   @map("data_fim") // Null = condomínio ativo
+  observacoes   String?     @db.Text
+  createdAt     DateTime    @default(now()) @map("created_at")
+  updatedAt     DateTime    @updatedAt @map("updated_at")
+
+  // Relacionamentos
+  propriedade Propriedade @relation(fields: [propriedadeId], references: [id], onDelete: Cascade)
+  condomino   Pessoa      @relation("PropriedadeCondominos", fields: [condominoId], references: [id])
+
+  @@unique([propriedadeId, condominoId, dataFim]) // Evita duplicatas
+  @@index([propriedadeId])
+  @@index([condominoId])
+  @@map("propriedades_condominos")
 }
 
 model Arrendamento {

@@ -1,10 +1,9 @@
 // src/controllers/comum/pessoaController.ts
 import { Request, Response } from "express";
-import { PrismaClient, TipoPessoa } from "@prisma/client";
+import prisma from "../../utils/prisma";
+import { TipoPessoa } from "@prisma/client";
 import { createGenericController } from "../GenericController";
 import { convertPessoaDateFields } from "../../utils/formatters";
-
-const prisma = new PrismaClient();
 
 // Função para validar dados de criação
 const validatePessoaCreate = (data: any) => {
