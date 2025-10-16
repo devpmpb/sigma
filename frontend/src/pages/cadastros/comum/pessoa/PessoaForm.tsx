@@ -74,7 +74,7 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
       representanteLegal: "",
     },
     // Campos de endereço
-    incluirEndereco: true, // Por padrão, incluir endereço
+    incluirEndereco: false, // Por padrão, NÃO incluir endereço
     tipoEndereco: TipoEndereco.RESIDENCIAL,
     logradouroId: "",
     numero: "",
@@ -212,7 +212,19 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
   const pessoaServiceWithEndereco = {
     ...pessoaService,
 
-    getById: pessoaService.getById,
+    getById: async (id: string | number): Promise<any> => {
+      const pessoa = await pessoaService.getById(id);
+
+      // Formatar datas para o formato do input antes de retornar
+      if (pessoa.pessoaFisica?.dataNascimento) {
+        pessoa.pessoaFisica.dataNascimento = formatDateForInput(pessoa.pessoaFisica.dataNascimento);
+      }
+      if (pessoa.pessoaJuridica?.dataFundacao) {
+        pessoa.pessoaJuridica.dataFundacao = formatDateForInput(pessoa.pessoaJuridica.dataFundacao);
+      }
+
+      return pessoa;
+    },
     getAll: pessoaService.getAll,
     delete: pessoaService.delete,
     search: pessoaService.search,
@@ -369,130 +381,31 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
           }
         };
 
-        // Carregar dados da pessoa ao editar
+        // Carregar dados do endereço ao editar
         useEffect(() => {
-          const loadPessoaData = async () => {
-            if (pessoaId && pessoaId !== "novo") {
-              try {
-                // Tentar usar o método que traz detalhes completos, senão usar getById
-                let pessoaData;
-                try {
-                  // Primeiro tentar o método com detalhes
-                  pessoaData = await pessoaService.getPessoaWithDetails(
-                    Number(pessoaId)
-                  );
-                } catch {
-                  // Se não existir, usar o método padrão
-                  pessoaData = await pessoaService.getById(pessoaId);
-                }
-
-                // Debug - remover depois de confirmar que funciona
-                console.log("Dados da pessoa carregados:", pessoaData);
-                if (pessoaData.pessoaFisica) {
-                  console.log("PessoaFisica - RG:", pessoaData.pessoaFisica.rg);
-                  console.log(
-                    "PessoaFisica - Data Nasc:",
-                    pessoaData.pessoaFisica.dataNascimento
-                  );
-                }
-
-                // Preencher dados básicos da pessoa
-                setValue("tipoPessoa", pessoaData.tipoPessoa);
-                setValue("nome", pessoaData.nome);
-                setValue("cpfCnpj", pessoaData.cpfCnpj);
-                setValue("email", pessoaData.email || "");
-                setValue("telefone", pessoaData.telefone || "");
-                setValue("ativo", pessoaData.ativo !== false); // garantir que seja boolean
-                setValue("isProdutor", pessoaData.isProdutor || false);
-                setValue(
-                  "inscricaoEstadualProdutor",
-                  pessoaData.inscricaoEstadualProdutor || ""
-                );
-
-                // Preencher dados específicos de pessoa física
-                if (
-                  pessoaData.tipoPessoa === TipoPessoa.FISICA &&
-                  pessoaData.pessoaFisica
-                ) {
-                  const rg = pessoaData.pessoaFisica.rg || "";
-                  const dataNascimento = pessoaData.pessoaFisica.dataNascimento
-                    ? formatDateForInput(pessoaData.pessoaFisica.dataNascimento)
-                    : "";
-
-                  console.log(
-                    "Setando campos PF - RG:",
-                    rg,
-                    "Data:",
-                    dataNascimento
-                  );
-
-                  // Usar a função helper para atualizar os campos
-                  updatePessoaFisica("rg", rg);
-                  updatePessoaFisica("dataNascimento", dataNascimento);
-                }
-
-                // Preencher dados específicos de pessoa jurídica
-                if (
-                  pessoaData.tipoPessoa === TipoPessoa.JURIDICA &&
-                  pessoaData.pessoaJuridica
-                ) {
-                  const nomeFantasia =
-                    pessoaData.pessoaJuridica.nomeFantasia || "";
-                  const inscricaoEstadual =
-                    pessoaData.pessoaJuridica.inscricaoEstadual || "";
-                  const inscricaoMunicipal =
-                    pessoaData.pessoaJuridica.inscricaoMunicipal || "";
-                  const dataFundacao = pessoaData.pessoaJuridica.dataFundacao
-                    ? formatDateForInput(pessoaData.pessoaJuridica.dataFundacao)
-                    : "";
-                  const representanteLegal =
-                    pessoaData.pessoaJuridica.representanteLegal || "";
-
-                  // Usar a função helper para atualizar os campos
-                  updatePessoaJuridica("nomeFantasia", nomeFantasia);
-                  updatePessoaJuridica("inscricaoEstadual", inscricaoEstadual);
-                  updatePessoaJuridica(
-                    "inscricaoMunicipal",
-                    inscricaoMunicipal
-                  );
-                  updatePessoaJuridica("dataFundacao", dataFundacao);
-                  updatePessoaJuridica(
-                    "representanteLegal",
-                    representanteLegal
-                  );
-                }
-
-                // Preencher dados do endereço se existir
-                if (enderecoExistente) {
-                  setValue("incluirEndereco", true);
-                  setValue("tipoEndereco", enderecoExistente.tipoEndereco);
-                  setValue(
-                    "logradouroId",
-                    enderecoExistente.logradouroId?.toString() || ""
-                  );
-                  setValue("numero", enderecoExistente.numero || "");
-                  setValue("complemento", enderecoExistente.complemento || "");
-                  setValue(
-                    "bairroId",
-                    enderecoExistente.bairroId?.toString() || ""
-                  );
-                  setValue(
-                    "areaRuralId",
-                    enderecoExistente.areaRuralId?.toString() || ""
-                  );
-                  setValue(
-                    "referenciaRural",
-                    enderecoExistente.referenciaRural || ""
-                  );
-                  setValue("coordenadas", enderecoExistente.coordenadas || "");
-                }
-              } catch (error) {
-                console.error("Erro ao carregar dados da pessoa:", error);
-              }
-            }
-          };
-
-          loadPessoaData();
+          if (pessoaId && pessoaId !== "novo" && enderecoExistente) {
+            setValue("incluirEndereco", true);
+            setValue("tipoEndereco", enderecoExistente.tipoEndereco);
+            setValue(
+              "logradouroId",
+              enderecoExistente.logradouroId?.toString() || ""
+            );
+            setValue("numero", enderecoExistente.numero || "");
+            setValue("complemento", enderecoExistente.complemento || "");
+            setValue(
+              "bairroId",
+              enderecoExistente.bairroId?.toString() || ""
+            );
+            setValue(
+              "areaRuralId",
+              enderecoExistente.areaRuralId?.toString() || ""
+            );
+            setValue(
+              "referenciaRural",
+              enderecoExistente.referenciaRural || ""
+            );
+            setValue("coordenadas", enderecoExistente.coordenadas || "");
+          }
         }, [pessoaId, enderecoExistente, setValue]);
 
         return (
@@ -659,9 +572,9 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
                       id="dataNascimento"
                       name="pessoaFisica.dataNascimento"
                       value={values.pessoaFisica?.dataNascimento || ""}
-                      onChange={(e) =>
-                        updatePessoaFisica("dataNascimento", e.target.value)
-                      }
+                      onChange={(e) => {
+                        updatePessoaFisica("dataNascimento", e.target.value);
+                      }}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </FormField>
