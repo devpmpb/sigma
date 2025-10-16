@@ -66,8 +66,14 @@ export const formatDateForInput = (
       return "";
     }
 
+    // Usa UTC para evitar problemas de fuso horário
+    // Extrai ano, mês e dia diretamente do objeto Date em UTC
+    const year = date.getUTCFullYear();
+    const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+    const day = String(date.getUTCDate()).padStart(2, "0");
+
     // Retorna no formato yyyy-mm-dd
-    return date.toISOString().split("T")[0];
+    return `${year}-${month}-${day}`;
   } catch {
     return "";
   }
