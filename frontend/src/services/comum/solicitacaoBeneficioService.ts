@@ -20,7 +20,22 @@ export interface SolicitacaoBeneficio {
   observacoes?: string;
   createdAt: string;
   updatedAt: string;
-  
+
+  // NOVOS CAMPOS: Cálculo automático
+  regraAplicadaId?: number;
+  valorCalculado?: number;
+  quantidadeSolicitada?: number;
+  calculoDetalhes?: {
+    areaEfetiva?: number;
+    regraAtendida?: string;
+    condicao?: string;
+    valorBase?: number;
+    quantidadeSolicitada?: number;
+    percentualAplicado?: number;
+    limiteAplicado?: any;
+    observacoes?: string[];
+  };
+
   // Relacionamentos
   pessoa: {
     id: number;
@@ -37,6 +52,13 @@ export interface SolicitacaoBeneficio {
     tipoPrograma: string;
     secretaria: TipoPerfil;
     ativo: boolean;
+  };
+  regraAplicada?: {
+    id: number;
+    tipoRegra: string;
+    parametro: any;
+    valorBeneficio: number;
+    limiteBeneficio: any;
   };
 }
 
@@ -74,18 +96,20 @@ class SolicitacaoBeneficioService extends BaseApiService<SolicitacaoBeneficio, S
   }
 
   /**
-   * Sobrescrever create para garantir conversão de tipos
+   * Sobrescrever create para SEMPRE usar endpoint com cálculo automático
+   * O FormBase chama este método normalmente, mas por baixo usa o endpoint inteligente
    */
   async create(data: SolicitacaoBeneficioDTO): Promise<SolicitacaoBeneficio> {
-    // Garantir que IDs sejam números
-    const processedData = {
-      ...data,
+    // Usar sempre o endpoint com cálculo automático
+    // Quantidade vem como undefined se não for informada
+    const resultado = await this.createComCalculo({
       pessoaId: Number(data.pessoaId),
       programaId: Number(data.programaId),
-    };
+      quantidadeSolicitada: undefined, // Será calculado pela regra padrão
+      observacoes: data.observacoes
+    });
 
-    const response = await apiClient.post(this.baseUrl, processedData);
-    return response.data;
+    return resultado.solicitacao;
   }
 
   /**
@@ -206,21 +230,92 @@ class SolicitacaoBeneficioService extends BaseApiService<SolicitacaoBeneficio, S
     return colorMap[status as StatusSolicitacao] || "gray";
   }
 
+  // ==================== NOVOS MÉTODOS ====================
+
   /**
-   * Valida dados da solicitação
+   * Calcula o benefício sem criar a solicitação
    */
-  private validateSolicitacaoData(data: SolicitacaoBeneficioDTO): string[] {
-    const errors: string[] = [];
+  async calcularBeneficio(dados: {
+    pessoaId: number;
+    programaId: number;
+    quantidadeSolicitada?: number;
+  }): Promise<{
+    sucesso: boolean;
+    calculo: {
+      regraAplicadaId: number | null;
+      valorCalculado: number;
+      calculoDetalhes: any;
+      mensagem: string;
+      avisos?: string[];
+    };
+    limitePeriodo: {
+      permitido: boolean;
+      mensagem: string;
+      detalhes?: any;
+    } | null;
+  }> {
+    const response = await apiClient.post(`${this.baseUrl}/calcular`, dados);
+    return response.data;
+  }
 
-    if (!data.pessoaId) {
-      errors.push("Pessoa é obrigatória");
+  /**
+   * Cria solicitação com cálculo automático
+   */
+  async createComCalculo(dados: {
+    pessoaId: number;
+    programaId: number;
+    quantidadeSolicitada?: number;
+    observacoes?: string;
+  }): Promise<{
+    sucesso: boolean;
+    mensagem: string;
+    solicitacao: SolicitacaoBeneficio;
+    calculo: {
+      mensagem: string;
+      avisos?: string[];
+    };
+  }> {
+    const response = await apiClient.post(`${this.baseUrl}/com-calculo`, dados);
+    return response.data;
+  }
+
+  /**
+   * Busca histórico de mudanças de status
+   */
+  async getHistorico(id: number | string): Promise<{
+    historico: Array<{
+      id: number;
+      statusAnterior: string;
+      statusNovo: string;
+      usuario: string | number;
+      motivo?: string;
+      observacoes?: string;
+      data: string;
+      descricao: string;
+    }>;
+  }> {
+    const response = await apiClient.get(`${this.baseUrl}/${id}/historico`);
+    return response.data;
+  }
+
+  /**
+   * Atualiza status com registro no histórico
+   */
+  async updateStatusComHistorico(
+    id: number | string,
+    dados: {
+      status: StatusSolicitacao;
+      observacoes?: string;
+      motivo?: string;
+      usuarioId?: number;
     }
-
-    if (!data.programaId) {
-      errors.push("Programa é obrigatório");
-    }
-
-    return errors;
+  ): Promise<{
+    sucesso: boolean;
+    mensagem: string;
+    solicitacao: SolicitacaoBeneficio;
+  }> {
+    const response = await apiClient.put(`${this.baseUrl}/${id}/status`, dados);
+    return response.data;
   }
 }
 

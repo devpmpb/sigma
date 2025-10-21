@@ -349,8 +349,19 @@ model SolicitacaoBeneficio {
   datasolicitacao DateTime @default(now())
   status          String   @default("pendente")
   observacoes     String?
+
+  // NOVOS CAMPOS: Cálculo automático de benefício
+  regraAplicadaId   Int?           // Qual regra foi aplicada
+  regraAplicada     RegrasNegocio? @relation(fields: [regraAplicadaId], references: [id])
+  valorCalculado    Decimal?       @db.Decimal(10, 2) // Valor calculado automaticamente
+  quantidadeSolicitada Decimal?    @db.Decimal(10, 2) // Quantidade solicitada (toneladas, unidades, etc)
+  calculoDetalhes   Json?          // Detalhes do cálculo (área, condições atendidas, etc)
+
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+
+  // Relacionamento com histórico
+  historico       HistoricoSolicitacao[]
 }
 
 // Modelo para programas de incentivo
@@ -375,11 +386,31 @@ model RegrasNegocio {
   programaId      Int
   programa        Programa @relation(fields: [programaId], references: [id])
   tipoRegra       String // 'area_efetiva', 'area_construcao', etc.
-  parametro       Json // Estrutura JSON com condições 
+  parametro       Json // Estrutura JSON com condições
   valorBeneficio  Decimal  @db.Decimal(10, 2)
   limiteBeneficio Json? // Estrutura JSON com limites
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+
+  // Relacionamento com solicitações que usaram esta regra
+  solicitacoes    SolicitacaoBeneficio[]
+}
+
+// Modelo para histórico de mudanças de status das solicitações
+model HistoricoSolicitacao {
+  id              Int                  @id @default(autoincrement())
+  solicitacaoId   Int
+  solicitacao     SolicitacaoBeneficio @relation(fields: [solicitacaoId], references: [id], onDelete: Cascade)
+  statusAnterior  String? // Null para o primeiro registro
+  statusNovo      String
+  usuarioId       Int? // Usuário que fez a mudança (se aplicável)
+  motivo          String? // Motivo da mudança (rejeição, aprovação, etc)
+  observacoes     String? @db.Text
+  createdAt       DateTime             @default(now())
+
+  @@index([solicitacaoId])
+  @@index([createdAt])
+  @@map("historico_solicitacoes")
 }
 
 model OrdemServico {

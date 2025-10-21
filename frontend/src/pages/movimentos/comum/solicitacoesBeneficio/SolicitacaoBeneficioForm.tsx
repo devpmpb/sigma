@@ -11,7 +11,7 @@ import programaService, {
 } from "../../../../services/comum/programaService";
 import pessoaService, { Pessoa } from "../../../../services/comum/pessoaService";
 import { FormBase } from "../../../../components/cadastro";
-import { FormField } from "../../../../components/comum";
+import { FormField, HistoricoSolicitacao } from "../../../../components/comum";
 
 interface SolicitacaoBeneficioFormProps {
   id?: string | number;
@@ -26,14 +26,19 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
   id,
   onSave,
 }) => {
-  const params = useParams({ strict: false });
+  const params = useParams({ strict: false }) as any;
   const solicitacaoId = id || params.id;
-  
+
   const [programas, setProgramas] = useState<Programa[]>([]);
   const [pessoas, setPessoas] = useState<Pessoa[]>([]);
   const [programaSelecionado, setProgramaSelecionado] = useState<Programa | null>(null);
   const [loadingProgramas, setLoadingProgramas] = useState(false);
   const [loadingPessoas, setLoadingPessoas] = useState(false);
+
+  // NOVO: Estados para cálculo automático
+  const [calculando, setCalculando] = useState(false);
+  const [calculoResultado, setCalculoResultado] = useState<any>(null);
+  const [quantidadeSolicitada, setQuantidadeSolicitada] = useState<number>(0);
 
   // Valor inicial para o formulário
   const initialValues: SolicitacaoBeneficioDTO = {
@@ -101,7 +106,48 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
     setProgramaSelecionado(programa || null);
     setValue("programaId", programaId);
     setValue("pessoaId", 0); // Resetar pessoa selecionada
+    setCalculoResultado(null); // Limpar cálculo anterior
   };
+
+  // NOVO: Função para calcular benefício automaticamente
+  const calcularBeneficioAutomatico = async (pessoaId: number, programaId: number, quantidade?: number) => {
+    // Só calcular se tiver pessoa E programa selecionados
+    if (!pessoaId || pessoaId === 0 || !programaId || programaId === 0) {
+      setCalculoResultado(null);
+      return;
+    }
+
+    setCalculando(true);
+    try {
+      const resultado = await solicitacaoBeneficioService.calcularBeneficio({
+        pessoaId,
+        programaId,
+        quantidadeSolicitada: quantidade && quantidade > 0 ? quantidade : undefined
+      });
+
+      setCalculoResultado(resultado);
+    } catch (error: any) {
+      console.error("Erro ao calcular benefício:", error);
+      setCalculoResultado({
+        sucesso: false,
+        calculo: {
+          regraAplicadaId: null,
+          valorCalculado: 0,
+          calculoDetalhes: {},
+          mensagem: error.response?.data?.erro || "Erro ao calcular benefício",
+          avisos: error.response?.data?.detalhes || []
+        },
+        limitePeriodo: null
+      });
+    } finally {
+      setCalculando(false);
+    }
+  };
+
+  // NOVO: Effect para recalcular quando pessoa, programa ou quantidade mudarem
+  useEffect(() => {
+    // Pega os valores atuais do formulário (será implementado via callback)
+  }, []);
 
   // Validação do formulário
   const validate = (values: SolicitacaoBeneficioDTO) => {
@@ -142,7 +188,7 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
       id={solicitacaoId}
       initialValues={initialValues}
       validate={validate}
-      returnUrl="/movimentos/comum/solicitacoes"
+      returnUrl="/movimentos/comum/solicitacoesBeneficios"
       onSave={onSave}
     >
       {({ values, errors, touched, handleChange, setValue }) => (
@@ -197,7 +243,14 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
                 id="pessoaId"
                 name="pessoaId"
                 value={values.pessoaId}
-                onChange={(e) => handleSelectChange(e, handleChange, setValue)}
+                onChange={(e) => {
+                  handleSelectChange(e, handleChange, setValue);
+                  // NOVO: Calcular automaticamente quando pessoa for selecionada
+                  const pessoaId = parseInt(e.target.value);
+                  if (pessoaId && pessoaId !== 0 && values.programaId && values.programaId !== 0) {
+                    calcularBeneficioAutomatico(pessoaId, values.programaId, quantidadeSolicitada);
+                  }
+                }}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 disabled={!programaSelecionado || loadingPessoas}
               >
@@ -218,6 +271,36 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
                 ))}
               </select>
             </FormField>
+
+            {/* NOVO: Campo de quantidade solicitada */}
+            {programaSelecionado && values.pessoaId && values.pessoaId !== 0 && (
+              <FormField
+                name="quantidadeSolicitada"
+                label="Quantidade Solicitada"
+                helpText="Quantidade de toneladas, unidades, etc (opcional para alguns programas)"
+              >
+                <input
+                  type="number"
+                  id="quantidadeSolicitada"
+                  name="quantidadeSolicitada"
+                  value={quantidadeSolicitada || ""}
+                  onChange={(e) => {
+                    const valor = parseFloat(e.target.value) || 0;
+                    setQuantidadeSolicitada(valor);
+                    // Recalcular automaticamente
+                    calcularBeneficioAutomatico(values.pessoaId, values.programaId, valor);
+                  }}
+                  onBlur={() => {
+                    // Recalcular quando sair do campo
+                    calcularBeneficioAutomatico(values.pessoaId, values.programaId, quantidadeSolicitada);
+                  }}
+                  min="0"
+                  step="0.01"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Ex: 10 (toneladas)"
+                />
+              </FormField>
+            )}
 
             {solicitacaoId && solicitacaoId !== "novo" && (
               <FormField
@@ -261,8 +344,94 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
             />
           </FormField>
 
+          {/* NOVO: Preview do Cálculo Automático */}
+          {calculando && (
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 animate-pulse">
+              <p className="text-gray-600">⏳ Calculando benefício...</p>
+            </div>
+          )}
+
+          {calculoResultado && !calculando && (
+            <div className={`border rounded-lg p-4 ${
+              calculoResultado.calculo.regraAplicadaId
+                ? 'bg-green-50 border-green-200'
+                : 'bg-yellow-50 border-yellow-200'
+            }`}>
+              <h4 className={`font-medium mb-3 ${
+                calculoResultado.calculo.regraAplicadaId
+                  ? 'text-green-900'
+                  : 'text-yellow-900'
+              }`}>
+                {calculoResultado.calculo.regraAplicadaId ? '✅' : '⚠️'} Cálculo do Benefício
+              </h4>
+
+              {/* Valor Calculado */}
+              {calculoResultado.calculo.regraAplicadaId && (
+                <div className="mb-4">
+                  <div className="text-3xl font-bold text-green-700">
+                    R$ {calculoResultado.calculo.valorCalculado.toFixed(2)}
+                  </div>
+                  <p className="text-sm text-green-600 mt-1">
+                    {calculoResultado.calculo.mensagem}
+                  </p>
+                </div>
+              )}
+
+              {/* Detalhes do Cálculo */}
+              {calculoResultado.calculo.calculoDetalhes?.observacoes && (
+                <div className="space-y-1 text-sm">
+                  {calculoResultado.calculo.calculoDetalhes.observacoes.map((obs: string, idx: number) => (
+                    <p key={idx} className={calculoResultado.calculo.regraAplicadaId ? 'text-green-700' : 'text-yellow-700'}>
+                      • {obs}
+                    </p>
+                  ))}
+                </div>
+              )}
+
+              {/* Avisos */}
+              {calculoResultado.calculo.avisos && calculoResultado.calculo.avisos.length > 0 && (
+                <div className="mt-3 pt-3 border-t border-yellow-300">
+                  <p className="font-medium text-yellow-900 mb-1">⚠️ Avisos:</p>
+                  {calculoResultado.calculo.avisos.map((aviso: string, idx: number) => (
+                    <p key={idx} className="text-sm text-yellow-700">• {aviso}</p>
+                  ))}
+                </div>
+              )}
+
+              {/* Mensagem quando não se enquadra */}
+              {!calculoResultado.calculo.regraAplicadaId && (
+                <div className="text-yellow-700">
+                  <p className="font-medium">{calculoResultado.calculo.mensagem}</p>
+                  {calculoResultado.calculo.avisos && calculoResultado.calculo.avisos.map((aviso: string, idx: number) => (
+                    <p key={idx} className="text-sm mt-1">• {aviso}</p>
+                  ))}
+                </div>
+              )}
+
+              {/* Verificação de Limites */}
+              {calculoResultado.limitePeriodo && !calculoResultado.limitePeriodo.permitido && (
+                <div className="mt-3 pt-3 border-t border-red-300 bg-red-50 -m-4 mt-3 p-4 rounded-b-lg">
+                  <p className="font-medium text-red-900 flex items-center gap-2">
+                    🚫 Limite Atingido
+                  </p>
+                  <p className="text-sm text-red-700 mt-1">
+                    {calculoResultado.limitePeriodo.mensagem}
+                  </p>
+                </div>
+              )}
+
+              {calculoResultado.limitePeriodo && calculoResultado.limitePeriodo.permitido && (
+                <div className="mt-3 pt-3 border-t border-green-300">
+                  <p className="text-sm text-green-700">
+                    ✓ {calculoResultado.limitePeriodo.mensagem}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Informações do programa selecionado */}
-          {programaSelecionado && (
+          {programaSelecionado && !calculoResultado && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <h4 className="font-medium text-blue-900 mb-2">
                 📋 Informações do Programa
@@ -278,6 +447,13 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
                   <p><strong>Lei:</strong> {programaSelecionado.leiNumero}</p>
                 )}
               </div>
+            </div>
+          )}
+
+          {/* NOVO: Histórico de mudanças (apenas ao editar) */}
+          {solicitacaoId && solicitacaoId !== "novo" && typeof solicitacaoId === 'number' && (
+            <div className="mt-6">
+              <HistoricoSolicitacao solicitacaoId={solicitacaoId} />
             </div>
           )}
         </>

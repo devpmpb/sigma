@@ -93,6 +93,155 @@ const genericController = createGenericController({
 export const programaController = {
   ...genericController,
 
+  // Sobrescrever findAll para incluir relações (_count)
+  async findAll(req: Request, res: Response) {
+    try {
+      const { ativo } = req.query;
+      const whereClause: any = {};
+
+      // Filtrar por status ativo/inativo se o parâmetro for fornecido
+      if (ativo !== undefined) {
+        whereClause.ativo = ativo === "true";
+      }
+
+      const programas = await prisma.programa.findMany({
+        where: whereClause,
+        include: {
+          _count: {
+            select: {
+              solicitacoes: true,
+              regras: true
+            }
+          }
+        },
+        orderBy: { nome: "asc" }
+      });
+
+      return res.status(200).json(programas);
+    } catch (error) {
+      console.error("Erro ao listar programas:", error);
+      return res.status(500).json({
+        erro: "Erro ao listar programas"
+      });
+    }
+  },
+
+  // Sobrescrever método status para validar regras antes de ativar
+  async status(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+
+      // Verificar se programa existe
+      const programa = await prisma.programa.findUnique({
+        where: { id: parseInt(id) },
+        include: {
+          _count: {
+            select: {
+              regras: true
+            }
+          }
+        }
+      });
+
+      if (!programa) {
+        return res.status(404).json({ erro: "Programa não encontrado" });
+      }
+
+      // Se está tentando ATIVAR um programa, verificar se tem regras
+      if (!programa.ativo) {
+        const quantidadeRegras = programa._count.regras;
+
+        if (quantidadeRegras === 0) {
+          return res.status(400).json({
+            erro: "Não é possível ativar um programa sem regras de negócio",
+            detalhes: [
+              "Configure ao menos uma regra de negócio antes de ativar o programa.",
+              "As regras definem os critérios de elegibilidade e valores dos benefícios."
+            ],
+            sugestao: "Acesse 'Gerenciar Regras' no formulário do programa para configurar as regras."
+          });
+        }
+      }
+
+      // Atualizar status
+      const programaAtualizado = await prisma.programa.update({
+        where: { id: parseInt(id) },
+        data: { ativo: !programa.ativo }
+      });
+
+      return res.status(200).json({
+        mensagem: `Programa ${programaAtualizado.ativo ? 'ativado' : 'desativado'} com sucesso`,
+        programa: programaAtualizado
+      });
+    } catch (error) {
+      console.error("Erro ao alterar status do programa:", error);
+      return res.status(500).json({ erro: "Erro interno do servidor" });
+    }
+  },
+
+  // Sobrescrever método delete para prevenir exclusão com solicitações vinculadas
+  async delete(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+
+      // Verificar se programa existe
+      const programa = await prisma.programa.findUnique({
+        where: { id: parseInt(id) },
+        select: {
+          nome: true,
+          _count: {
+            select: {
+              solicitacoes: true,
+              regras: true
+            }
+          }
+        }
+      });
+
+      if (!programa) {
+        return res.status(404).json({ erro: "Programa não encontrado" });
+      }
+
+      // Verificar se há solicitações vinculadas
+      const quantidadeSolicitacoes = programa._count.solicitacoes;
+
+      if (quantidadeSolicitacoes > 0) {
+        return res.status(400).json({
+          erro: "Não é possível excluir este programa",
+          detalhes: [
+            `Existem ${quantidadeSolicitacoes} solicitação(ões) de benefício vinculadas a este programa.`,
+            "A exclusão causaria perda de dados importantes."
+          ],
+          sugestao: "Desative o programa ao invés de excluí-lo. Programas inativos não aparecem para novas solicitações, mas preservam o histórico.",
+          quantidadeSolicitacoes
+        });
+      }
+
+      // Se chegou aqui, pode excluir (mas vai excluir as regras em cascata)
+      await prisma.programa.delete({
+        where: { id: parseInt(id) }
+      });
+
+      return res.status(200).json({
+        mensagem: "Programa excluído com sucesso",
+        avisos: programa._count.regras > 0
+          ? [`${programa._count.regras} regra(s) de negócio também foram excluídas`]
+          : undefined
+      });
+    } catch (error) {
+      console.error("Erro ao excluir programa:", error);
+
+      // Verificar se é erro de integridade referencial
+      if ((error as any).code === "P2003") {
+        return res.status(400).json({
+          erro: "Não é possível excluir este programa pois está sendo utilizado em outros registros"
+        });
+      }
+
+      return res.status(500).json({ erro: "Erro interno do servidor" });
+    }
+  },
+
   // Buscar programas por tipo
   async getByTipo(req: Request, res: Response) {
     try {
