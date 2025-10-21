@@ -112,8 +112,12 @@ export async function calcularBeneficio(
             valorCalculado = (quantidadeSolicitada || 0) * valorBase;
           }
         } else {
-          // Sem quantidade, retorna o valor fixo ou limite máximo
-          valorCalculado = limite?.limite ? Math.min(valorBase, limite.limite) : valorBase;
+          // Sem quantidade informada, retorna 0
+          // O usuário precisa informar a quantidade para calcular o benefício
+          valorCalculado = 0;
+          avisos.push(
+            `Informe a quantidade desejada para calcular o valor do benefício`
+          );
         }
 
         return {

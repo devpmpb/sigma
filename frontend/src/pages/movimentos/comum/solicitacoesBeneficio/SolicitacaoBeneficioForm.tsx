@@ -38,7 +38,7 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
   // NOVO: Estados para cálculo automático
   const [calculando, setCalculando] = useState(false);
   const [calculoResultado, setCalculoResultado] = useState<any>(null);
-  const [quantidadeSolicitada, setQuantidadeSolicitada] = useState<number>(0);
+  const [quantidadeSolicitada, setQuantidadeSolicitada] = useState<number | string>(""); // Inicia vazio ao invés de 0
 
   // Valor inicial para o formulário
   const initialValues: SolicitacaoBeneficioDTO = {
@@ -273,7 +273,7 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
             </FormField>
 
             {/* NOVO: Campo de quantidade solicitada */}
-            {programaSelecionado && values.pessoaId && values.pessoaId !== 0 && (
+            {programaSelecionado && values.pessoaId !== 0 && (
               <FormField
                 name="quantidadeSolicitada"
                 label="Quantidade Solicitada"
@@ -283,16 +283,24 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
                   type="number"
                   id="quantidadeSolicitada"
                   name="quantidadeSolicitada"
-                  value={quantidadeSolicitada || ""}
+                  value={quantidadeSolicitada}
                   onChange={(e) => {
-                    const valor = parseFloat(e.target.value) || 0;
-                    setQuantidadeSolicitada(valor);
-                    // Recalcular automaticamente
-                    calcularBeneficioAutomatico(values.pessoaId, values.programaId, valor);
+                    const valorInput = e.target.value;
+                    // Se estiver vazio, mantém como string vazia
+                    if (valorInput === "" || valorInput === null) {
+                      setQuantidadeSolicitada("");
+                      calcularBeneficioAutomatico(values.pessoaId, values.programaId, undefined);
+                    } else {
+                      const valor = parseFloat(valorInput);
+                      setQuantidadeSolicitada(valor);
+                      // Recalcular automaticamente
+                      calcularBeneficioAutomatico(values.pessoaId, values.programaId, valor);
+                    }
                   }}
                   onBlur={() => {
                     // Recalcular quando sair do campo
-                    calcularBeneficioAutomatico(values.pessoaId, values.programaId, quantidadeSolicitada);
+                    const valor = typeof quantidadeSolicitada === 'number' ? quantidadeSolicitada : undefined;
+                    calcularBeneficioAutomatico(values.pessoaId, values.programaId, valor);
                   }}
                   min="0"
                   step="0.01"
