@@ -277,7 +277,11 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
               <FormField
                 name="quantidadeSolicitada"
                 label="Quantidade Solicitada"
-                helpText="Quantidade de toneladas, unidades, etc (opcional para alguns programas)"
+                helpText={
+                  calculoResultado?.calculo?.calculoDetalhes?.limiteAplicado?.limite
+                    ? `Limite máximo: ${calculoResultado.calculo.calculoDetalhes.limiteAplicado.limite} ${calculoResultado.calculo.calculoDetalhes.limiteAplicado.unidade || 'unidades'}`
+                    : "Quantidade de toneladas, unidades, etc (opcional para alguns programas)"
+                }
               >
                 <input
                   type="number"
@@ -304,9 +308,23 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
                   }}
                   min="0"
                   step="0.01"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    calculoResultado?.calculo?.calculoDetalhes?.limiteAplicado?.limite &&
+                    typeof quantidadeSolicitada === 'number' &&
+                    quantidadeSolicitada > calculoResultado.calculo.calculoDetalhes.limiteAplicado.limite
+                      ? 'border-yellow-400 bg-yellow-50'
+                      : 'border-gray-300'
+                  }`}
                   placeholder="Ex: 10 (toneladas)"
                 />
+                {/* Aviso visual quando exceder o limite */}
+                {calculoResultado?.calculo?.calculoDetalhes?.limiteAplicado?.limite &&
+                  typeof quantidadeSolicitada === 'number' &&
+                  quantidadeSolicitada > calculoResultado.calculo.calculoDetalhes.limiteAplicado.limite && (
+                  <div className="mt-2 text-sm text-yellow-700 bg-yellow-50 border border-yellow-200 rounded p-2">
+                    ⚠️ Quantidade informada ({quantidadeSolicitada} {calculoResultado.calculo.calculoDetalhes.limiteAplicado.unidade || 'unidades'}) excede o limite máximo de {calculoResultado.calculo.calculoDetalhes.limiteAplicado.limite} {calculoResultado.calculo.calculoDetalhes.limiteAplicado.unidade || 'unidades'}. O sistema calculará automaticamente com o valor máximo permitido.
+                  </div>
+                )}
               </FormField>
             )}
 
