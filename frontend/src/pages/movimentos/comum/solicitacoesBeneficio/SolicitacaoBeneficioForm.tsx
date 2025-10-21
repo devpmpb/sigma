@@ -9,7 +9,9 @@ import programaService, {
   Programa,
   TipoPerfil,
 } from "../../../../services/comum/programaService";
-import pessoaService, { Pessoa } from "../../../../services/comum/pessoaService";
+import pessoaService, {
+  Pessoa,
+} from "../../../../services/comum/pessoaService";
 import { FormBase } from "../../../../components/cadastro";
 import { FormField, HistoricoSolicitacao } from "../../../../components/comum";
 
@@ -31,19 +33,24 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
 
   const [programas, setProgramas] = useState<Programa[]>([]);
   const [pessoas, setPessoas] = useState<Pessoa[]>([]);
-  const [programaSelecionado, setProgramaSelecionado] = useState<Programa | null>(null);
+  const [programaSelecionado, setProgramaSelecionado] =
+    useState<Programa | null>(null);
   const [loadingProgramas, setLoadingProgramas] = useState(false);
   const [loadingPessoas, setLoadingPessoas] = useState(false);
 
   // NOVO: Estados para cálculo automático
   const [calculando, setCalculando] = useState(false);
   const [calculoResultado, setCalculoResultado] = useState<any>(null);
-  const [quantidadeSolicitada, setQuantidadeSolicitada] = useState<number | string>(""); // Inicia vazio ao invés de 0
+  const [quantidadeSolicitada, setQuantidadeSolicitada] = useState<
+    number | string
+  >(""); // Inicia vazio ao invés de 0
+  const [dadosCarregados, setDadosCarregados] = useState(false); // Controla se já carregou dados do edit
 
   // Valor inicial para o formulário
   const initialValues: SolicitacaoBeneficioDTO = {
     pessoaId: 0,
     programaId: 0,
+    quantidadeSolicitada: undefined,
     observacoes: "",
     status: StatusSolicitacao.PENDENTE,
   };
@@ -54,7 +61,7 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
       setLoadingProgramas(true);
       try {
         const programasAtivos = await programaService.getAll();
-        setProgramas(programasAtivos.filter(p => p.ativo));
+        setProgramas(programasAtivos.filter((p) => p.ativo));
       } catch (error) {
         console.error("Erro ao carregar programas:", error);
       } finally {
@@ -80,13 +87,11 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
         if (programaSelecionado.secretaria === TipoPerfil.AGRICULTURA) {
           // Para agricultura, buscar apenas pessoas que são produtores
           const todasPessoas = await pessoaService.getProdutores();
-          pessoasDisponiveis = todasPessoas.filter(pessoa => 
-            pessoa.ativo
-          );
+          pessoasDisponiveis = todasPessoas.filter((pessoa) => pessoa.ativo);
         } else {
           // Para obras, qualquer pessoa ativa
           const todasPessoas = await pessoaService.getAll();
-          pessoasDisponiveis = todasPessoas.filter(pessoa => pessoa.ativo);
+          pessoasDisponiveis = todasPessoas.filter((pessoa) => pessoa.ativo);
         }
 
         setPessoas(pessoasDisponiveis);
@@ -102,7 +107,7 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
 
   // Função para atualizar programa selecionado
   const handleProgramaChange = (programaId: number, setValue: any) => {
-    const programa = programas.find(p => p.id === programaId);
+    const programa = programas.find((p) => p.id === programaId);
     setProgramaSelecionado(programa || null);
     setValue("programaId", programaId);
     setValue("pessoaId", 0); // Resetar pessoa selecionada
@@ -110,7 +115,11 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
   };
 
   // NOVO: Função para calcular benefício automaticamente
-  const calcularBeneficioAutomatico = async (pessoaId: number, programaId: number, quantidade?: number) => {
+  const calcularBeneficioAutomatico = async (
+    pessoaId: number,
+    programaId: number,
+    quantidade?: number
+  ) => {
     // Só calcular se tiver pessoa E programa selecionados
     if (!pessoaId || pessoaId === 0 || !programaId || programaId === 0) {
       setCalculoResultado(null);
@@ -122,7 +131,8 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
       const resultado = await solicitacaoBeneficioService.calcularBeneficio({
         pessoaId,
         programaId,
-        quantidadeSolicitada: quantidade && quantidade > 0 ? quantidade : undefined
+        quantidadeSolicitada:
+          quantidade && quantidade > 0 ? quantidade : undefined,
       });
 
       setCalculoResultado(resultado);
@@ -135,19 +145,65 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
           valorCalculado: 0,
           calculoDetalhes: {},
           mensagem: error.response?.data?.erro || "Erro ao calcular benefício",
-          avisos: error.response?.data?.detalhes || []
+          avisos: error.response?.data?.detalhes || [],
         },
-        limitePeriodo: null
+        limitePeriodo: null,
       });
     } finally {
       setCalculando(false);
     }
   };
 
-  // NOVO: Effect para recalcular quando pessoa, programa ou quantidade mudarem
+  // NOVO: Carregar dados completos da solicitação quando estiver editando
   useEffect(() => {
-    // Pega os valores atuais do formulário (será implementado via callback)
-  }, []);
+    const carregarDadosCompletos = async () => {
+      if (!solicitacaoId || solicitacaoId === "novo" || dadosCarregados) {
+        return;
+      }
+
+      try {
+        const solicitacao = await solicitacaoBeneficioService.getById(
+          solicitacaoId
+        );
+        console.log("📦 Solicitação carregada:", solicitacao);
+
+        // 1. Carregar programa selecionado para aparecer no select
+        if (solicitacao.programa) {
+          setProgramaSelecionado(solicitacao.programa);
+        }
+
+        // 2. Carregar quantidade solicitada
+        const quantidadeCarregada = solicitacao.quantidadeSolicitada
+          ? Number(solicitacao.quantidadeSolicitada)
+          : "";
+        console.log(
+          "🔢 Quantidade carregada:",
+          quantidadeCarregada,
+          "| Original:",
+          solicitacao.quantidadeSolicitada
+        );
+        setQuantidadeSolicitada(quantidadeCarregada);
+
+        // Atualizar também no FormBase
+        // Nota: o setValue será passado pelo FormBase depois que renderizar
+
+        // 3. Recalcular o benefício com os dados carregados (atualiza o cálculo)
+        if (solicitacao.pessoaId && solicitacao.programaId) {
+          await calcularBeneficioAutomatico(
+            solicitacao.pessoaId,
+            solicitacao.programaId,
+            quantidadeCarregada ? Number(quantidadeCarregada) : undefined
+          );
+        }
+
+        setDadosCarregados(true);
+      } catch (error) {
+        console.error("Erro ao carregar dados da solicitação:", error);
+      }
+    };
+
+    carregarDadosCompletos();
+  }, [solicitacaoId, dadosCarregados]);
 
   // Validação do formulário
   const validate = (values: SolicitacaoBeneficioDTO) => {
@@ -166,15 +222,15 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
 
   // Função para converter strings para números
   const handleSelectChange = (
-    e: React.ChangeEvent<HTMLSelectElement>, 
-    handleChange: any, 
+    e: React.ChangeEvent<HTMLSelectElement>,
+    handleChange: any,
     setValue: any
   ) => {
     const { name, value } = e.target;
-    
+
     // Converter para número se for pessoaId ou programaId
-    if (name === 'pessoaId' || name === 'programaId') {
-      const numericValue = value === '' ? 0 : parseInt(value, 10);
+    if (name === "pessoaId" || name === "programaId") {
+      const numericValue = value === "" ? 0 : parseInt(value, 10);
       setValue(name, numericValue);
     } else {
       handleChange(e);
@@ -189,10 +245,21 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
       initialValues={initialValues}
       validate={validate}
       returnUrl="/movimentos/comum/solicitacoesBeneficios"
-      onSave={onSave}
+      //onSave={onSave}
     >
       {({ values, errors, touched, handleChange, setValue }) => (
         <>
+          {/* Aviso quando estiver editando */}
+          {solicitacaoId && solicitacaoId !== "novo" && (
+            <div className="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <p className="text-sm text-blue-800">
+                ℹ️ <strong>Modo de Edição:</strong> Você pode alterar todos os
+                dados da solicitação. O valor do benefício será recalculado
+                automaticamente ao modificar pessoa, programa ou quantidade.
+              </p>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
               name="programaId"
@@ -200,9 +267,12 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
               error={errors.programaId}
               touched={touched.programaId}
               required
-              helpText={programaSelecionado ? 
-                `Secretaria: ${programaService.formatarSecretaria(programaSelecionado.secretaria)}` : 
-                "Selecione o programa para definir as pessoas disponíveis"
+              helpText={
+                programaSelecionado
+                  ? `Secretaria: ${programaService.formatarSecretaria(
+                      programaSelecionado.secretaria
+                    )}`
+                  : "Selecione o programa para definir as pessoas disponíveis"
               }
             >
               <select
@@ -221,7 +291,8 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
                 </option>
                 {programas.map((programa) => (
                   <option key={programa.id} value={programa.id}>
-                    [{programaService.formatarSecretaria(programa.secretaria)}] {programa.nome}
+                    [{programaService.formatarSecretaria(programa.secretaria)}]{" "}
+                    {programa.nome}
                   </option>
                 ))}
               </select>
@@ -229,7 +300,11 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
 
             <FormField
               name="pessoaId"
-              label={programaSelecionado?.secretaria === TipoPerfil.AGRICULTURA ? "Produtor" : "Pessoa"}
+              label={
+                programaSelecionado?.secretaria === TipoPerfil.AGRICULTURA
+                  ? "Produtor"
+                  : "Pessoa"
+              }
               error={errors.pessoaId}
               touched={touched.pessoaId}
               required
@@ -247,8 +322,17 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
                   handleSelectChange(e, handleChange, setValue);
                   // NOVO: Calcular automaticamente quando pessoa for selecionada
                   const pessoaId = parseInt(e.target.value);
-                  if (pessoaId && pessoaId !== 0 && values.programaId && values.programaId !== 0) {
-                    calcularBeneficioAutomatico(pessoaId, values.programaId, quantidadeSolicitada);
+                  if (
+                    pessoaId &&
+                    pessoaId !== 0 &&
+                    values.programaId &&
+                    values.programaId !== 0
+                  ) {
+                    calcularBeneficioAutomatico(
+                      pessoaId,
+                      values.programaId,
+                      quantidadeSolicitada
+                    );
                   }
                 }}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -272,14 +356,21 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
               </select>
             </FormField>
 
-            {/* NOVO: Campo de quantidade solicitada */}
+            {/* NOVO: Campo de quantidade solicitada - READONLY se estiver editando */}
             {programaSelecionado && values.pessoaId !== 0 && (
               <FormField
                 name="quantidadeSolicitada"
                 label="Quantidade Solicitada"
                 helpText={
-                  calculoResultado?.calculo?.calculoDetalhes?.limiteAplicado?.limite
-                    ? `Limite máximo: ${calculoResultado.calculo.calculoDetalhes.limiteAplicado.limite} ${calculoResultado.calculo.calculoDetalhes.limiteAplicado.unidade || 'unidades'}`
+                  calculoResultado?.calculo?.calculoDetalhes?.limiteAplicado
+                    ?.limite
+                    ? `Limite máximo: ${
+                        calculoResultado.calculo.calculoDetalhes.limiteAplicado
+                          .limite
+                      } ${
+                        calculoResultado.calculo.calculoDetalhes.limiteAplicado
+                          .unidade || "unidades"
+                      }`
                     : "Quantidade de toneladas, unidades, etc (opcional para alguns programas)"
                 }
               >
@@ -293,38 +384,71 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
                     // Se estiver vazio, mantém como string vazia
                     if (valorInput === "" || valorInput === null) {
                       setQuantidadeSolicitada("");
-                      calcularBeneficioAutomatico(values.pessoaId, values.programaId, undefined);
+                      setValue("quantidadeSolicitada", undefined);
+                      calcularBeneficioAutomatico(
+                        values.pessoaId,
+                        values.programaId,
+                        undefined
+                      );
                     } else {
                       const valor = parseFloat(valorInput);
                       setQuantidadeSolicitada(valor);
+                      setValue("quantidadeSolicitada", valor);
                       // Recalcular automaticamente
-                      calcularBeneficioAutomatico(values.pessoaId, values.programaId, valor);
+                      calcularBeneficioAutomatico(
+                        values.pessoaId,
+                        values.programaId,
+                        valor
+                      );
                     }
                   }}
                   onBlur={() => {
-                    // Recalcular quando sair do campo
-                    const valor = typeof quantidadeSolicitada === 'number' ? quantidadeSolicitada : undefined;
-                    calcularBeneficioAutomatico(values.pessoaId, values.programaId, valor);
+                    const valor =
+                      typeof quantidadeSolicitada === "number"
+                        ? quantidadeSolicitada
+                        : undefined;
+                    calcularBeneficioAutomatico(
+                      values.pessoaId,
+                      values.programaId,
+                      valor
+                    );
                   }}
                   min="0"
                   step="0.01"
                   className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    calculoResultado?.calculo?.calculoDetalhes?.limiteAplicado?.limite &&
-                    typeof quantidadeSolicitada === 'number' &&
-                    quantidadeSolicitada > calculoResultado.calculo.calculoDetalhes.limiteAplicado.limite
-                      ? 'border-yellow-400 bg-yellow-50'
-                      : 'border-gray-300'
+                    calculoResultado?.calculo?.calculoDetalhes?.limiteAplicado
+                      ?.limite &&
+                    typeof quantidadeSolicitada === "number" &&
+                    quantidadeSolicitada >
+                      calculoResultado.calculo.calculoDetalhes.limiteAplicado
+                        .limite
+                      ? "border-yellow-400 bg-yellow-50"
+                      : "border-gray-300"
                   }`}
                   placeholder="Ex: 10 (toneladas)"
                 />
                 {/* Aviso visual quando exceder o limite */}
-                {calculoResultado?.calculo?.calculoDetalhes?.limiteAplicado?.limite &&
-                  typeof quantidadeSolicitada === 'number' &&
-                  quantidadeSolicitada > calculoResultado.calculo.calculoDetalhes.limiteAplicado.limite && (
-                  <div className="mt-2 text-sm text-yellow-700 bg-yellow-50 border border-yellow-200 rounded p-2">
-                    ⚠️ Quantidade informada ({quantidadeSolicitada} {calculoResultado.calculo.calculoDetalhes.limiteAplicado.unidade || 'unidades'}) excede o limite máximo de {calculoResultado.calculo.calculoDetalhes.limiteAplicado.limite} {calculoResultado.calculo.calculoDetalhes.limiteAplicado.unidade || 'unidades'}. O sistema calculará automaticamente com o valor máximo permitido.
-                  </div>
-                )}
+                {calculoResultado?.calculo?.calculoDetalhes?.limiteAplicado
+                  ?.limite &&
+                  typeof quantidadeSolicitada === "number" &&
+                  quantidadeSolicitada >
+                    calculoResultado.calculo.calculoDetalhes.limiteAplicado
+                      .limite && (
+                    <div className="mt-2 text-sm text-yellow-700 bg-yellow-50 border border-yellow-200 rounded p-2">
+                      ⚠️ Quantidade informada ({quantidadeSolicitada}{" "}
+                      {calculoResultado.calculo.calculoDetalhes.limiteAplicado
+                        .unidade || "unidades"}
+                      ) excede o limite máximo de{" "}
+                      {
+                        calculoResultado.calculo.calculoDetalhes.limiteAplicado
+                          .limite
+                      }{" "}
+                      {calculoResultado.calculo.calculoDetalhes.limiteAplicado
+                        .unidade || "unidades"}
+                      . O sistema calculará automaticamente com o valor máximo
+                      permitido.
+                    </div>
+                  )}
               </FormField>
             )}
 
@@ -342,11 +466,13 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
                   onChange={handleChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  {solicitacaoBeneficioService.getStatusOptions().map((status) => (
-                    <option key={status.value} value={status.value}>
-                      {status.label}
-                    </option>
-                  ))}
+                  {solicitacaoBeneficioService
+                    .getStatusOptions()
+                    .map((status) => (
+                      <option key={status.value} value={status.value}>
+                        {status.label}
+                      </option>
+                    ))}
                 </select>
               </FormField>
             )}
@@ -378,17 +504,22 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
           )}
 
           {calculoResultado && !calculando && (
-            <div className={`border rounded-lg p-4 ${
-              calculoResultado.calculo.regraAplicadaId
-                ? 'bg-green-50 border-green-200'
-                : 'bg-yellow-50 border-yellow-200'
-            }`}>
-              <h4 className={`font-medium mb-3 ${
+            <div
+              className={`border rounded-lg p-4 ${
                 calculoResultado.calculo.regraAplicadaId
-                  ? 'text-green-900'
-                  : 'text-yellow-900'
-              }`}>
-                {calculoResultado.calculo.regraAplicadaId ? '✅' : '⚠️'} Cálculo do Benefício
+                  ? "bg-green-50 border-green-200"
+                  : "bg-yellow-50 border-yellow-200"
+              }`}
+            >
+              <h4
+                className={`font-medium mb-3 ${
+                  calculoResultado.calculo.regraAplicadaId
+                    ? "text-green-900"
+                    : "text-yellow-900"
+                }`}
+              >
+                {calculoResultado.calculo.regraAplicadaId ? "✅" : "⚠️"} Cálculo
+                do Benefício
               </h4>
 
               {/* Valor Calculado */}
@@ -406,53 +537,78 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
               {/* Detalhes do Cálculo */}
               {calculoResultado.calculo.calculoDetalhes?.observacoes && (
                 <div className="space-y-1 text-sm">
-                  {calculoResultado.calculo.calculoDetalhes.observacoes.map((obs: string, idx: number) => (
-                    <p key={idx} className={calculoResultado.calculo.regraAplicadaId ? 'text-green-700' : 'text-yellow-700'}>
-                      • {obs}
-                    </p>
-                  ))}
+                  {calculoResultado.calculo.calculoDetalhes.observacoes.map(
+                    (obs: string, idx: number) => (
+                      <p
+                        key={idx}
+                        className={
+                          calculoResultado.calculo.regraAplicadaId
+                            ? "text-green-700"
+                            : "text-yellow-700"
+                        }
+                      >
+                        • {obs}
+                      </p>
+                    )
+                  )}
                 </div>
               )}
 
               {/* Avisos */}
-              {calculoResultado.calculo.avisos && calculoResultado.calculo.avisos.length > 0 && (
-                <div className="mt-3 pt-3 border-t border-yellow-300">
-                  <p className="font-medium text-yellow-900 mb-1">⚠️ Avisos:</p>
-                  {calculoResultado.calculo.avisos.map((aviso: string, idx: number) => (
-                    <p key={idx} className="text-sm text-yellow-700">• {aviso}</p>
-                  ))}
-                </div>
-              )}
+              {calculoResultado.calculo.avisos &&
+                calculoResultado.calculo.avisos.length > 0 && (
+                  <div className="mt-3 pt-3 border-t border-yellow-300">
+                    <p className="font-medium text-yellow-900 mb-1">
+                      ⚠️ Avisos:
+                    </p>
+                    {calculoResultado.calculo.avisos.map(
+                      (aviso: string, idx: number) => (
+                        <p key={idx} className="text-sm text-yellow-700">
+                          • {aviso}
+                        </p>
+                      )
+                    )}
+                  </div>
+                )}
 
               {/* Mensagem quando não se enquadra */}
               {!calculoResultado.calculo.regraAplicadaId && (
                 <div className="text-yellow-700">
-                  <p className="font-medium">{calculoResultado.calculo.mensagem}</p>
-                  {calculoResultado.calculo.avisos && calculoResultado.calculo.avisos.map((aviso: string, idx: number) => (
-                    <p key={idx} className="text-sm mt-1">• {aviso}</p>
-                  ))}
+                  <p className="font-medium">
+                    {calculoResultado.calculo.mensagem}
+                  </p>
+                  {calculoResultado.calculo.avisos &&
+                    calculoResultado.calculo.avisos.map(
+                      (aviso: string, idx: number) => (
+                        <p key={idx} className="text-sm mt-1">
+                          • {aviso}
+                        </p>
+                      )
+                    )}
                 </div>
               )}
 
               {/* Verificação de Limites */}
-              {calculoResultado.limitePeriodo && !calculoResultado.limitePeriodo.permitido && (
-                <div className="mt-3 pt-3 border-t border-red-300 bg-red-50 -m-4 mt-3 p-4 rounded-b-lg">
-                  <p className="font-medium text-red-900 flex items-center gap-2">
-                    🚫 Limite Atingido
-                  </p>
-                  <p className="text-sm text-red-700 mt-1">
-                    {calculoResultado.limitePeriodo.mensagem}
-                  </p>
-                </div>
-              )}
+              {calculoResultado.limitePeriodo &&
+                !calculoResultado.limitePeriodo.permitido && (
+                  <div className="mt-3 pt-3 border-t border-red-300 bg-red-50 -m-4 mt-3 p-4 rounded-b-lg">
+                    <p className="font-medium text-red-900 flex items-center gap-2">
+                      🚫 Limite Atingido
+                    </p>
+                    <p className="text-sm text-red-700 mt-1">
+                      {calculoResultado.limitePeriodo.mensagem}
+                    </p>
+                  </div>
+                )}
 
-              {calculoResultado.limitePeriodo && calculoResultado.limitePeriodo.permitido && (
-                <div className="mt-3 pt-3 border-t border-green-300">
-                  <p className="text-sm text-green-700">
-                    ✓ {calculoResultado.limitePeriodo.mensagem}
-                  </p>
-                </div>
-              )}
+              {calculoResultado.limitePeriodo &&
+                calculoResultado.limitePeriodo.permitido && (
+                  <div className="mt-3 pt-3 border-t border-green-300">
+                    <p className="text-sm text-green-700">
+                      ✓ {calculoResultado.limitePeriodo.mensagem}
+                    </p>
+                  </div>
+                )}
             </div>
           )}
 
@@ -463,25 +619,40 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
                 📋 Informações do Programa
               </h4>
               <div className="text-sm text-blue-700 space-y-1">
-                <p><strong>Nome:</strong> {programaSelecionado.nome}</p>
-                <p><strong>Tipo:</strong> {programaSelecionado.tipoPrograma}</p>
-                <p><strong>Secretaria:</strong> {programaService.formatarSecretaria(programaSelecionado.secretaria)}</p>
+                <p>
+                  <strong>Nome:</strong> {programaSelecionado.nome}
+                </p>
+                <p>
+                  <strong>Tipo:</strong> {programaSelecionado.tipoPrograma}
+                </p>
+                <p>
+                  <strong>Secretaria:</strong>{" "}
+                  {programaService.formatarSecretaria(
+                    programaSelecionado.secretaria
+                  )}
+                </p>
                 {programaSelecionado.descricao && (
-                  <p><strong>Descrição:</strong> {programaSelecionado.descricao}</p>
+                  <p>
+                    <strong>Descrição:</strong> {programaSelecionado.descricao}
+                  </p>
                 )}
                 {programaSelecionado.leiNumero && (
-                  <p><strong>Lei:</strong> {programaSelecionado.leiNumero}</p>
+                  <p>
+                    <strong>Lei:</strong> {programaSelecionado.leiNumero}
+                  </p>
                 )}
               </div>
             </div>
           )}
 
           {/* NOVO: Histórico de mudanças (apenas ao editar) */}
-          {solicitacaoId && solicitacaoId !== "novo" && typeof solicitacaoId === 'number' && (
-            <div className="mt-6">
-              <HistoricoSolicitacao solicitacaoId={solicitacaoId} />
-            </div>
-          )}
+          {solicitacaoId &&
+            solicitacaoId !== "novo" &&
+            typeof solicitacaoId === "number" && (
+              <div className="mt-6">
+                <HistoricoSolicitacao solicitacaoId={solicitacaoId} />
+              </div>
+            )}
         </>
       )}
     </FormBase>

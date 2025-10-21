@@ -51,9 +51,11 @@ export const solicitacaoBeneficioController = {
               id: true,
               nome: true,
               tipoPrograma: true,
-              secretaria: true
+              secretaria: true,
+              ativo: true
             }
-          }
+          },
+          regraAplicada: true
           },
           orderBy: { datasolicitacao: "asc" },
         });
@@ -66,6 +68,52 @@ export const solicitacaoBeneficioController = {
         });
       }
     },
+
+  // SOBRESCREVER: Método findById com relacionamentos
+  async findById(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+
+      const solicitacao = await prisma.solicitacaoBeneficio.findUnique({
+        where: { id: parseInt(id) },
+        include: {
+          pessoa: {
+            select: {
+              id: true,
+              nome: true,
+              cpfCnpj: true,
+              telefone: true,
+              email: true,
+              isProdutor: true
+            }
+          },
+          programa: {
+            select: {
+              id: true,
+              nome: true,
+              tipoPrograma: true,
+              secretaria: true,
+              ativo: true,
+              descricao: true,
+              leiNumero: true
+            }
+          },
+          regraAplicada: true
+        }
+      });
+
+      if (!solicitacao) {
+        return res.status(404).json({ erro: "Solicitação não encontrada" });
+      }
+
+      return res.status(200).json(solicitacao);
+    } catch (error) {
+      console.error("Erro ao buscar solicitação:", error);
+      return res.status(500).json({
+        erro: "Erro ao buscar solicitação",
+      });
+    }
+  },
 
   // SOBRESCREVER: Método create com validações assíncronas
   async create(req: Request, res: Response) {
@@ -328,6 +376,13 @@ export const solicitacaoBeneficioController = {
     try {
       const { pessoaId, programaId, quantidadeSolicitada, observacoes } = req.body;
 
+      console.log("🔍 BACKEND - createComCalculo recebeu:", {
+        pessoaId,
+        programaId,
+        quantidadeSolicitada,
+        observacoes
+      });
+
       if (!pessoaId || !programaId) {
         return res.status(400).json({
           erro: "Pessoa e Programa são obrigatórios"
@@ -387,6 +442,13 @@ export const solicitacaoBeneficioController = {
         parseInt(programaId),
         quantidadeSolicitada ? parseFloat(quantidadeSolicitada) : undefined
       );
+
+      console.log("💰 BACKEND - Resultado do cálculo:", {
+        regraAplicadaId: calculo.regraAplicadaId,
+        valorCalculado: calculo.valorCalculado,
+        quantidadeSolicitada: quantidadeSolicitada,
+        temDetalhes: !!calculo.calculoDetalhes
+      });
 
       // Verificar limites se há regra aplicada
       if (calculo.regraAplicadaId) {
