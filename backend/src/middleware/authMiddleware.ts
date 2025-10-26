@@ -35,7 +35,7 @@ export const authenticateToken = async (
     // Verificar se o token é válido
     const decoded = jwt.verify(
       token,
-      process.env.JWT_SECRET || "sigma_secret_key"
+      process.env.JWT_SECRET!
     ) as { userId: number };
 
     // Verificar se a sessão ainda é válida
@@ -155,7 +155,7 @@ export const optionalAuth = async (
       if (token) {
         const decoded = jwt.verify(
           token,
-          process.env.JWT_SECRET || "sigma_secret_key"
+          process.env.JWT_SECRET!
         ) as { userId: number };
 
         const sessao = await prisma.usuarioSessao.findFirst({

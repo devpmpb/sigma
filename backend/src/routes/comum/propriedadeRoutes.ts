@@ -40,7 +40,7 @@ router.get(
   requirePermission(ModuloSistema.COMUM, AcaoPermissao.VIEW),
   propriedadeController.findByTipo
 );
-router.get("/situacao/:situacao", propriedadeController.findBySituacao);
+router.get("/situacao/:situacao", requirePermission(ModuloSistema.COMUM, AcaoPermissao.VIEW), propriedadeController.findBySituacao);
 router.post(
   "/",
   requirePermission(ModuloSistema.COMUM, AcaoPermissao.CREATE),

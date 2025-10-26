@@ -33,9 +33,9 @@ router.use("/auth", authRoutes);
 // MIDDLEWARE DE AUTENTICAÇÃO para todas as rotas abaixo
 router.use(authenticateToken);
 
-// ADMINISTRAÇÃO (requer acesso admin)
-router.use("/usuarios", usuarioRoutes);
-router.use("/perfis", perfilRoutes);
+// ADMINISTRAÇÃO (requer acesso ao módulo ADMIN)
+router.use("/usuarios", requireModuleAccess(ModuloSistema.ADMIN), usuarioRoutes);
+router.use("/perfis", requireModuleAccess(ModuloSistema.ADMIN), perfilRoutes);
 
 // COMUM (requer pelo menos acesso ao módulo comum)
 router.use("/bairros", requireModuleAccess(ModuloSistema.COMUM), bairroRoutes);

@@ -40,13 +40,13 @@ interface AuthenticatedUser {
 const generateTokens = (userId: number) => {
   const accessToken = jwt.sign(
     { userId },
-    process.env.JWT_SECRET || "sigma_secret_key",
+    process.env.JWT_SECRET!,
     { expiresIn: "15m" } // Token de acesso expira em 15 minutos
   );
 
   const refreshToken = jwt.sign(
     { userId, type: "refresh" },
-    process.env.JWT_REFRESH_SECRET || "sigma_refresh_secret_key",
+    process.env.JWT_REFRESH_SECRET!,
     { expiresIn: "7d" } // Refresh token expira em 7 dias
   );
 
@@ -113,51 +113,33 @@ export const authController = {
         },
       });
 
-      // Log de auditoria para tentativa de login
-      await prisma.auditoriaLogin.create({
-        data: {
-          email,
-          sucesso: false,
-          ipAddress: req.ip,
-          userAgent: req.get("User-Agent"),
-          motivo: !usuario ? "usuario_nao_encontrado" : "senha_incorreta",
-        },
-      });
+      // Hash dummy para evitar timing attack
+      // Se usuário não existir, ainda fazemos bcrypt.compare para manter tempo consistente
+      const hashDummy = "$2a$10$XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX";
+      const senhaParaComparar = usuario?.senha || hashDummy;
+
+      // SEMPRE executar bcrypt.compare (evita timing attack)
+      const senhaValida = await bcrypt.compare(password, senhaParaComparar);
+
+      // Variável para rastrear motivo da falha (para auditoria interna)
+      let motivoFalha = "";
+      let loginBemSucedido = false;
 
       // Verificar se usuário existe
       if (!usuario) {
-        return res.status(401).json({
-          error: "Credenciais inválidas",
-        });
+        motivoFalha = "usuario_nao_encontrado";
       }
-
       // Verificar se usuário está ativo
-      if (!usuario.ativo) {
-        await prisma.auditoriaLogin.updateMany({
-          where: { email, createdAt: { gte: new Date(Date.now() - 1000) } },
-          data: { motivo: "usuario_inativo" },
-        });
-
-        return res.status(401).json({
-          error: "Usuário inativo",
-        });
+      else if (!usuario.ativo) {
+        motivoFalha = "usuario_inativo";
       }
-
       // Verificar se usuário está bloqueado
-      if (usuario.bloqueadoAte && usuario.bloqueadoAte > new Date()) {
-        await prisma.auditoriaLogin.updateMany({
-          where: { email, createdAt: { gte: new Date(Date.now() - 1000) } },
-          data: { motivo: "usuario_bloqueado" },
-        });
-
-        return res.status(401).json({
-          error: "Usuário temporariamente bloqueado",
-        });
+      else if (usuario.bloqueadoAte && usuario.bloqueadoAte > new Date()) {
+        motivoFalha = "usuario_bloqueado";
       }
-
       // Verificar senha
-      const senhaValida = await bcrypt.compare(password, usuario.senha);
-      if (!senhaValida) {
+      else if (!senhaValida) {
+        motivoFalha = "senha_incorreta";
         // Incrementar tentativas de login
         await prisma.usuario.update({
           where: { id: usuario.id },
@@ -170,7 +152,24 @@ export const authController = {
                 : undefined,
           },
         });
+      } else {
+        // Login bem-sucedido!
+        loginBemSucedido = true;
+      }
 
+      // Log de auditoria (após todas as verificações)
+      await prisma.auditoriaLogin.create({
+        data: {
+          email,
+          sucesso: loginBemSucedido,
+          ipAddress: req.ip,
+          userAgent: req.get("User-Agent"),
+          motivo: loginBemSucedido ? "login_sucesso" : motivoFalha,
+        },
+      });
+
+      // Se falhou por qualquer motivo, retornar erro genérico
+      if (!loginBemSucedido) {
         return res.status(401).json({
           error: "Credenciais inválidas",
         });
@@ -200,12 +199,6 @@ export const authController = {
           ipAddress: req.ip,
           userAgent: req.get("User-Agent"),
         },
-      });
-
-      // Log de sucesso
-      await prisma.auditoriaLogin.updateMany({
-        where: { email, createdAt: { gte: new Date(Date.now() - 1000) } },
-        data: { sucesso: true, motivo: "login_sucesso" },
       });
 
       // Buscar dados completos do usuário
@@ -240,7 +233,7 @@ export const authController = {
       // Verificar se refresh token é válido
       const decoded = jwt.verify(
         refreshToken,
-        process.env.JWT_REFRESH_SECRET || "sigma_refresh_secret_key"
+        process.env.JWT_REFRESH_SECRET!
       ) as { userId: number; type: string };
 
       if (decoded.type !== "refresh") {
