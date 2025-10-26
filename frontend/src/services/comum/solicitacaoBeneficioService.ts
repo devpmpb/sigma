@@ -8,7 +8,7 @@ export enum StatusSolicitacao {
   EM_ANALISE = "em_analise",
   APROVADA = "aprovada",
   REJEITADA = "rejeitada",
-  CANCELADA = "cancelada"
+  CANCELADA = "cancelada",
 }
 
 export interface SolicitacaoBeneficio {
@@ -20,7 +20,22 @@ export interface SolicitacaoBeneficio {
   observacoes?: string;
   createdAt: string;
   updatedAt: string;
-  
+
+  // NOVOS CAMPOS: Cálculo automático
+  regraAplicadaId?: number;
+  valorCalculado?: number;
+  quantidadeSolicitada?: number;
+  calculoDetalhes?: {
+    areaEfetiva?: number;
+    regraAtendida?: string;
+    condicao?: string;
+    valorBase?: number;
+    quantidadeSolicitada?: number;
+    percentualAplicado?: number;
+    limiteAplicado?: any;
+    observacoes?: string[];
+  };
+
   // Relacionamentos
   pessoa: {
     id: number;
@@ -38,11 +53,19 @@ export interface SolicitacaoBeneficio {
     secretaria: TipoPerfil;
     ativo: boolean;
   };
+  regraAplicada?: {
+    id: number;
+    tipoRegra: string;
+    parametro: any;
+    valorBeneficio: number;
+    limiteBeneficio: any;
+  };
 }
 
 export interface SolicitacaoBeneficioDTO {
   pessoaId: number;
   programaId: number;
+  quantidadeSolicitada?: number;
   observacoes?: string;
   status?: StatusSolicitacao;
 }
@@ -68,30 +91,49 @@ export interface EstatisticasSolicitacao {
   }>;
 }
 
-class SolicitacaoBeneficioService extends BaseApiService<SolicitacaoBeneficio, SolicitacaoBeneficioDTO> {
+class SolicitacaoBeneficioService extends BaseApiService<
+  SolicitacaoBeneficio,
+  SolicitacaoBeneficioDTO
+> {
   constructor() {
     super("/solicitacoesBeneficio", "comum");
   }
 
   /**
-   * Sobrescrever create para garantir conversão de tipos
+   * Sobrescrever create para SEMPRE usar endpoint com cálculo automático
+   * O FormBase chama este método normalmente, mas por baixo usa o endpoint inteligente
    */
-  async create(data: SolicitacaoBeneficioDTO): Promise<SolicitacaoBeneficio> {
-    // Garantir que IDs sejam números
-    const processedData = {
-      ...data,
+  create = async (
+    data: SolicitacaoBeneficioDTO
+  ): Promise<SolicitacaoBeneficio> => {
+    console.log("🚀 CREATE chamado com dados:", data);
+
+    // Usar sempre o endpoint com cálculo automático
+    const dadosParaEnviar = {
       pessoaId: Number(data.pessoaId),
       programaId: Number(data.programaId),
+      quantidadeSolicitada: data.quantidadeSolicitada
+        ? Number(data.quantidadeSolicitada)
+        : undefined,
+      observacoes: data.observacoes,
     };
 
-    const response = await apiClient.post(this.baseUrl, processedData);
-    return response.data;
-  }
+    console.log("📤 Enviando para createComCalculo:", dadosParaEnviar);
+
+    const resultado = await this.createComCalculo(dadosParaEnviar);
+
+    console.log("✅ Resultado do createComCalculo:", resultado);
+
+    return resultado.solicitacao;
+  };
 
   /**
    * Sobrescrever update para garantir conversão de tipos
    */
-  async update(id: number | string, data: Partial<SolicitacaoBeneficioDTO>): Promise<SolicitacaoBeneficio> {
+  async update(
+    id: number | string,
+    data: Partial<SolicitacaoBeneficioDTO>
+  ): Promise<SolicitacaoBeneficio> {
     // Garantir que IDs sejam números se fornecidos
     const processedData = {
       ...data,
@@ -99,14 +141,19 @@ class SolicitacaoBeneficioService extends BaseApiService<SolicitacaoBeneficio, S
       ...(data.programaId && { programaId: Number(data.programaId) }),
     };
 
-    const response = await apiClient.put(`${this.baseUrl}/${id}`, processedData);
+    const response = await apiClient.put(
+      `${this.baseUrl}/${id}`,
+      processedData
+    );
     return response.data;
   }
 
   /**
    * Busca solicitações por pessoa
    */
-  async getByPessoa(pessoaId: number | string): Promise<SolicitacaoBeneficio[]> {
+  async getByPessoa(
+    pessoaId: number | string
+  ): Promise<SolicitacaoBeneficio[]> {
     const response = await apiClient.get(`${this.baseUrl}/pessoa/${pessoaId}`);
     return response.data;
   }
@@ -114,8 +161,12 @@ class SolicitacaoBeneficioService extends BaseApiService<SolicitacaoBeneficio, S
   /**
    * Busca solicitações por programa
    */
-  async getByPrograma(programaId: number | string): Promise<SolicitacaoBeneficio[]> {
-    const response = await apiClient.get(`${this.baseUrl}/programa/${programaId}`);
+  async getByPrograma(
+    programaId: number | string
+  ): Promise<SolicitacaoBeneficio[]> {
+    const response = await apiClient.get(
+      `${this.baseUrl}/programa/${programaId}`
+    );
     return response.data;
   }
 
@@ -123,7 +174,9 @@ class SolicitacaoBeneficioService extends BaseApiService<SolicitacaoBeneficio, S
    * Busca solicitações por secretaria
    */
   async getBySecretaria(secretaria: string): Promise<SolicitacaoBeneficio[]> {
-    const response = await apiClient.get(`${this.baseUrl}/secretaria/${secretaria}`);
+    const response = await apiClient.get(
+      `${this.baseUrl}/secretaria/${secretaria}`
+    );
     return response.data;
   }
 
@@ -131,7 +184,7 @@ class SolicitacaoBeneficioService extends BaseApiService<SolicitacaoBeneficio, S
    * Atualiza status da solicitação
    */
   async updateStatus(
-    id: number | string, 
+    id: number | string,
     dados: {
       status: StatusSolicitacao;
       observacoes?: string;
@@ -168,11 +221,31 @@ class SolicitacaoBeneficioService extends BaseApiService<SolicitacaoBeneficio, S
    */
   getStatusOptions() {
     return [
-      { value: StatusSolicitacao.PENDENTE, label: "Pendente", color: "yellow" as const },
-      { value: StatusSolicitacao.EM_ANALISE, label: "Em Análise", color: "blue" as const },
-      { value: StatusSolicitacao.APROVADA, label: "Aprovada", color: "green" as const },
-      { value: StatusSolicitacao.REJEITADA, label: "Rejeitada", color: "red" as const },
-      { value: StatusSolicitacao.CANCELADA, label: "Cancelada", color: "gray" as const },
+      {
+        value: StatusSolicitacao.PENDENTE,
+        label: "Pendente",
+        color: "yellow" as const,
+      },
+      {
+        value: StatusSolicitacao.EM_ANALISE,
+        label: "Em Análise",
+        color: "blue" as const,
+      },
+      {
+        value: StatusSolicitacao.APROVADA,
+        label: "Aprovada",
+        color: "green" as const,
+      },
+      {
+        value: StatusSolicitacao.REJEITADA,
+        label: "Rejeitada",
+        color: "red" as const,
+      },
+      {
+        value: StatusSolicitacao.CANCELADA,
+        label: "Cancelada",
+        color: "gray" as const,
+      },
     ];
   }
 
@@ -187,7 +260,7 @@ class SolicitacaoBeneficioService extends BaseApiService<SolicitacaoBeneficio, S
       [StatusSolicitacao.REJEITADA]: "Rejeitada",
       [StatusSolicitacao.CANCELADA]: "Cancelada",
     };
-    
+
     return statusMap[status as StatusSolicitacao] || status;
   }
 
@@ -202,25 +275,98 @@ class SolicitacaoBeneficioService extends BaseApiService<SolicitacaoBeneficio, S
       [StatusSolicitacao.REJEITADA]: "red" as const,
       [StatusSolicitacao.CANCELADA]: "gray" as const,
     };
-    
+
     return colorMap[status as StatusSolicitacao] || "gray";
   }
 
+  // ==================== NOVOS MÉTODOS ====================
+
   /**
-   * Valida dados da solicitação
+   * Calcula o benefício sem criar a solicitação
    */
-  private validateSolicitacaoData(data: SolicitacaoBeneficioDTO): string[] {
-    const errors: string[] = [];
+  async calcularBeneficio(dados: {
+    pessoaId: number;
+    programaId: number;
+    quantidadeSolicitada?: number;
+  }): Promise<{
+    sucesso: boolean;
+    calculo: {
+      regraAplicadaId: number | null;
+      valorCalculado: number;
+      calculoDetalhes: any;
+      mensagem: string;
+      avisos?: string[];
+    };
+    limitePeriodo: {
+      permitido: boolean;
+      mensagem: string;
+      detalhes?: any;
+    } | null;
+  }> {
+    const response = await apiClient.post(`${this.baseUrl}/calcular`, dados);
+    return response.data;
+  }
 
-    if (!data.pessoaId) {
-      errors.push("Pessoa é obrigatória");
+  /**
+   * Cria solicitação com cálculo automático
+   */
+  async createComCalculo(dados: {
+    pessoaId: number;
+    programaId: number;
+    quantidadeSolicitada?: number;
+    observacoes?: string;
+  }): Promise<{
+    sucesso: boolean;
+    mensagem: string;
+    solicitacao: SolicitacaoBeneficio;
+    calculo: {
+      mensagem: string;
+      avisos?: string[];
+    };
+  }> {
+    console.log("🎯 createComCalculo chamado com:", dados);
+    const response = await apiClient.post(`${this.baseUrl}/com-calculo`, dados);
+    console.log("📥 Resposta do backend:", response.data);
+    return response.data;
+  }
+
+  /**
+   * Busca histórico de mudanças de status
+   */
+  async getHistorico(id: number | string): Promise<{
+    historico: Array<{
+      id: number;
+      statusAnterior: string;
+      statusNovo: string;
+      usuario: string | number;
+      motivo?: string;
+      observacoes?: string;
+      data: string;
+      descricao: string;
+    }>;
+  }> {
+    const response = await apiClient.get(`${this.baseUrl}/${id}/historico`);
+    return response.data;
+  }
+
+  /**
+   * Atualiza status com registro no histórico
+   */
+  async updateStatusComHistorico(
+    id: number | string,
+    dados: {
+      status: StatusSolicitacao;
+      observacoes?: string;
+      motivo?: string;
+      usuarioId?: number;
     }
-
-    if (!data.programaId) {
-      errors.push("Programa é obrigatório");
-    }
-
-    return errors;
+  ): Promise<{
+    sucesso: boolean;
+    mensagem: string;
+    solicitacao: SolicitacaoBeneficio;
+  }> {
+    const response = await apiClient.put(`${this.baseUrl}/${id}/status`, dados);
+    return response.data;
   }
 }
 

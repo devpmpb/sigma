@@ -5,13 +5,10 @@ import { ModuloSistema, AcaoPermissao } from "@prisma/client";
 
 const router = Router();
 
-// Listar todos os programas
-router.get(
-  "/",
-  requirePermission(ModuloSistema.COMUM, AcaoPermissao.VIEW),
-  programaController.findAll
-);
+// IMPORTANTE: Rotas específicas DEVEM vir ANTES das rotas genéricas com :id
+// para evitar conflitos de roteamento
 
+// Rotas específicas (sem :id)
 // Buscar estatísticas dos programas
 router.get(
   "/stats",
@@ -24,6 +21,21 @@ router.get(
   "/tipo/:tipo",
   requirePermission(ModuloSistema.COMUM, AcaoPermissao.VIEW),
   programaController.getByTipo
+);
+
+// Buscar programas por secretaria
+router.get(
+  "/secretaria/:secretaria",
+  requirePermission(ModuloSistema.COMUM, AcaoPermissao.VIEW),
+  programaController.getBySecretaria
+);
+
+// Rotas CRUD básicas
+// Listar todos os programas
+router.get(
+  "/",
+  requirePermission(ModuloSistema.COMUM, AcaoPermissao.VIEW),
+  programaController.findAll
 );
 
 // Buscar programa por ID
@@ -73,12 +85,6 @@ router.delete(
   "/:id",
   requirePermission(ModuloSistema.COMUM, AcaoPermissao.DELETE),
   programaController.delete
-);
-
-router.get(
-  "/secretaria/:secretaria",
-  requirePermission(ModuloSistema.COMUM, AcaoPermissao.VIEW),
-  programaController.getBySecretaria
 );
 
 export default router;
