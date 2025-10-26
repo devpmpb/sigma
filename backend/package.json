@@ -25,7 +25,17 @@
     "test:coverage": "jest --coverage",
     "enum:check": "node scripts/check-enums.js",
     "auth:test": "node scripts/test-auth.js",
-    "users:create-admin": "node scripts/create-admin.js"
+    "users:create-admin": "node scripts/create-admin.js",
+    "pm2:start": "pm2 start ecosystem.config.js --env production",
+    "pm2:start:dev": "pm2 start ecosystem.config.js --env development",
+    "pm2:stop": "pm2 stop sigma-backend",
+    "pm2:restart": "pm2 restart sigma-backend",
+    "pm2:logs": "pm2 logs sigma-backend",
+    "pm2:status": "pm2 status",
+    "pm2:monit": "pm2 monit",
+    "deploy:build": "npm install --production && npm run build && npm run migrate:deploy",
+    "deploy:full": "npm run deploy:build && npm run pm2:restart",
+    "secrets:generate": "node -e \"console.log('JWT_SECRET=' + require('crypto').randomBytes(64).toString('hex')); console.log('JWT_REFRESH_SECRET=' + require('crypto').randomBytes(64).toString('hex'));\""
   },
   "dependencies": {
     "@prisma/client": "^6.16.2",

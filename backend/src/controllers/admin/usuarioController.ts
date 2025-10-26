@@ -3,6 +3,7 @@ import prisma from "../../utils/prisma";
 import { TipoPerfil } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
+import crypto from "crypto";
 
 // Schemas de validação com ENUMs
 const createUserSchema = z.object({
@@ -383,8 +384,8 @@ export const usuarioController = {
         return res.status(404).json({ erro: "Usuário não encontrado" });
       }
 
-      // Gerar nova senha aleatória
-      const novaSenha = Math.random().toString(36).slice(-8);
+      // Gerar nova senha aleatória de forma criptograficamente segura
+      const novaSenha = crypto.randomBytes(12).toString('base64').slice(0, 16);
       const senhaHash = await bcrypt.hash(novaSenha, 10);
 
       await prisma.usuario.update({

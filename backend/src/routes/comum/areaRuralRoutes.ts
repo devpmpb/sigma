@@ -1,25 +1,15 @@
 import { Router } from "express";
 import { areaRuralController } from "../../controllers/comum/areaRuralController";
+import { requirePermission } from "../../middleware/authMiddleware";
+import { ModuloSistema, AcaoPermissao } from "@prisma/client";
 
 const router = Router();
 
-// Aplicar autenticação a todas as rotas
-
 // Rotas básicas CRUD do generic controller
-router.get("/", areaRuralController.findAll);
-router.get("/:id", areaRuralController.findById);
-router.post("/", areaRuralController.create);
-router.put("/:id", areaRuralController.update);
-router.delete("/:id", areaRuralController.delete);
-
-/* Rota para toggle de status (ativar/desativar)
-if (areaRuralController.toggleStatus) {
-  router.patch("/:id/toggle-status", areaRuralController.toggleStatus);
-}
-
-// Rota de busca/pesquisa
-if (areaRuralController.search) {
-  router.get("/search", areaRuralController.search);
-}*/
+router.get("/", requirePermission(ModuloSistema.COMUM, AcaoPermissao.VIEW), areaRuralController.findAll);
+router.get("/:id", requirePermission(ModuloSistema.COMUM, AcaoPermissao.VIEW), areaRuralController.findById);
+router.post("/", requirePermission(ModuloSistema.COMUM, AcaoPermissao.CREATE), areaRuralController.create);
+router.put("/:id", requirePermission(ModuloSistema.COMUM, AcaoPermissao.EDIT), areaRuralController.update);
+router.delete("/:id", requirePermission(ModuloSistema.COMUM, AcaoPermissao.DELETE), areaRuralController.delete);
 
 export default router;
