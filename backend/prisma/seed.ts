@@ -3,6 +3,7 @@ import { PrismaClient } from "@prisma/client";
 import seedAuth from "./seeds/authSeed";
 
 import seedProgramasLegais from "./seeds/programasLegaisCompleto";
+import seedProdutoresAdicionais from "./seeds/produtoresAdicionais";
 
 import seedCondominos from "./seeds/condominosSeed";
 import seedLogradouros from "./seeds/logradourosSeed";
@@ -16,6 +17,8 @@ async function main() {
   await seedAuth();
 
   await seedProgramasLegais();
+
+  await seedProdutoresAdicionais();
 
   await seedCondominos();
   //wait seedSolicitacoesBeneficio();

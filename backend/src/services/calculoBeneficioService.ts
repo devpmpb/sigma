@@ -144,8 +144,110 @@ export async function calcularBeneficio(
       }
     }
 
+    // Regras de equipamentos (ordenhadeiras, resfriadores)
+    if (regra.tipoRegra === "tipo_equipamento") {
+      const limite = regra.limiteBeneficio as any;
+      const valorBase = Number(regra.valorBeneficio);
+
+      // Para equipamentos, aceita qualquer produtor
+      // (as validações de produção mínima serão feitas na análise da solicitação)
+      let valorCalculado = valorBase; // Valor máximo do equipamento
+
+      // Se foi informado valor da nota fiscal
+      if (quantidadeSolicitada && quantidadeSolicitada > 0) {
+        if (limite?.percentual) {
+          valorCalculado = quantidadeSolicitada * (limite.percentual / 100);
+
+          // Aplicar teto se houver
+          if (limite?.limite && valorCalculado > limite.limite) {
+            avisos.push(
+              `Valor calculado (R$ ${valorCalculado.toFixed(2)}) excede o limite de R$ ${limite.limite.toFixed(2)}`
+            );
+            valorCalculado = limite.limite;
+          }
+        }
+      } else {
+        valorCalculado = 0;
+        avisos.push(
+          `Informe o valor da nota fiscal para calcular o benefício`
+        );
+      }
+
+      return {
+        regraAplicadaId: regra.id,
+        valorCalculado: Number(valorCalculado.toFixed(2)),
+        calculoDetalhes: {
+          regraAtendida: regra.tipoRegra,
+          tipoEquipamento: parametro.tipoEquipamento,
+          valorBase: valorBase,
+          quantidadeSolicitada: quantidadeSolicitada,
+          percentualAplicado: limite?.percentual || 100,
+          limiteAplicado: limite,
+          observacoes: [
+            `Equipamento: ${parametro.tipoEquipamento}`,
+            limite?.percentual ? `Subsídio: ${limite.percentual}% do valor` : '',
+            limite?.limite ? `Limite máximo: R$ ${limite.limite.toFixed(2)}` : '',
+            limite?.descricao || ''
+          ].filter(Boolean)
+        },
+        mensagem: quantidadeSolicitada
+          ? `Benefício calculado: R$ ${valorCalculado.toFixed(2)}`
+          : `Informe o valor da nota fiscal`,
+        avisos: avisos.length > 0 ? avisos : undefined
+      };
+    }
+
+    // Regras de inseminação artificial
+    if (regra.tipoRegra.startsWith("inseminacao_")) {
+      const limite = regra.limiteBeneficio as any;
+      const valorBase = Number(regra.valorBeneficio);
+
+      // Para inseminação, aceita qualquer produtor com atividade pecuária
+      // (as validações específicas serão feitas na análise da solicitação)
+      let valorCalculado = valorBase;
+
+      // Se é modalidade de reembolso e tem quantidade de doses
+      if (regra.tipoRegra.includes("opcao3") || regra.tipoRegra.includes("suinos")) {
+        if (quantidadeSolicitada && quantidadeSolicitada > 0) {
+          valorCalculado = quantidadeSolicitada * valorBase;
+        } else {
+          valorCalculado = 0;
+          avisos.push(
+            `Informe a quantidade de ${parametro.tipoAnimal === 'suino' ? 'matrizes' : 'doses'}`
+          );
+        }
+      } else {
+        // Modalidades de fornecimento direto (opcao1, opcao2)
+        valorCalculado = 0;
+        avisos.push(
+          `Modalidade: ${parametro.modalidade}. Valor será definido na análise.`
+        );
+      }
+
+      return {
+        regraAplicadaId: regra.id,
+        valorCalculado: Number(valorCalculado.toFixed(2)),
+        calculoDetalhes: {
+          regraAtendida: regra.tipoRegra,
+          tipoAnimal: parametro.tipoAnimal,
+          modalidade: parametro.modalidade,
+          valorBase: valorBase,
+          quantidadeSolicitada: quantidadeSolicitada,
+          limiteAplicado: limite,
+          observacoes: [
+            `Animal: ${parametro.tipoAnimal}`,
+            `Modalidade: ${parametro.descricao}`,
+            limite?.descricao || ''
+          ].filter(Boolean)
+        },
+        mensagem: quantidadeSolicitada && valorCalculado > 0
+          ? `Benefício calculado: R$ ${valorCalculado.toFixed(2)}`
+          : `Modalidade: ${parametro.modalidade}`,
+        avisos: avisos.length > 0 ? avisos : undefined
+      };
+    }
+
     // Outros tipos de regras podem ser implementados aqui
-    // (tipo_equipamento, inseminacao_bovinos, etc)
   }
 
   // Nenhuma regra se aplicou
@@ -156,7 +258,7 @@ export async function calcularBeneficio(
       areaEfetiva: areaTotal,
       observacoes: [
         `Área efetiva: ${areaTotal} alqueires`,
-        "Nenhuma regra do programa se aplica a esta área"
+        "Nenhuma regra do programa se aplica a esta situação"
       ]
     },
     mensagem: "Produtor não se enquadra nos critérios do programa",
