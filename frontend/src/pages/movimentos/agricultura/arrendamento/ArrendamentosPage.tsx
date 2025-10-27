@@ -212,7 +212,7 @@ const ArrendamentosPage: React.FC = () => {
   const actionButtons = (
     <div className="flex space-x-2">
       <button
-        onClick={() => navigate({ to: "/relatorios/arrendamentos" })}
+        onClick={() => window.open("/movimentos/agricultura/relatoriosArrendamento", "_blank")}
         className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm"
       >
         📊 Relatórios

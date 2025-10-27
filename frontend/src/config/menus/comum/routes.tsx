@@ -69,7 +69,10 @@ const AvaliacoesBeneficio = lazy(
   () => import("../../../pages/movimentos/comum/AvaliacoesBeneficio")
 );
 const RelatoriosBeneficio = lazy(
-  () => import("../../../pages/movimentos/comum/RelatoriosBeneficio")
+  () => import("../../../pages/relatorios/RelatoriosBeneficio")
+);
+const RelatoriosBeneficioDetalhado = lazy(
+  () => import("../../../pages/relatorios/RelatoriosBeneficio")
 );
 
 const TipoVeiculo = lazy(
@@ -264,8 +267,8 @@ export const comunRouteConfig = [
     action: "view",
   },
   {
-    path: "/movimentos/comum/relatorios",
-    component: RelatoriosBeneficio,
+    path: "/movimentos/comum/relatorioBeneficios",
+    component: RelatoriosBeneficioDetalhado,
     module: "comum",
     action: "view",
   },

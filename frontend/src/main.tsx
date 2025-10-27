@@ -3,6 +3,18 @@ import ReactDOM from "react-dom/client";
 import "./index.css";
 import { AuthProvider } from "./context/AuthContext";
 import { RouterProvider } from "./router";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+// Configurar o QueryClient
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 1,
+      staleTime: 5 * 60 * 1000, // 5 minutos
+    },
+  },
+});
 
 // Componente para mostrar o carregamento de componentes lazy
 const LoadingFallback = () => (
@@ -18,10 +30,12 @@ const LoadingFallback = () => (
 console.log("Inicializando aplicação com Tailwind CSS e TanStack Router");
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <AuthProvider>
-      <Suspense fallback={<LoadingFallback />}>
-        <RouterProvider />
-      </Suspense>
-    </AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <Suspense fallback={<LoadingFallback />}>
+          <RouterProvider />
+        </Suspense>
+      </AuthProvider>
+    </QueryClientProvider>
   </React.StrictMode>
 );
