@@ -16,6 +16,8 @@ import transferenciaPropiedadeRoutes from "./comum/transferenciaPropiedadeRoutes
 import solicitacoesBeneficioRoutes from "./comum/solicitacoesBeneficioRoutes";
 import ordemServicoRoutes from "./obras/ordemServicoRoutes";
 import areaRuralRoutes from "./comum/areaRuralRoutes";
+import relatorioBeneficioRoutes from "./comum/relatorioBeneficioRoutes";
+import relatorioArrendamentoRoutes from "./agricultura/relatorioArrendamentoRoutes";
 
 // Importar middleware de autenticação
 import {
@@ -110,6 +112,19 @@ router.use(
   "/ordens-servico",
   requireModuleAccess(ModuloSistema.OBRAS),
   ordemServicoRoutes
+);
+
+// RELATÓRIOS
+router.use(
+  "/relatorios/beneficios",
+  requireModuleAccess(ModuloSistema.COMUM),
+  relatorioBeneficioRoutes
+);
+
+router.use(
+  "/relatorios/arrendamentos",
+  requireModuleAccess(ModuloSistema.AGRICULTURA),
+  relatorioArrendamentoRoutes
 );
 
 export default router;
