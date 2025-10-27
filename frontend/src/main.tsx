@@ -4,14 +4,39 @@ import "./index.css";
 import { AuthProvider } from "./context/AuthContext";
 import { RouterProvider } from "./router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
-// Configurar o QueryClient
+// Configurar o QueryClient com retry inteligente e error handling
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      refetchOnWindowFocus: false,
-      retry: 1,
-      staleTime: 5 * 60 * 1000, // 5 minutos
+      // Cache e refetch
+      staleTime: 5 * 60 * 1000, // 5 minutos - dados considerados "frescos"
+      gcTime: 10 * 60 * 1000, // 10 minutos - tempo no cache após inativo (antes era cacheTime)
+      refetchOnWindowFocus: false, // Não refetch ao voltar pra aba
+      refetchOnReconnect: true, // Refetch ao reconectar internet
+
+      // Retry inteligente
+      retry: (failureCount, error: any) => {
+        // Não retry em erros 4xx (cliente)
+        if (error?.response?.status >= 400 && error?.response?.status < 500) {
+          return false;
+        }
+        // Retry até 3 vezes em erros 5xx (servidor) ou network
+        return failureCount < 3;
+      },
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
+    },
+    mutations: {
+      // Retry para mutations (create, update, delete)
+      retry: (failureCount, error: any) => {
+        // Não retry em conflitos ou validações
+        if (error?.response?.status === 409 || error?.response?.status === 422) {
+          return false;
+        }
+        // Retry apenas 1 vez em erros de rede
+        return failureCount < 1;
+      },
     },
   },
 });
@@ -36,6 +61,8 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
           <RouterProvider />
         </Suspense>
       </AuthProvider>
+      {/* DevTools - só aparece em desenvolvimento */}
+      <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
   </React.StrictMode>
 );

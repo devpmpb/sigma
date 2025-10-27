@@ -1,6 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { Link, useRouter } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
 import useMenuItems from "../../hooks/useMenuItems";
+import pessoaService from "../../services/comum/pessoaService";
+import propriedadeService from "../../services/comum/propriedadeService";
+import programaService from "../../services/comum/programaService";
+import solicitacaoBeneficioService from "../../services/comum/solicitacaoBeneficioService";
+import arrendamentoService from "../../services/agricultura/arrendamentoService";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -9,9 +15,55 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
   const { sidebarItems } = useMenuItems();
   const router = useRouter();
-  
+  const queryClient = useQueryClient();
+
   // Estado local para forçar uma re-renderização quando a rota muda
   const [currentPath, setCurrentPath] = useState(router.state.location.pathname);
+
+  // 🚀 Função de prefetch - carrega dados antes de navegar
+  const handlePrefetch = (path: string) => {
+    // Mapeia rotas para seus respectivos serviços
+    const prefetchMap: Record<string, () => Promise<any>> = {
+      "/cadastros/comum/pessoas": () =>
+        queryClient.prefetchQuery({
+          queryKey: ["/api/comum/pessoas"],
+          queryFn: () => pessoaService.getAll(),
+          staleTime: 5 * 60 * 1000,
+        }),
+      "/cadastros/comum/propriedades": () =>
+        queryClient.prefetchQuery({
+          queryKey: ["/api/comum/propriedades"],
+          queryFn: () => propriedadeService.getAll(),
+          staleTime: 5 * 60 * 1000,
+        }),
+      "/cadastros/comum/programas": () =>
+        queryClient.prefetchQuery({
+          queryKey: ["/api/comum/programas"],
+          queryFn: () => programaService.getAll(),
+          staleTime: 5 * 60 * 1000,
+        }),
+      "/movimentos/comum/solicitacoesBeneficios": () =>
+        queryClient.prefetchQuery({
+          queryKey: ["/api/comum/solicitacoes-beneficio"],
+          queryFn: () => solicitacaoBeneficioService.getAll(),
+          staleTime: 5 * 60 * 1000,
+        }),
+      "/movimentos/agricultura/arrendamentos": () =>
+        queryClient.prefetchQuery({
+          queryKey: ["/api/agricultura/arrendamentos"],
+          queryFn: () => arrendamentoService.getAll(),
+          staleTime: 5 * 60 * 1000,
+        }),
+    };
+
+    // Executa prefetch se rota estiver mapeada
+    const prefetchFn = prefetchMap[path];
+    if (prefetchFn) {
+      prefetchFn().catch((err) =>
+        console.log("Prefetch silencioso (ignorar erro):", err)
+      );
+    }
+  };
 
   // Atualiza o estado local quando a rota muda
   useEffect(() => {
@@ -70,6 +122,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
               <li key={item.id} className="mb-1">
                 <Link
                   to={item.path}
+                  onMouseEnter={() => {
+                    // 🚀 PREFETCH: Carrega dados ao passar o mouse
+                    handlePrefetch(item.path);
+                  }}
                   onClick={() => {
                     // Força atualização do estado imediatamente após o clique
                     setTimeout(() => {

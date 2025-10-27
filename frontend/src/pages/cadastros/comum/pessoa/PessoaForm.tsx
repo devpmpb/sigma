@@ -1,5 +1,5 @@
 // frontend/src/pages/cadastros/comum/pessoa/PessoaForm.tsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useParams } from "@tanstack/react-router";
 import pessoaService, {
   Pessoa,
@@ -22,6 +22,7 @@ import {
   formatarTelefone,
   formatDateForInput,
 } from "../../../../utils/formatters";
+import { useFormData } from "../../../../hooks/useFormData";
 
 interface PessoaFormProps {
   id?: string | number;
@@ -45,12 +46,38 @@ interface PessoaFormData extends PessoaDTO {
 const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
   const pessoaId = id || useParams({ strict: false }).id;
 
-  // Estados para dados auxiliares
-  const [logradouros, setLogradouros] = useState<any[]>([]);
-  const [bairros, setBairros] = useState<any[]>([]);
-  const [areasRurais, setAreasRurais] = useState<any[]>([]);
+  // 🚀 NOVO: Carregar dados auxiliares com React Query (cache compartilhado!)
+  const { data: logradourosData, isLoading: loadingLogradouros } = useFormData(
+    "logradouros",
+    logradouroService
+  );
+  const { data: bairrosData, isLoading: loadingBairros } = useFormData(
+    "bairros",
+    bairroService
+  );
+  const { data: areasRuraisData, isLoading: loadingAreasRurais } = useFormData(
+    "areasRurais",
+    areaRuralService
+  );
+
+  // Filtrar apenas ativos (usando useMemo para não recalcular toda hora)
+  const logradouros = useMemo(
+    () => (logradourosData || []).filter((l: any) => l.ativo),
+    [logradourosData]
+  );
+  const bairros = useMemo(
+    () => (bairrosData || []).filter((b: any) => b.ativo),
+    [bairrosData]
+  );
+  const areasRurais = useMemo(
+    () => (areasRuraisData || []).filter((a: any) => a.ativo),
+    [areasRuraisData]
+  );
+
+  const loadingDados = loadingLogradouros || loadingBairros || loadingAreasRurais;
+
+  // Estado para endereço existente
   const [enderecoExistente, setEnderecoExistente] = useState<any>(null);
-  const [loadingDados, setLoadingDados] = useState(false);
 
   // Valor inicial para o formulário com campos de endereço
   const initialValues: PessoaFormData = {
@@ -85,10 +112,8 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
     coordenadas: "",
   };
 
-  // Carregar dados auxiliares
-  useEffect(() => {
-    carregarDadosAuxiliares();
-  }, []);
+  // ✅ REMOVIDO: carregarDadosAuxiliares() - agora usa React Query!
+  // Dados auxiliares são carregados automaticamente pelos hooks useFormData acima
 
   // Carregar endereço existente se estiver editando
   useEffect(() => {
@@ -96,27 +121,6 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
       carregarEnderecoExistente();
     }
   }, [pessoaId]);
-
-  const carregarDadosAuxiliares = async () => {
-    setLoadingDados(true);
-    try {
-      const [logradourosData, bairrosData, areasRuraisData] = await Promise.all(
-        [
-          logradouroService.getAll(),
-          bairroService.getAll(),
-          areaRuralService.getAll(),
-        ]
-      );
-
-      setLogradouros(logradourosData.filter((l: any) => l.ativo));
-      setBairros(bairrosData.filter((b: any) => b.ativo));
-      setAreasRurais(areasRuraisData.filter((a: any) => a.ativo));
-    } catch (error) {
-      console.error("Erro ao carregar dados auxiliares:", error);
-    } finally {
-      setLoadingDados(false);
-    }
-  };
 
   const carregarEnderecoExistente = async () => {
     try {
