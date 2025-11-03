@@ -8,6 +8,9 @@ export interface ResultadoCalculo {
   valorCalculado: number;
   calculoDetalhes: {
     areaEfetiva?: number;
+    areaEfetivaHectares?: number;
+    tipoEquipamento?: string;
+    tipoAnimal?: string;
     regraAtendida?: string;
     condicao?: string;
     valorBase?: number;
@@ -18,6 +21,31 @@ export interface ResultadoCalculo {
   };
   mensagem: string;
   avisos?: string[];
+}
+
+/**
+ * Converte hectares para alqueires paulistas
+ * 1 alqueire paulista = 2,42 hectares
+ */
+function hectaresParaAlqueires(hectares: number): number {
+  return hectares / 2.42;
+}
+
+/**
+ * Normaliza a área para a unidade especificada no parâmetro
+ * Por padrão, a área efetiva está em HECTARES no banco
+ */
+function normalizarArea(areaHectares: number, unidadeEsperada: string): number {
+  if (!unidadeEsperada || unidadeEsperada === 'hectares') {
+    return areaHectares;
+  }
+
+  if (unidadeEsperada === 'alqueires') {
+    return hectaresParaAlqueires(areaHectares);
+  }
+
+  // Se não reconhecer a unidade, assume hectares
+  return areaHectares;
 }
 
 /**
@@ -64,7 +92,8 @@ export async function calcularBeneficio(
   }
 
   // 3. Avaliar cada regra e encontrar a aplicável
-  const areaTotal = Number(areaEfetiva.areaEfetiva);
+  // Área está armazenada em HECTARES no banco
+  const areaEmHectares = Number(areaEfetiva.areaEfetiva);
   const avisos: string[] = [];
 
   for (const regra of regras) {
@@ -74,6 +103,11 @@ export async function calcularBeneficio(
     if (regra.tipoRegra === "area_propriedade") {
       const condicao = parametro.condicao;
       const valor = parametro.valor;
+
+      // IMPORTANTE: Normalizar área para a unidade esperada pela regra
+      // A área no banco está em HECTARES, mas as regras podem estar em ALQUEIRES
+      const unidadeRegra = parametro.unidade || 'hectares';
+      const areaTotal = normalizarArea(areaEmHectares, unidadeRegra);
 
       let regraAtendida = false;
 
@@ -125,6 +159,7 @@ export async function calcularBeneficio(
           valorCalculado: Number(valorCalculado.toFixed(2)),
           calculoDetalhes: {
             areaEfetiva: areaTotal,
+            areaEfetivaHectares: areaEmHectares,
             regraAtendida: regra.tipoRegra,
             condicao: `${condicao} ${valor} ${parametro.unidade || 'alqueires'}`,
             valorBase: valorBase,
@@ -132,7 +167,7 @@ export async function calcularBeneficio(
             percentualAplicado: percentualAplicado,
             limiteAplicado: limite,
             observacoes: [
-              `Área efetiva: ${areaTotal} ${parametro.unidade || 'alqueires'}`,
+              `Área efetiva: ${areaTotal.toFixed(2)} ${parametro.unidade || 'alqueires'} (${areaEmHectares.toFixed(2)} hectares)`,
               `Valor base: R$ ${valorBase.toFixed(2)}${quantidadeSolicitada ? ` por ${limite?.unidade || 'unidade'}` : ''}`,
               percentualAplicado < 100 ? `Percentual aplicado: ${percentualAplicado}%` : '',
               limite?.descricao || ''
@@ -251,13 +286,15 @@ export async function calcularBeneficio(
   }
 
   // Nenhuma regra se aplicou
+  const areaEmAlqueires = hectaresParaAlqueires(areaEmHectares);
   return {
     regraAplicadaId: null,
     valorCalculado: 0,
     calculoDetalhes: {
-      areaEfetiva: areaTotal,
+      areaEfetiva: areaEmAlqueires,
+      areaEfetivaHectares: areaEmHectares,
       observacoes: [
-        `Área efetiva: ${areaTotal} alqueires`,
+        `Área efetiva: ${areaEmHectares.toFixed(2)} hectares (${areaEmAlqueires.toFixed(2)} alqueires)`,
         "Nenhuma regra do programa se aplica a esta situação"
       ]
     },
