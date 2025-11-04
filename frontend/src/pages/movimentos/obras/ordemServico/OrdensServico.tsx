@@ -34,6 +34,18 @@ const OrdensServico: React.FC = () => {
       ),
     },
     {
+      title: "Tipo de Serviço",
+      key: "tipoServico",
+      render: (ordem) => (
+        <div>
+          <div className="font-medium">{ordem.tipoServico?.nome}</div>
+          <div className="text-xs text-gray-500">
+            {ordem.quantidadeSolicitada} {ordem.tipoServico?.unidade}(s)
+          </div>
+        </div>
+      ),
+    },
+    {
       title: "Veículo",
       key: "veiculo",
       render: (ordem) => (
@@ -55,10 +67,6 @@ const OrdensServico: React.FC = () => {
             {ordem.horaInicio && ordem.horaFim ? (
               <span className="text-green-600">
                 ✓ {ordem.horaInicio} às {ordem.horaFim}
-              </span>
-            ) : ordem.horasEstimadas ? (
-              <span className="text-blue-600">
-                ⏱ {ordem.horasEstimadas}h estimadas
               </span>
             ) : (
               <span className="text-gray-400">Aguardando execução</span>

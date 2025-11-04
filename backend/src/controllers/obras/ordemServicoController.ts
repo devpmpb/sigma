@@ -105,6 +105,9 @@ const genericController = createGenericController({
     pessoa: {
       select: { id: true, nome: true, cpfCnpj: true }
     },
+    tipoServico: {
+      select: { id: true, nome: true, unidade: true }
+    },
     veiculo: {
       include: {
         tipoVeiculo: { select: { id: true, descricao: true } }
@@ -113,47 +116,50 @@ const genericController = createGenericController({
   },
   validateCreate: (data: any) => {
     const errors = [];
-    
+
     if (!data.pessoaId) {
       errors.push("Pessoa solicitante é obrigatória");
     }
-    
+
+    if (!data.tipoServicoId) {
+      errors.push("Tipo de serviço é obrigatório");
+    }
+
+    if (!data.quantidadeSolicitada || data.quantidadeSolicitada <= 0) {
+      errors.push("Quantidade solicitada deve ser maior que zero");
+    }
+
     if (!data.veiculoId) {
       errors.push("Veículo é obrigatório");
     }
-    
+
     if (!data.dataServico) {
       errors.push("Data do serviço é obrigatória");
     }
-    
+
     // Horários são opcionais, mas se preenchidos devem estar corretos
     const horaRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
     if (data.horaInicio && !horaRegex.test(data.horaInicio)) {
       errors.push("Formato da hora de início inválido (use HH:mm)");
     }
-    
+
     if (data.horaFim && !horaRegex.test(data.horaFim)) {
       errors.push("Formato da hora de fim inválido (use HH:mm)");
     }
-    
+
     // Se ambos os horários foram preenchidos, validar se fim > início
     if (data.horaInicio && data.horaFim) {
       const [inicioHora, inicioMin] = data.horaInicio.split(':').map(Number);
       const [fimHora, fimMin] = data.horaFim.split(':').map(Number);
-      
+
       const inicioEmMinutos = inicioHora * 60 + inicioMin;
       const fimEmMinutos = fimHora * 60 + fimMin;
-      
+
       if (fimEmMinutos <= inicioEmMinutos) {
         errors.push("Hora de fim deve ser maior que a hora de início");
       }
     }
-    
-    // Validar horas estimadas se fornecidas
-    if (data.horasEstimadas && data.horasEstimadas <= 0) {
-      errors.push("Horas estimadas deve ser maior que zero");
-    }
-    
+
     return {
       isValid: errors.length === 0,
       errors: errors.length > 0 ? errors : undefined,
@@ -162,34 +168,48 @@ const genericController = createGenericController({
   
   // Processar dados antes de salvar
   processDataForSave: async (data: any) => {
-    // Buscar o tipo de veículo
-    const veiculo = await prisma.veiculo.findUnique({
-      where: { id: data.veiculoId },
-      include: { tipoVeiculo: true }
-    });
-    
-    if (!veiculo) {
-      throw new Error("Veículo não encontrado");
-    }
-    
     // Gerar número da ordem se não existir
     if (!data.numeroOrdem) {
       data.numeroOrdem = await gerarNumeroOrdem();
     }
-    
-    // Calcular valor automaticamente
-    const valorReferencial = data.valorReferencial || 180;
-    const valorCalculado = calcularValorServico(
-      veiculo.tipoVeiculo.descricao,
-      data.horaInicio,
-      data.horaFim,
-      data.horasEstimadas,
-      valorReferencial
+
+    // Buscar tipo de serviço com faixas
+    const tipoServico = await prisma.tipoServico.findUnique({
+      where: { id: data.tipoServicoId },
+      include: {
+        faixasPreco: {
+          where: { ativo: true },
+          orderBy: { quantidadeMin: 'asc' }
+        }
+      }
+    });
+
+    if (!tipoServico) {
+      throw new Error("Tipo de serviço não encontrado");
+    }
+
+    // Encontrar a faixa de preço adequada
+    const quantidade = parseFloat(data.quantidadeSolicitada);
+    const faixa = tipoServico.faixasPreco.find(
+      (f: any) =>
+        quantidade >= f.quantidadeMin &&
+        (f.quantidadeMax === null || quantidade <= f.quantidadeMax)
     );
-    
+
+    if (!faixa) {
+      throw new Error("Não foi encontrada uma faixa de preço para a quantidade informada");
+    }
+
+    // Calcular valor
+    const valorReferencial = data.valorReferencial || 180;
+    const multiplicador = parseFloat(faixa.multiplicadorVR.toString());
+
+    // Cálculo: VR * multiplicador * quantidade
+    const valorCalculado = valorReferencial * multiplicador * quantidade;
+
     return {
       ...data,
-      valorCalculado,
+      valorCalculado: parseFloat(valorCalculado.toFixed(2)),
       valorReferencial
     };
   }

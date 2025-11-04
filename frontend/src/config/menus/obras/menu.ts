@@ -6,7 +6,12 @@ export const cadastrosObrasMenu: MenuGroup = {
   title: "Obras",
   module: "obras",
   items: [
-    //espaco para cadastro de obras
+    {
+      id: "cadastro-tipo-servico",
+      title: "Tipos de Serviço",
+      path: "/cadastros/obras/tipos-servico",
+      module: "obras",
+    },
   ],
 };
 
