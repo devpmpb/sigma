@@ -357,6 +357,9 @@ model SolicitacaoBeneficio {
   quantidadeSolicitada Decimal?    @db.Decimal(10, 2) // Quantidade solicitada (toneladas, unidades, etc)
   calculoDetalhes   Json?          // Detalhes do cálculo (área, condições atendidas, etc)
 
+  // MIGRAÇÃO GIM: Campo para enquadramento (P = Pequeno, G = Grande)
+  enquadramento     String?        // 'P' (pequeno produtor) ou 'G' (grande produtor)
+
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 

@@ -53,7 +53,7 @@ export interface CalcularValorResponse {
 
 class TipoServicoService extends BaseApiService<TipoServico, TipoServicoInput> {
   constructor() {
-    super("/api/tipos-servico", "obras");
+    super("/tipos-servico", "obras");
   }
 
   /**

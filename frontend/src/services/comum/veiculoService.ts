@@ -26,11 +26,11 @@ export interface VeiculoDTO {
 
 class VeiculoService extends BaseApiService<Veiculo, VeiculoDTO> {
   constructor() {
-    super("/veiculos", "obras");
+    super("/veiculos", "comum");
   }
 
   getAtivos = async (): Promise<Veiculo[]> => {
-    const response = await apiClient.get(`${this.baseUrl}/ativos`);
+    const response = await apiClient.get(`${this.baseUrl}?ativo=true`);
     return response.data;
   };
 
