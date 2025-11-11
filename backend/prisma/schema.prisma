@@ -225,15 +225,20 @@ model Endereco {
 }
 
 model AreaEfetiva {
-  id                    Int      @id
+  id                    Int                @id
   pessoaId              Int?
-  pessoa                Pessoa   @relation(fields: [id], references: [id])
+  pessoa                Pessoa             @relation(fields: [id], references: [id])
   anoReferencia         Int
-  areaPropria           Decimal  @db.Decimal(10, 2)
-  areaArrendadaRecebida Decimal  @db.Decimal(10, 2)
-  areaArrendadaCedida   Decimal  @db.Decimal(10, 2)
-  areaEfetiva           Decimal  @db.Decimal(10, 2)
-  updatedAt             DateTime @updatedAt
+  areaPropria           Decimal            @db.Decimal(10, 2)
+  areaArrendadaRecebida Decimal            @db.Decimal(10, 2)
+  areaArrendadaCedida   Decimal            @db.Decimal(10, 2)
+  areaEfetiva           Decimal            @db.Decimal(10, 2)
+  atividadeProdutiva    AtividadeProdutiva? // ENUM (mantido para compatibilidade)
+  ramoAtividadeId       Int?               // Nova relação (mais flexível)
+  ramoAtividade         RamoAtividade?     @relation(fields: [ramoAtividadeId], references: [id])
+  updatedAt             DateTime           @updatedAt
+
+  @@index([ramoAtividadeId])
 }
 
 model Propriedade {
@@ -367,6 +372,23 @@ model SolicitacaoBeneficio {
   historico       HistoricoSolicitacao[]
 }
 
+// Modelo para ramos de atividade (flexível, permite cadastrar novos)
+model RamoAtividade {
+  id          Int                    @id @default(autoincrement())
+  nome        String                 @unique
+  descricao   String?
+  categoria   AtividadeProdutiva // Agrupamento por categoria
+  ativo       Boolean                @default(true)
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
+
+  areasEfetivas AreaEfetiva[]
+  programas     ProgramaRamoAtividade[]
+
+  @@index([categoria])
+  @@index([ativo])
+}
+
 // Modelo para programas de incentivo
 model Programa {
   id           Int          @id @default(autoincrement())
@@ -381,6 +403,20 @@ model Programa {
 
   solicitacoes SolicitacaoBeneficio[]
   regras       RegrasNegocio[]
+  ramosAtividade ProgramaRamoAtividade[]
+}
+
+// Relação N:N entre Programa e RamoAtividade (define quais ramos podem acessar cada programa)
+model ProgramaRamoAtividade {
+  programaId      Int
+  programa        Programa       @relation(fields: [programaId], references: [id], onDelete: Cascade)
+  ramoAtividadeId Int
+  ramoAtividade   RamoAtividade  @relation(fields: [ramoAtividadeId], references: [id], onDelete: Cascade)
+  createdAt       DateTime       @default(now())
+
+  @@id([programaId, ramoAtividadeId])
+  @@index([programaId])
+  @@index([ramoAtividadeId])
 }
 
 // Modelo para regras de negócio dos programas

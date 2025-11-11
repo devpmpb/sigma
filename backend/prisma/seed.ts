@@ -17,18 +17,18 @@ async function main() {
   // Seed de autenticação (usuários, perfis, permissões) com ENUMs
   await seedAuth();
 
-  await seedProgramasLegais();
+  /*await seedProgramasLegais();
 
-  await seedProdutoresAdicionais();
+  //await seedProdutoresAdicionais();
 
-  await seedCondominos();
+  //await seedCondominos();
   //wait seedSolicitacoesBeneficio();
 
   // Seed de logradouros
-  await seedLogradouros();
+  //await seedLogradouros();
 
   // Seed de tipos de serviço e faixas de preço
-  await seedTiposServico();
+  //await seedTiposServico();
 
   // Cadastrar bairros iniciais de Pato Bragado
   console.log("🏘️ Criando bairros iniciais...");
@@ -132,7 +132,7 @@ async function main() {
   console.log("💡 Dica: Use os ENUMs no código para garantir type safety!");
   console.log("   - TipoPerfil.ADMIN");
   console.log("   - ModuloSistema.OBRAS");
-  console.log("   - AcaoPermissao.VIEW");
+  console.log("   - AcaoPermissao.VIEW");*/
 }
 
 main()
