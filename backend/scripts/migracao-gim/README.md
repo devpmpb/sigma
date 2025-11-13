@@ -1,10 +1,10 @@
 # 🚀 Migração GIM → SIGMA - Scripts de Migração
 
-## ✅ STATUS: MIGRAÇÃO CONCLUÍDA
+## ⏳ STATUS: MIGRAÇÃO EM ANDAMENTO
 
-**Data:** 2025-01-10 a 2025-01-12
-**Registros migrados:** 39.016
-**Status:** 100% COMPLETA
+**Data:** 2025-01-10 a 2025-01-13
+**Registros migrados:** 39.016 (sem contar endereços)
+**Status:** Falta migrar ~8.588 endereços
 
 ---
 
@@ -12,7 +12,7 @@
 
 ### **Scripts de Migração (EXECUTADOS):**
 
-1. **`01-migrar-pessoas.sql`** - Migração de pessoas, propriedades e endereços
+1. **`01-migrar-pessoas.sql`** - Migração de pessoas e propriedades
 2. **`10-migrar-programas.sql`** - Migração de 62 programas do GIM
 3. **`11-migrar-regras-programas.sql`** - Criação de ~120 RegrasNegocio
 4. **`12-migrar-telefones.sql`** - Migração de ~2.500 telefones (tabela separada)
@@ -20,6 +20,10 @@
 6. **`13-corrigir-mapeamento-subsidios.sql`** - Correção de mapeamento de programas
 7. **`14-diagnostico-subsidios-pendentes.sql`** - Diagnóstico final (validação)
 8. **`99-validacao-completa.sql`** - Validação completa da migração
+
+### **Scripts em Andamento:**
+
+- **`15-migrar-enderecos.sql`** ⏳ - Migração de ~8.588 endereços (aguardando Bairro.csv)
 
 ### **Scripts Opcionais (NÃO EXECUTADOS):**
 
@@ -180,5 +184,10 @@ WHERE r.id IS NULL;
 
 ---
 
-**Última atualização:** 2025-01-12
-**Status:** ✅ MIGRAÇÃO 100% COMPLETA
+**Última atualização:** 2025-01-13
+**Status:** ⏳ MIGRAÇÃO EM ANDAMENTO - Pendente: migração de endereços
+
+**Trabalho realizado em 2025-01-13:**
+- ✅ Limpeza de seeds obsoletos (removidos programasLegaisCompleto, produtoresAdicionais, condominosSeed)
+- ✅ Script `15-migrar-enderecos.sql` criado
+- ⏳ Aguardando Bairro.csv para completar migração de endereços

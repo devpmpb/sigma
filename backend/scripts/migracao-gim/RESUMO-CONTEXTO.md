@@ -86,20 +86,48 @@ Executado script `14-diagnostico-subsidios-pendentes.sql`:
 - Todos os dados conferidos GIM vs SIGMA
 - Integridade referencial verificada
 
+### **7. Limpeza de Seeds** ✅ (2025-01-13)
+- Removidos seeds obsoletos após migração:
+  - ❌ `condominosSeed.ts` (dados fake)
+  - ❌ `programasLegaisCompleto.ts` (substituído por 62 programas reais do GIM)
+  - ❌ `produtoresAdicionais.ts` (substituído por ~1.000 pessoas reais do GIM)
+- Mantidos apenas seeds essenciais:
+  - ✅ `authSeed.ts` (usuários, perfis, permissões)
+  - ✅ `logradourosSeed.ts` (logradouros de Pato Branco com CEP)
+  - ✅ `tiposServicoSeed.ts` (módulo Obras)
+- Arquivo `seed.ts` reduzido de 146 para 51 linhas
+
+### **8. Início da Migração de Endereços** ⏳ (2025-01-13)
+- ✅ Script `15-migrar-enderecos.sql` criado
+- Identificados ~8.588 endereços no GIM
+- Estratégia de mapeamento de logradouros GIM → SIGMA definida:
+  - Método EXATO: busca por nome contido
+  - Método SIMILAR: busca por similaridade (SIMILARITY > 0.4)
+- Pendências identificadas:
+  - ⏳ Baixar Bairro.csv do GIM
+  - ⏳ Identificar tabela de relacionamento Pessoa → Endereço
+  - ⏳ Executar migração completa
+
 ---
 
 ## 📁 SCRIPTS CRIADOS (ORDEM DE EXECUÇÃO)
 
 ### **Essenciais (já executados):**
-1. ✅ `10-migrar-programas.sql` - Programas
-2. ✅ `11-migrar-regras-programas.sql` - Regras de negócio
-3. ✅ `12-migrar-telefones.sql` - Telefones (tabela separada)
-4. ✅ `08-migrar-telefones-e-subsidios-SIMPLES.sql` - Subsídios
-5. ✅ `13-corrigir-mapeamento-subsidios.sql` - Correção de mapeamento
-6. ✅ `14-diagnostico-subsidios-pendentes.sql` - Diagnóstico final
-7. ✅ `99-validacao-completa.sql` - Validação completa
+1. ✅ `01-migrar-pessoas.sql` - Pessoas, propriedades (parcial)
+2. ✅ `10-migrar-programas.sql` - Programas
+3. ✅ `11-migrar-regras-programas.sql` - Regras de negócio
+4. ✅ `12-migrar-telefones.sql` - Telefones (tabela separada)
+5. ✅ `08-migrar-telefones-e-subsidios-SIMPLES.sql` - Subsídios
+6. ✅ `13-corrigir-mapeamento-subsidios.sql` - Correção de mapeamento
+7. ✅ `14-diagnostico-subsidios-pendentes.sql` - Diagnóstico final
+8. ✅ `99-validacao-completa.sql` - Validação completa
+
+### **Em andamento:**
+- ⏳ `15-migrar-enderecos.sql` - Migração de ~8.588 endereços (criado, aguardando execução)
 
 ### **Opcionais (não executados):**
+- 📋 `02-migrar-propriedades.sql` - Já incluído no script 01
+- 📋 `03-migrar-arrendamentos.sql` - Migração de arrendamentos
 - 📋 `popular-ramos-basicos.sql` - 9 ramos básicos
 - 📋 `09-migrar-ramos-atividade.sql` - Ramos do GIM
 
@@ -166,55 +194,63 @@ Executado script `14-diagnostico-subsidios-pendentes.sql`:
 
 ---
 
-## 🚀 PRÓXIMOS PASSOS (PÓS-MIGRAÇÃO)
+## 🚀 PRÓXIMOS PASSOS
+
+### **🔴 PRIORIDADE URGENTE - Completar Migração:**
+1. ⏳ **Migrar Endereços (~8.588 registros)**
+   - ✅ Script criado: `15-migrar-enderecos.sql`
+   - ⏳ Baixar Bairro.csv do GIM (amanhã)
+   - ⏳ Identificar tabela de relacionamento Pessoa → Endereço no GIM
+   - ⏳ Executar migração completa de endereços
+   - ⏳ Validar mapeamento de logradouros GIM → SIGMA
 
 ### **Prioridade ALTA - Backend:**
-1. 📋 Criar endpoints CRUD para Telefone
+2. 📋 Criar endpoints CRUD para Telefone
    - GET /api/comum/telefones/:pessoaId
    - POST /api/comum/telefones
    - PUT /api/comum/telefones/:id
    - DELETE /api/comum/telefones/:id
    - PATCH /api/comum/telefones/:id/principal (marcar como principal)
 
-2. 📋 Atualizar endpoint de Pessoa
+3. 📋 Atualizar endpoint de Pessoa
    - Incluir telefones[] na resposta
    - Permitir criar pessoa com telefones
    - Validar telefone principal obrigatório
 
-3. 📋 Implementar cálculo de benefícios com RegrasNegocio
+4. 📋 Implementar cálculo de benefícios com RegrasNegocio
    - Criar serviço de cálculo dinâmico
    - Validar regras por tipo (area_efetiva, quantidade, misto)
    - Aplicar limites de periodicidade
 
 ### **Prioridade ALTA - Frontend:**
-4. 📋 Criar componente de gerenciamento de telefones
+5. 📋 Criar componente de gerenciamento de telefones
    - Lista de telefones da pessoa
    - Adicionar/Editar/Remover telefone
    - Marcar telefone principal
    - Validação de tipo e formato
 
-5. 📋 Atualizar formulário de Pessoa
+6. 📋 Atualizar formulário de Pessoa
    - Integrar componente de telefones
    - Validar pelo menos 1 telefone
    - UI para indicar telefone principal
 
-6. 📋 Criar tela de configuração de RegrasNegocio
+7. 📋 Criar tela de configuração de RegrasNegocio
    - CRUD de regras por programa
    - Formulário dinâmico baseado em tipoRegra
    - Preview de cálculo de benefício
 
 ### **Prioridade MÉDIA:**
-7. 📋 Executar `popular-ramos-basicos.sql` (se necessário)
-8. 📋 Executar `09-migrar-ramos-atividade.sql` (se necessário)
-9. 📋 Criar filtros de programa por RamoAtividade
-10. 📋 Implementar relatórios de subsídios por status/período
+8. 📋 Executar `popular-ramos-basicos.sql` (se necessário)
+9. 📋 Executar `09-migrar-ramos-atividade.sql` (se necessário)
+10. 📋 Criar filtros de programa por RamoAtividade
+11. 📋 Implementar relatórios de subsídios por status/período
 
 ### **Prioridade BAIXA (futuro):**
-11. 📋 Migrar TipoVeiculo (5 registros)
-12. 📋 Migrar Veiculo (35 registros)
-13. 📋 Migrar TransferenciaPropriedade (407 registros)
-14. 📋 Decidir sobre histórico de situações (1.833 registros)
-15. 📋 Avaliar necessidade de auditoria completa de mudanças
+12. 📋 Migrar TipoVeiculo (5 registros)
+13. 📋 Migrar Veiculo (35 registros)
+14. 📋 Migrar TransferenciaPropriedade (407 registros)
+15. 📋 Decidir sobre histórico de situações (1.833 registros)
+16. 📋 Avaliar necessidade de auditoria completa de mudanças
 
 ---
 
@@ -352,5 +388,5 @@ Os "problemas" identificados inicialmente (subsídios no programa genérico e va
 
 ---
 
-**Última atualização:** 2025-01-12
-**Status:** ✅ MIGRAÇÃO 100% COMPLETA E VALIDADA
+**Última atualização:** 2025-01-13
+**Status:** ⏳ MIGRAÇÃO EM ANDAMENTO - Falta migrar endereços (~8.588 registros)
