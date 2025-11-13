@@ -92,7 +92,7 @@ END $$;
 -- PASSO 3: CRIAR FUNÇÕES AUXILIARES
 -- ============================================================================
 
--- Função para formatar telefone
+-- Função para formatar telefone (apenas número com DDD, sem tipo)
 CREATE OR REPLACE FUNCTION formatar_telefone_gim(
     p_ddd VARCHAR,
     p_numero VARCHAR,
@@ -104,63 +104,51 @@ DECLARE
     v_ddd VARCHAR := TRIM(COALESCE(p_ddd, ''));
     v_numero VARCHAR := REGEXP_REPLACE(TRIM(COALESCE(p_numero, '')), '[^0-9]', '', 'g');
     v_ramal VARCHAR := TRIM(COALESCE(p_ramal, ''));
-    v_tipo VARCHAR := TRIM(COALESCE(p_tipo, ''));
 BEGIN
     IF v_numero = '' THEN RETURN NULL; END IF;
 
+    -- Formata: (DDD) NUMERO ou apenas NUMERO
     IF v_ddd != '' THEN
         v_resultado := '(' || v_ddd || ') ' || v_numero;
     ELSE
         v_resultado := v_numero;
     END IF;
 
+    -- Adiciona ramal se existir
     IF v_ramal != '' THEN
         v_resultado := v_resultado || ' ramal ' || v_ramal;
     END IF;
 
-    IF v_tipo != '' AND v_tipo != 'Residencial' THEN
-        v_resultado := v_resultado || ' (' || v_tipo || ')';
-    END IF;
+    -- NÃO adiciona tipo (Celular, Comercial, etc) - apenas o número
 
     RETURN v_resultado;
 END;
 $$ LANGUAGE plpgsql;
 
--- Função para consolidar telefones
+-- Função para obter telefone principal (prioridade: Celular > Residencial > Comercial)
 CREATE OR REPLACE FUNCTION consolidar_telefones_pessoa(p_cod_pessoa BIGINT)
 RETURNS VARCHAR AS $$
 DECLARE
-    v_telefones TEXT := '';
-    v_count INTEGER := 0;
-    rec RECORD;
+    v_telefone_principal VARCHAR;
 BEGIN
-    FOR rec IN (
-        SELECT formatar_telefone_gim(ddd, numero, ramal, tipo) as telefone_formatado
-        FROM staging_gim.telefones_gim
-        WHERE cod_pessoa = p_cod_pessoa
-        ORDER BY
-            CASE tipo
-                WHEN 'Celular' THEN 1
-                WHEN 'Residencial' THEN 2
-                WHEN 'Comercial' THEN 3
-                ELSE 4
-            END,
-            cod_telefone
-    ) LOOP
-        IF rec.telefone_formatado IS NOT NULL THEN
-            IF v_count > 0 THEN
-                v_telefones := v_telefones || ' | ';
-            END IF;
-            v_telefones := v_telefones || rec.telefone_formatado;
-            v_count := v_count + 1;
-        END IF;
-    END LOOP;
+    -- Busca apenas o primeiro telefone pela ordem de prioridade
+    SELECT formatar_telefone_gim(ddd, numero, ramal, tipo)
+    INTO v_telefone_principal
+    FROM staging_gim.telefones_gim
+    WHERE cod_pessoa = p_cod_pessoa
+      AND numero IS NOT NULL
+      AND TRIM(numero) != ''
+    ORDER BY
+        CASE tipo
+            WHEN 'Celular' THEN 1
+            WHEN 'Residencial' THEN 2
+            WHEN 'Comercial' THEN 3
+            ELSE 4
+        END,
+        cod_telefone
+    LIMIT 1;  -- Retorna apenas o telefone principal
 
-    IF LENGTH(v_telefones) > 200 THEN
-        v_telefones := LEFT(v_telefones, 197) || '...';
-    END IF;
-
-    RETURN NULLIF(v_telefones, '');
+    RETURN v_telefone_principal;
 END;
 $$ LANGUAGE plpgsql;
 
