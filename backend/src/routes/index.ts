@@ -15,6 +15,7 @@ import arrendamentosRoutes from "./agricultura/arrendamentoRoutes";
 import transferenciaPropiedadeRoutes from "./comum/transferenciaPropiedadeRoutes";
 import solicitacoesBeneficioRoutes from "./comum/solicitacoesBeneficioRoutes";
 import ordemServicoRoutes from "./obras/ordemServicoRoutes";
+import tipoServicoRoutes from "./obras/tipoServicoRoutes";
 import areaRuralRoutes from "./comum/areaRuralRoutes";
 import relatorioBeneficioRoutes from "./comum/relatorioBeneficioRoutes";
 import relatorioArrendamentoRoutes from "./agricultura/relatorioArrendamentoRoutes";
@@ -112,6 +113,12 @@ router.use(
   "/ordens-servico",
   requireModuleAccess(ModuloSistema.OBRAS),
   ordemServicoRoutes
+);
+
+router.use(
+  "/tipos-servico",
+  requireModuleAccess(ModuloSistema.OBRAS),
+  tipoServicoRoutes
 );
 
 // RELATÓRIOS

@@ -11,6 +11,13 @@ export interface OrdemServico {
     nome: string;
     cpfCnpj: string;
   };
+  tipoServicoId: number;
+  tipoServico?: {
+    id: number;
+    nome: string;
+    unidade: string;
+  };
+  quantidadeSolicitada: number;
   veiculoId: number;
   veiculo?: {
     id: number;
@@ -24,7 +31,6 @@ export interface OrdemServico {
   dataServico: string;
   horaInicio?: string;
   horaFim?: string;
-  horasEstimadas?: number;
   valorReferencial: number;
   valorCalculado: number;
   observacoes?: string;
@@ -38,11 +44,12 @@ export interface OrdemServico {
 // Interface para os dados de criação/atualização
 export interface OrdemServicoDTO {
   pessoaId: number;
+  tipoServicoId: number;
+  quantidadeSolicitada: number;
   veiculoId: number;
   dataServico: string;
   horaInicio?: string;
   horaFim?: string;
-  horasEstimadas?: number;
   valorReferencial?: number;
   observacoes?: string;
   enderecoServico?: string;

@@ -7,6 +7,7 @@ import seedProdutoresAdicionais from "./seeds/produtoresAdicionais";
 
 import seedCondominos from "./seeds/condominosSeed";
 import seedLogradouros from "./seeds/logradourosSeed";
+import seedTiposServico from "./seeds/tiposServicoSeed";
 
 const prisma = new PrismaClient();
 
@@ -16,15 +17,18 @@ async function main() {
   // Seed de autenticação (usuários, perfis, permissões) com ENUMs
   await seedAuth();
 
-  await seedProgramasLegais();
+  /*await seedProgramasLegais();
 
-  await seedProdutoresAdicionais();
+  //await seedProdutoresAdicionais();
 
-  await seedCondominos();
+  //await seedCondominos();
   //wait seedSolicitacoesBeneficio();
 
   // Seed de logradouros
-  await seedLogradouros();
+  //await seedLogradouros();
+
+  // Seed de tipos de serviço e faixas de preço
+  //await seedTiposServico();
 
   // Cadastrar bairros iniciais de Pato Bragado
   console.log("🏘️ Criando bairros iniciais...");
@@ -118,6 +122,7 @@ async function main() {
   console.log("   • Áreas rurais de exemplo");
   console.log("   • Grupos de produtos iniciais");
   console.log("   • Tipos de veículos iniciais");
+  console.log("   • Tipos de serviço (4) com faixas de preço");
   console.log("");
   console.log("🔐 Credenciais de acesso:");
   console.log("   Admin: admin@sigma.com / 123456");
@@ -127,7 +132,7 @@ async function main() {
   console.log("💡 Dica: Use os ENUMs no código para garantir type safety!");
   console.log("   - TipoPerfil.ADMIN");
   console.log("   - ModuloSistema.OBRAS");
-  console.log("   - AcaoPermissao.VIEW");
+  console.log("   - AcaoPermissao.VIEW");*/
 }
 
 main()

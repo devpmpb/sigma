@@ -86,6 +86,13 @@ enum AtividadeProdutiva {
   OUTROS
 }
 
+enum TipoTelefone {
+  CELULAR
+  RESIDENCIAL
+  COMERCIAL
+  OUTRO
+}
+
 // Modelos existentes
 model Bairro {
   id        Int        @id @default(autoincrement())
@@ -151,7 +158,7 @@ model Pessoa {
   tipoPessoa                TipoPessoa
   nome                      String // Razão social para PJ, nome completo para PF
   cpfCnpj                   String       @unique
-  telefone                  String?
+  telefone                  String?      // DEPRECATED - manter por compatibilidade, usar relação telefones[]
   email                     String?
   ativo                     Boolean      @default(true)
   isProdutor                Boolean?     @default(false)
@@ -161,6 +168,7 @@ model Pessoa {
   updatedAt                 DateTime     @updatedAt
 
   // Relacionamentos
+  telefones                  Telefone[]
   enderecos                  Endereco[]
   propriedades               Propriedade[]
   transferenciasComoAnterior TransferenciaPropriedade[] @relation("TransferenciaProprietarioAnterior")
@@ -191,6 +199,23 @@ model PessoaJuridica {
   inscricaoMunicipal String?
   dataFundacao       DateTime?
   representanteLegal String?
+}
+
+model Telefone {
+  id        Int          @id @default(autoincrement())
+  pessoaId  Int
+  pessoa    Pessoa       @relation(fields: [pessoaId], references: [id], onDelete: Cascade)
+  ddd       String?      // 2-3 caracteres
+  numero    String       // Número limpo (apenas dígitos)
+  ramal     String?
+  tipo      TipoTelefone @default(CELULAR)
+  principal Boolean      @default(false) // Telefone principal da pessoa
+  ativo     Boolean      @default(true)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@index([pessoaId])
+  @@index([pessoaId, principal]) // Otimizar busca por telefone principal
 }
 
 model Endereco {
@@ -225,15 +250,20 @@ model Endereco {
 }
 
 model AreaEfetiva {
-  id                    Int      @id
+  id                    Int                @id
   pessoaId              Int?
-  pessoa                Pessoa   @relation(fields: [id], references: [id])
+  pessoa                Pessoa             @relation(fields: [id], references: [id])
   anoReferencia         Int
-  areaPropria           Decimal  @db.Decimal(10, 2)
-  areaArrendadaRecebida Decimal  @db.Decimal(10, 2)
-  areaArrendadaCedida   Decimal  @db.Decimal(10, 2)
-  areaEfetiva           Decimal  @db.Decimal(10, 2)
-  updatedAt             DateTime @updatedAt
+  areaPropria           Decimal            @db.Decimal(10, 2)
+  areaArrendadaRecebida Decimal            @db.Decimal(10, 2)
+  areaArrendadaCedida   Decimal            @db.Decimal(10, 2)
+  areaEfetiva           Decimal            @db.Decimal(10, 2)
+  atividadeProdutiva    AtividadeProdutiva? // ENUM (mantido para compatibilidade)
+  ramoAtividadeId       Int?               // Nova relação (mais flexível)
+  ramoAtividade         RamoAtividade?     @relation(fields: [ramoAtividadeId], references: [id])
+  updatedAt             DateTime           @updatedAt
+
+  @@index([ramoAtividadeId])
 }
 
 model Propriedade {
@@ -357,11 +387,31 @@ model SolicitacaoBeneficio {
   quantidadeSolicitada Decimal?    @db.Decimal(10, 2) // Quantidade solicitada (toneladas, unidades, etc)
   calculoDetalhes   Json?          // Detalhes do cálculo (área, condições atendidas, etc)
 
+  // MIGRAÇÃO GIM: Campo para enquadramento (P = Pequeno, G = Grande)
+  enquadramento     String?        // 'P' (pequeno produtor) ou 'G' (grande produtor)
+
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
   // Relacionamento com histórico
   historico       HistoricoSolicitacao[]
+}
+
+// Modelo para ramos de atividade (flexível, permite cadastrar novos)
+model RamoAtividade {
+  id          Int                    @id @default(autoincrement())
+  nome        String                 @unique
+  descricao   String?
+  categoria   AtividadeProdutiva // Agrupamento por categoria
+  ativo       Boolean                @default(true)
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
+
+  areasEfetivas AreaEfetiva[]
+  programas     ProgramaRamoAtividade[]
+
+  @@index([categoria])
+  @@index([ativo])
 }
 
 // Modelo para programas de incentivo
@@ -378,6 +428,20 @@ model Programa {
 
   solicitacoes SolicitacaoBeneficio[]
   regras       RegrasNegocio[]
+  ramosAtividade ProgramaRamoAtividade[]
+}
+
+// Relação N:N entre Programa e RamoAtividade (define quais ramos podem acessar cada programa)
+model ProgramaRamoAtividade {
+  programaId      Int
+  programa        Programa       @relation(fields: [programaId], references: [id], onDelete: Cascade)
+  ramoAtividadeId Int
+  ramoAtividade   RamoAtividade  @relation(fields: [ramoAtividadeId], references: [id], onDelete: Cascade)
+  createdAt       DateTime       @default(now())
+
+  @@id([programaId, ramoAtividadeId])
+  @@index([programaId])
+  @@index([ramoAtividadeId])
 }
 
 // Modelo para regras de negócio dos programas
@@ -413,26 +477,60 @@ model HistoricoSolicitacao {
   @@map("historico_solicitacoes")
 }
 
-model OrdemServico {
-  id               Int      @id @default(autoincrement())
-  numeroOrdem      String   @unique // Número sequencial da ordem
-  pessoaId         Int // Solicitante do serviço
-  pessoa           Pessoa   @relation(fields: [pessoaId], references: [id])
-  veiculoId        Int // Veículo que executará o serviço
-  veiculo          Veiculo  @relation(fields: [veiculoId], references: [id])
-  dataServico      DateTime // Data em que o serviço será executado
-  horaInicio       String? // Hora de início (formato HH:mm) - Preenchida após execução
-  horaFim          String? // Hora de fim (formato HH:mm) - Preenchida após execução
-  horasEstimadas   Decimal? @db.Decimal(4, 2) // Horas estimadas solicitadas pelo cidadão
-  valorReferencial Decimal  @default(180.00) @db.Decimal(10, 2) // Valor referencial (VR) do ano
-  valorCalculado   Decimal  @db.Decimal(10, 2) // Valor calculado automaticamente
-  observacoes      String? // Observações adicionais
-  status           String   @default("pendente") // pendente, em_execucao, concluida, cancelada
-  usuarioId        Int? // Usuário que criou a ordem
-  enderecoServico  String? // Local onde será executado o serviço
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+model TipoServico {
+  id        Int      @id @default(autoincrement())
+  nome      String   @unique // "Carga de terra", "Caminhão truck", "Pá carregadeira", "PATROLA"
+  unidade   String // "carga" ou "hora"
+  ativo     Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
+  faixasPreco FaixaPrecoServico[]
+  ordens      OrdemServico[]
+
+  @@map("tipos_servico")
+}
+
+model FaixaPrecoServico {
+  id              Int         @id @default(autoincrement())
+  tipoServicoId   Int
+  tipoServico     TipoServico @relation(fields: [tipoServicoId], references: [id], onDelete: Cascade)
+  quantidadeMin   Int // Ex: 1, 4, 11
+  quantidadeMax   Int? // Ex: 3, 10, null (sem limite superior)
+  multiplicadorVR Decimal     @db.Decimal(4, 2) // 0.10, 0.30, 0.50, 0.35, 0.40
+  ativo           Boolean     @default(true)
+  vigenciaInicio  DateTime    @default(now())
+  vigenciaFim     DateTime?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([tipoServicoId])
+  @@map("faixas_preco_servico")
+}
+
+model OrdemServico {
+  id                   Int         @id @default(autoincrement())
+  numeroOrdem          String      @unique // Número sequencial da ordem
+  pessoaId             Int // Solicitante do serviço
+  pessoa               Pessoa      @relation(fields: [pessoaId], references: [id])
+  tipoServicoId        Int // Tipo de serviço solicitado
+  tipoServico          TipoServico @relation(fields: [tipoServicoId], references: [id])
+  quantidadeSolicitada Decimal     @db.Decimal(6, 2) // Quantidade de cargas ou horas solicitadas
+  veiculoId            Int // Veículo que executará o serviço
+  veiculo              Veiculo     @relation(fields: [veiculoId], references: [id])
+  dataServico          DateTime // Data em que o serviço será executado
+  horaInicio           String? // Hora de início (formato HH:mm) - Preenchida após execução
+  horaFim              String? // Hora de fim (formato HH:mm) - Preenchida após execução
+  valorReferencial     Decimal     @default(180.00) @db.Decimal(10, 2) // Valor referencial (VR) do ano
+  valorCalculado       Decimal     @db.Decimal(10, 2) // Valor calculado automaticamente
+  observacoes          String? // Observações adicionais
+  status               String      @default("pendente") // pendente, em_execucao, concluida, cancelada
+  usuarioId            Int? // Usuário que criou a ordem
+  enderecoServico      String? // Local onde será executado o serviço
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+
+  @@index([tipoServicoId])
   @@map("ordens_servico")
 }
 

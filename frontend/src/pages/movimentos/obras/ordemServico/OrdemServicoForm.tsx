@@ -9,6 +9,7 @@ import ordemServicoService, {
 } from "../../../../services/obras/ordemServicoService";
 import pessoaService, { Pessoa } from "../../../../services/comum/pessoaService";
 import veiculoService, { Veiculo } from "../../../../services/comum/veiculoService";
+import tipoServicoService, { TipoServico } from "../../../../services/obras/tipoServicoService";
 import { formatarMoeda } from "../../../../utils/formatters";
 
 interface OrdemServicoFormProps {
@@ -20,18 +21,22 @@ interface OrdemServicoFormProps {
 const OrdemServicoForm: React.FC<OrdemServicoFormProps> = ({ id, onSave }) => {
   const [pessoas, setPessoas] = useState<Pessoa[]>([]);
   const [veiculos, setVeiculos] = useState<Veiculo[]>([]);
+  const [tiposServico, setTiposServico] = useState<TipoServico[]>([]);
   const [loadingPessoas, setLoadingPessoas] = useState(false);
   const [loadingVeiculos, setLoadingVeiculos] = useState(false);
+  const [loadingTiposServico, setLoadingTiposServico] = useState(false);
   const [valorCalculado, setValorCalculado] = useState<number>(0);
+  const [calculando, setCalculando] = useState(false);
 
   // Valores iniciais do formulário
   const initialValues: OrdemServicoDTO = {
     pessoaId: 0,
+    tipoServicoId: 0,
+    quantidadeSolicitada: 0,
     veiculoId: 0,
     dataServico: "",
     horaInicio: "",
     horaFim: "",
-    horasEstimadas: undefined,
     valorReferencial: 180,
     observacoes: "",
     enderecoServico: "",
@@ -61,39 +66,47 @@ const OrdemServicoForm: React.FC<OrdemServicoFormProps> = ({ id, onSave }) => {
       } finally {
         setLoadingVeiculos(false);
       }
+
+      // Carregar tipos de serviço
+      setLoadingTiposServico(true);
+      try {
+        const tiposData = await tipoServicoService.getAtivos();
+        setTiposServico(tiposData);
+      } catch (error) {
+        console.error("Erro ao carregar tipos de serviço:", error);
+      } finally {
+        setLoadingTiposServico(false);
+      }
     };
 
     carregarDados();
   }, []);
 
-  // Função para calcular valor em tempo real
-  const calcularValor = (
-    veiculoId: number, 
-    horaInicio?: string, 
-    horaFim?: string, 
-    horasEstimadas?: number, 
+  // Função para calcular valor automaticamente
+  const calcularValor = async (
+    tipoServicoId: number,
+    quantidade: number,
     valorReferencial: number = 180
   ) => {
-    if (!veiculoId) {
+    if (!tipoServicoId || !quantidade || quantidade <= 0) {
       setValorCalculado(0);
       return;
     }
 
-    const veiculo = veiculos.find(v => v.id === veiculoId);
-    if (!veiculo?.tipoVeiculo?.descricao) {
+    setCalculando(true);
+    try {
+      const resultado = await tipoServicoService.calcularValor({
+        tipoServicoId,
+        quantidade,
+        valorReferencial,
+      });
+      setValorCalculado(resultado.valorCalculado);
+    } catch (error) {
+      console.error("Erro ao calcular valor:", error);
       setValorCalculado(0);
-      return;
+    } finally {
+      setCalculando(false);
     }
-
-    const valor = ordemServicoService.calcularValorServico(
-      veiculo.tipoVeiculo.descricao,
-      horaInicio,
-      horaFim,
-      horasEstimadas,
-      valorReferencial
-    );
-    
-    setValorCalculado(valor);
   };
 
   // Função de validação
@@ -102,6 +115,14 @@ const OrdemServicoForm: React.FC<OrdemServicoFormProps> = ({ id, onSave }) => {
 
     if (!values.pessoaId || values.pessoaId === 0) {
       errors.pessoaId = "Solicitante é obrigatório";
+    }
+
+    if (!values.tipoServicoId || values.tipoServicoId === 0) {
+      errors.tipoServicoId = "Tipo de serviço é obrigatório";
+    }
+
+    if (!values.quantidadeSolicitada || values.quantidadeSolicitada <= 0) {
+      errors.quantidadeSolicitada = "Quantidade deve ser maior que zero";
     }
 
     if (!values.veiculoId || values.veiculoId === 0) {
@@ -115,29 +136,23 @@ const OrdemServicoForm: React.FC<OrdemServicoFormProps> = ({ id, onSave }) => {
       const dataServico = new Date(values.dataServico);
       const hoje = new Date();
       hoje.setHours(0, 0, 0, 0);
-      
+
       if (dataServico < hoje) {
         errors.dataServico = "Data do serviço não pode ser no passado";
       }
     }
 
     // Horários são opcionais, mas se preenchidos devem estar corretos
-    // Validar se hora fim é maior que hora início (quando ambos preenchidos)
     if (values.horaInicio && values.horaFim) {
-      const [inicioHora, inicioMin] = values.horaInicio.split(':').map(Number);
-      const [fimHora, fimMin] = values.horaFim.split(':').map(Number);
-      
+      const [inicioHora, inicioMin] = values.horaInicio.split(":").map(Number);
+      const [fimHora, fimMin] = values.horaFim.split(":").map(Number);
+
       const inicioEmMinutos = inicioHora * 60 + inicioMin;
       const fimEmMinutos = fimHora * 60 + fimMin;
-      
+
       if (fimEmMinutos <= inicioEmMinutos) {
         errors.horaFim = "Hora de fim deve ser maior que a hora de início";
       }
-    }
-
-    // Validar horas estimadas se fornecidas
-    if (values.horasEstimadas !== undefined && values.horasEstimadas <= 0) {
-      errors.horasEstimadas = "Horas estimadas deve ser maior que zero";
     }
 
     if (!values.valorReferencial || values.valorReferencial <= 0) {
@@ -147,27 +162,45 @@ const OrdemServicoForm: React.FC<OrdemServicoFormProps> = ({ id, onSave }) => {
     return Object.keys(errors).length > 0 ? errors : null;
   };
 
+  // Preparar dados para submissão (incluir valorCalculado)
+  const prepareSubmit = (values: OrdemServicoDTO) => {
+    return {
+      ...values,
+      valorCalculado,
+    };
+  };
+
   return (
     <FormBase<OrdemServico, OrdemServicoDTO>
-      title={id && id !== "novo" ? "Editar Ordem de Serviço" : "Nova Ordem de Serviço"}
+      title={
+        id && id !== "novo" ? "Editar Ordem de Serviço" : "Nova Ordem de Serviço"
+      }
       service={ordemServicoService}
       id={id}
       initialValues={initialValues}
       validate={validate}
       onSave={onSave}
+      prepareSubmit={prepareSubmit}
       returnUrl="/movimentos/obras/ordens-servico"
     >
       {({ values, errors, touched, handleChange, setValue }) => {
         // Recalcular valor quando campos relevantes mudarem
         React.useEffect(() => {
           calcularValor(
-            values.veiculoId, 
-            values.horaInicio || undefined, 
-            values.horaFim || undefined, 
-            values.horasEstimadas, 
+            values.tipoServicoId,
+            values.quantidadeSolicitada,
             values.valorReferencial
           );
-        }, [values.veiculoId, values.horaInicio, values.horaFim, values.horasEstimadas, values.valorReferencial]);
+        }, [
+          values.tipoServicoId,
+          values.quantidadeSolicitada,
+          values.valorReferencial,
+        ]);
+
+        // Encontrar tipo de serviço selecionado
+        const tipoSelecionado = tiposServico.find(
+          (t) => t.id === values.tipoServicoId
+        );
 
         return (
           <div className="space-y-6">
@@ -220,12 +253,115 @@ const OrdemServicoForm: React.FC<OrdemServicoFormProps> = ({ id, onSave }) => {
                     </option>
                     {veiculos.map((veiculo) => (
                       <option key={veiculo.id} value={veiculo.id}>
-                        {veiculo.descricao} - {veiculo.tipoVeiculo?.descricao} ({veiculo.placa})
+                        {veiculo.descricao} - {veiculo.tipoVeiculo?.descricao} (
+                        {veiculo.placa})
                       </option>
                     ))}
                   </select>
                 </FormField>
               </div>
+            </FormSection>
+
+            {/* Seção de Serviço */}
+            <FormSection title="Tipo de Serviço">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Tipo de Serviço */}
+                <FormField
+                  name="tipoServicoId"
+                  label="Tipo de Serviço"
+                  error={touched.tipoServicoId ? errors.tipoServicoId : undefined}
+                  required
+                >
+                  <select
+                    id="tipoServicoId"
+                    name="tipoServicoId"
+                    value={values.tipoServicoId}
+                    onChange={(e) =>
+                      setValue("tipoServicoId", Number(e.target.value))
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    disabled={loadingTiposServico}
+                  >
+                    <option value={0}>
+                      {loadingTiposServico
+                        ? "Carregando..."
+                        : "Selecione o tipo de serviço"}
+                    </option>
+                    {tiposServico.map((tipo) => (
+                      <option key={tipo.id} value={tipo.id}>
+                        {tipo.nome} (por {tipo.unidade})
+                      </option>
+                    ))}
+                  </select>
+                </FormField>
+
+                {/* Quantidade Solicitada */}
+                <FormField
+                  name="quantidadeSolicitada"
+                  label={`Quantidade ${tipoSelecionado ? `(${tipoSelecionado.unidade}s)` : ""}`}
+                  error={
+                    touched.quantidadeSolicitada
+                      ? errors.quantidadeSolicitada
+                      : undefined
+                  }
+                  required
+                  help={
+                    tipoSelecionado
+                      ? `Quantidade de ${tipoSelecionado.unidade}s solicitadas`
+                      : "Selecione um tipo de serviço primeiro"
+                  }
+                >
+                  <input
+                    type="number"
+                    id="quantidadeSolicitada"
+                    name="quantidadeSolicitada"
+                    value={values.quantidadeSolicitada || ""}
+                    onChange={(e) =>
+                      setValue(
+                        "quantidadeSolicitada",
+                        e.target.value ? Number(e.target.value) : 0
+                      )
+                    }
+                    step="0.5"
+                    min="0"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder={
+                      tipoSelecionado
+                        ? `Ex: 5 ${tipoSelecionado.unidade}s`
+                        : "0"
+                    }
+                    disabled={!tipoSelecionado}
+                  />
+                </FormField>
+              </div>
+
+              {/* Preview das faixas do tipo selecionado */}
+              {tipoSelecionado && tipoSelecionado.faixasPreco && (
+                <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <h4 className="text-sm font-semibold text-blue-900 mb-2">
+                    Faixas de Preço - {tipoSelecionado.nome}
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                    {tipoSelecionado.faixasPreco.map((faixa, idx) => (
+                      <div
+                        key={idx}
+                        className="text-xs bg-white p-2 rounded border border-blue-100"
+                      >
+                        <span className="font-medium text-blue-700">
+                          {faixa.quantidadeMin}
+                          {faixa.quantidadeMax
+                            ? `-${faixa.quantidadeMax}`
+                            : "+"}
+                          :
+                        </span>{" "}
+                        <span className="text-green-700 font-semibold">
+                          {faixa.multiplicadorVR}×VR
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </FormSection>
 
             {/* Seção de Data e Horário */}
@@ -244,28 +380,8 @@ const OrdemServicoForm: React.FC<OrdemServicoFormProps> = ({ id, onSave }) => {
                     name="dataServico"
                     value={values.dataServico}
                     onChange={handleChange}
-                    min={new Date().toISOString().split('T')[0]}
+                    min={new Date().toISOString().split("T")[0]}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </FormField>
-
-                {/* Horas Estimadas */}
-                <FormField
-                  name="horasEstimadas"
-                  label="Horas Estimadas"
-                  error={touched.horasEstimadas ? errors.horasEstimadas : undefined}
-                  help="Tempo estimado que a máquina será utilizada"
-                >
-                  <input
-                    type="number"
-                    id="horasEstimadas"
-                    name="horasEstimadas"
-                    value={values.horasEstimadas || ""}
-                    onChange={(e) => setValue("horasEstimadas", e.target.value ? Number(e.target.value) : undefined)}
-                    step="0.5"
-                    min="0"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Ex: 4.5"
                   />
                 </FormField>
               </div>
@@ -305,32 +421,6 @@ const OrdemServicoForm: React.FC<OrdemServicoFormProps> = ({ id, onSave }) => {
                   />
                 </FormField>
               </div>
-
-              {/* Informações de Cálculo */}
-              <div className="mt-4 space-y-2">
-                {/* Horas Trabalhadas (apenas se horários preenchidos) */}
-                {values.horaInicio && values.horaFim && (
-                  <div className="p-3 bg-blue-50 rounded-md">
-                    <p className="text-sm text-blue-700">
-                      <strong>Horas reais trabalhadas:</strong>{" "}
-                      {ordemServicoService.calcularHorasTrabalhadas(values.horaInicio, values.horaFim).toFixed(2)}h
-                    </p>
-                  </div>
-                )}
-                
-                {/* Horas para Cálculo */}
-                {(values.horasEstimadas || (values.horaInicio && values.horaFim)) && (
-                  <div className="p-3 bg-green-50 rounded-md">
-                    <p className="text-sm text-green-700">
-                      <strong>Horas para cálculo:</strong>{" "}
-                      {values.horaInicio && values.horaFim 
-                        ? `${ordemServicoService.calcularHorasTrabalhadas(values.horaInicio, values.horaFim).toFixed(2)}h (horas reais)`
-                        : `${values.horasEstimadas}h (estimadas)`
-                      }
-                    </p>
-                  </div>
-                )}
-              </div>
             </FormSection>
 
             {/* Seção de Valores */}
@@ -358,22 +448,28 @@ const OrdemServicoForm: React.FC<OrdemServicoFormProps> = ({ id, onSave }) => {
                 {/* Valor Calculado (read-only) */}
                 <FormField name="valorCalculado" label="Valor Calculado">
                   <div className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-md">
-                    <span className="text-lg font-bold text-green-700">
-                      {formatarMoeda(valorCalculado)}
-                    </span>
+                    {calculando ? (
+                      <span className="text-gray-500">Calculando...</span>
+                    ) : (
+                      <span className="text-lg font-bold text-green-700">
+                        {formatarMoeda(valorCalculado)}
+                      </span>
+                    )}
                   </div>
                 </FormField>
               </div>
-              
+
               {/* Informação sobre o cálculo */}
               <div className="mt-4 p-3 bg-yellow-50 rounded-md">
                 <p className="text-sm text-yellow-700">
-                  <strong>💡 Dica:</strong> O valor é calculado automaticamente baseado no tipo de veículo e nas horas informadas (estimadas ou reais).
-                  {!values.horasEstimadas && !values.horaInicio && (
+                  <strong>💡 Dica:</strong> O valor é calculado automaticamente
+                  baseado no tipo de serviço, quantidade e valor referencial.
+                  {!values.tipoServicoId || !values.quantidadeSolicitada ? (
                     <span className="block mt-1">
-                      Informe as horas estimadas para ver o cálculo do valor.
+                      Selecione o tipo de serviço e informe a quantidade para ver o
+                      cálculo.
                     </span>
-                  )}
+                  ) : null}
                 </p>
               </div>
             </FormSection>
@@ -421,7 +517,9 @@ const OrdemServicoForm: React.FC<OrdemServicoFormProps> = ({ id, onSave }) => {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value={StatusOrdemServico.PENDENTE}>Pendente</option>
-                    <option value={StatusOrdemServico.EM_EXECUCAO}>Em Execução</option>
+                    <option value={StatusOrdemServico.EM_EXECUCAO}>
+                      Em Execução
+                    </option>
                     <option value={StatusOrdemServico.CONCLUIDA}>Concluída</option>
                     <option value={StatusOrdemServico.CANCELADA}>Cancelada</option>
                   </select>

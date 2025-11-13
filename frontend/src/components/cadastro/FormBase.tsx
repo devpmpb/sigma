@@ -178,7 +178,7 @@ function FormBase<T extends Record<string, any>, R>({
       <div className="bg-white shadow-md rounded-lg p-6">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-gray-800">
-            {id && id !== "novo" ? `Editar ${title}` : `Novo ${title}`}
+            {id && id !== "novo" ? `Editar ${title}` : `${title}`}
           </h1>
 
           <button

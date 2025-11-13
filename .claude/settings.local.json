@@ -1,7 +1,13 @@
 {
   "permissions": {
     "allow": [
-      "Read(//c/Users/marce/Downloads/Leis/**)"
+      "Read(//c/Users/marce/Downloads/Leis/**)",
+      "Bash(npm run migrate:*)",
+      "Bash(npx prisma migrate dev:*)",
+      "Bash(cut:*)",
+      "Bash(npx prisma migrate deploy:*)",
+      "Bash(npx prisma db seed:*)",
+      "Bash(npx prisma generate:*)"
     ],
     "deny": [],
     "ask": []
