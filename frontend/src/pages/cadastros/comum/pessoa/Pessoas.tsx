@@ -108,6 +108,8 @@ const Pessoas: React.FC = () => {
         activeText: "Ativo",
         inactiveText: "Inativo",
       }}
+      enablePagination={true}
+      initialPageSize={50}
     />
   );
 };

@@ -160,7 +160,7 @@ export const arrendamentoController = {
   // Sobrescrever findAll para incluir relacionamentos
   findAll: async (req: Request, res: Response) => {
     try {
-      const { status, proprietarioId, arrendatarioId, propriedadeId } =
+      const { status, proprietarioId, arrendatarioId, propriedadeId, page, pageSize } =
         req.query;
 
       const whereClause: any = {};
@@ -182,56 +182,89 @@ export const arrendamentoController = {
         whereClause.propriedadeId = Number(propriedadeId);
       }
 
-      const arrendamentos = await prisma.arrendamento.findMany({
-        where: whereClause,
-        include: {
-          propriedade: true,
-          // 🔄 ALTERADO: Agora usa Pessoa diretamente ao invés de PessoaFisica
-          proprietario: {
-            include: {
-              pessoaFisica: true, // Ainda incluímos para compatibilidade
-              pessoaJuridica: true,
-            },
-          },
-          arrendatario: {
-            include: {
-              pessoaFisica: true, // Ainda incluímos para compatibilidade
-              pessoaJuridica: true,
-            },
-          },
-        },
-        orderBy: {
-          dataInicio: "desc",
-        },
-      });
+      // Parâmetros de paginação
+      const pageNum = page ? parseInt(page as string, 10) : undefined;
+      const pageSizeNum = pageSize ? parseInt(pageSize as string, 10) : undefined;
 
-      // 🆕 TRANSFORMAR DADOS PARA MANTER COMPATIBILIDADE COM FRONTEND
-      const arrendamentosFormatados = arrendamentos.map((arrendamento) => ({
-        ...arrendamento,
-        // Manter estrutura antiga para compatibilidade
+      const includeConfig = {
+        propriedade: true,
         proprietario: {
-          id: arrendamento.proprietario.id,
-          pessoa: {
-            id: arrendamento.proprietario.id,
-            nome: arrendamento.proprietario.nome,
-            cpfCnpj: arrendamento.proprietario.cpfCnpj,
-            telefone: arrendamento.proprietario.telefone,
-            email: arrendamento.proprietario.email,
+          include: {
+            pessoaFisica: true,
+            pessoaJuridica: true,
           },
         },
         arrendatario: {
-          id: arrendamento.arrendatario.id,
-          pessoa: {
-            id: arrendamento.arrendatario.id,
-            nome: arrendamento.arrendatario.nome,
-            cpfCnpj: arrendamento.arrendatario.cpfCnpj,
-            telefone: arrendamento.arrendatario.telefone,
-            email: arrendamento.arrendatario.email,
+          include: {
+            pessoaFisica: true,
+            pessoaJuridica: true,
           },
         },
-      }));
+      };
 
-      return res.status(200).json(arrendamentosFormatados);
+      // Função para formatar arrendamentos
+      const formatarArrendamentos = (arrendamentos: any[]) =>
+        arrendamentos.map((arrendamento) => ({
+          ...arrendamento,
+          proprietario: {
+            id: arrendamento.proprietario.id,
+            pessoa: {
+              id: arrendamento.proprietario.id,
+              nome: arrendamento.proprietario.nome,
+              cpfCnpj: arrendamento.proprietario.cpfCnpj,
+              telefone: arrendamento.proprietario.telefone,
+              email: arrendamento.proprietario.email,
+            },
+          },
+          arrendatario: {
+            id: arrendamento.arrendatario.id,
+            pessoa: {
+              id: arrendamento.arrendatario.id,
+              nome: arrendamento.arrendatario.nome,
+              cpfCnpj: arrendamento.arrendatario.cpfCnpj,
+              telefone: arrendamento.arrendatario.telefone,
+              email: arrendamento.arrendatario.email,
+            },
+          },
+        }));
+
+      // Se paginação foi solicitada
+      if (pageNum !== undefined && pageSizeNum !== undefined) {
+        const skip = (pageNum - 1) * pageSizeNum;
+        const take = pageSizeNum;
+
+        // Buscar registros paginados e total
+        const [arrendamentos, total] = await Promise.all([
+          prisma.arrendamento.findMany({
+            where: whereClause,
+            include: includeConfig,
+            orderBy: { dataInicio: "desc" },
+            skip,
+            take,
+          }),
+          prisma.arrendamento.count({ where: whereClause }),
+        ]);
+
+        // Retornar com metadados de paginação
+        return res.status(200).json({
+          data: formatarArrendamentos(arrendamentos),
+          pagination: {
+            page: pageNum,
+            pageSize: pageSizeNum,
+            total,
+            totalPages: Math.ceil(total / pageSizeNum),
+          },
+        });
+      }
+
+      // Sem paginação - retornar todos os registros
+      const arrendamentos = await prisma.arrendamento.findMany({
+        where: whereClause,
+        include: includeConfig,
+        orderBy: { dataInicio: "desc" },
+      });
+
+      return res.status(200).json(formatarArrendamentos(arrendamentos));
     } catch (error) {
       console.error("Erro ao listar arrendamentos:", error);
       return res.status(500).json({

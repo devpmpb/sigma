@@ -16,7 +16,7 @@ export default function useApiService<
   T,
   R = Partial<T>,
   S extends object = object
->(service: S) {
+>(service: S, usePagination: boolean = false, initialPageSize: number = 50) {
   const queryClient = useQueryClient();
 
   // Estados locais para compatibilidade (busca por termo e item individual)
@@ -25,21 +25,36 @@ export default function useApiService<
   const [itemLoading, setItemLoading] = useState(false);
   const [itemError, setItemError] = useState<string | null>(null);
 
+  // Estados de paginação
+  const [page, setPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(initialPageSize);
+  const [totalPages, setTotalPages] = useState<number>(0);
+  const [total, setTotal] = useState<number>(0);
+
   // Gera query key única baseada no serviço
   // @ts-ignore
   const queryKey = useMemo(() => [service.baseUrl || 'api-service'], [service]);
 
-  // Query principal para listar todos os dados
+  // Query principal para listar todos os dados (com ou sem paginação)
   const {
     data: queryData,
     isLoading: queryLoading,
     error: queryError,
     refetch,
   } = useQuery({
-    queryKey,
+    queryKey: usePagination ? [...queryKey, 'paginated', page, pageSize] : queryKey,
     queryFn: async () => {
-      // @ts-ignore - Assumimos que o serviço tem um método getAll
-      return await service.getAll();
+      if (usePagination) {
+        // @ts-ignore - Assumimos que o serviço tem um método getPaginated
+        const response = await service.getPaginated(page, pageSize);
+        // Atualizar estados de paginação
+        setTotalPages(response.pagination.totalPages);
+        setTotal(response.pagination.total);
+        return response.data;
+      } else {
+        // @ts-ignore - Assumimos que o serviço tem um método getAll
+        return await service.getAll();
+      }
     },
     staleTime: 5 * 60 * 1000, // 5 minutos
     enabled: !searchTerm, // Desabilita se tiver termo de busca ativo
@@ -326,6 +341,41 @@ export default function useApiService<
     setItemError(null);
   }, []);
 
+  /**
+   * Navega para uma página específica
+   */
+  const goToPage = useCallback((newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setPage(newPage);
+    }
+  }, [totalPages]);
+
+  /**
+   * Navega para a próxima página
+   */
+  const nextPage = useCallback(() => {
+    if (page < totalPages) {
+      setPage(page + 1);
+    }
+  }, [page, totalPages]);
+
+  /**
+   * Navega para a página anterior
+   */
+  const previousPage = useCallback(() => {
+    if (page > 1) {
+      setPage(page - 1);
+    }
+  }, [page]);
+
+  /**
+   * Altera o tamanho da página
+   */
+  const changePageSize = useCallback((newPageSize: number) => {
+    setPageSize(newPageSize);
+    setPage(1); // Volta para a primeira página
+  }, []);
+
   return {
     // Estados (mantém compatibilidade com interface antiga)
     data: data || [],
@@ -342,6 +392,18 @@ export default function useApiService<
     toggleStatus,
     remove,
     clearItem,
+
+    // Paginação
+    pagination: usePagination ? {
+      page,
+      pageSize,
+      total,
+      totalPages,
+      goToPage,
+      nextPage,
+      previousPage,
+      changePageSize,
+    } : undefined,
 
     // O próprio serviço, para acesso a métodos específicos
     service,

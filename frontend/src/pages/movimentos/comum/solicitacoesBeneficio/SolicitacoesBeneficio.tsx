@@ -218,6 +218,9 @@ const SolicitacoesBeneficio: React.FC = () => {
         field: "status",
         options: solicitacaoBeneficioService.getStatusOptions(),
       }}
+      // Paginação
+      enablePagination={true}
+      initialPageSize={50}
     />
   );
 };

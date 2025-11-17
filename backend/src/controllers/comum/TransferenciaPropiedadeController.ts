@@ -325,55 +325,80 @@ export const transferenciaPropiedadeController = {
 
   findAll: async (req: Request, res: Response) => {
     try {
-      const { search } = req.query;
+      const { search, page, pageSize } = req.query;
 
-      let transferencias;
+      // Parâmetros de paginação
+      const pageNum = page ? parseInt(page as string, 10) : undefined;
+      const pageSizeNum = pageSize ? parseInt(pageSize as string, 10) : undefined;
 
+      // Construir whereClause
+      const whereClause: any = {};
       if (search) {
-        // Busca com filtro
-        transferencias = await prisma.transferenciaPropriedade.findMany({
-          where: {
-            OR: [
-              {
-                propriedade: {
-                  nome: { contains: String(search), mode: "insensitive" },
-                },
-              },
-              {
-                propriedade: {
-                  matricula: { contains: String(search), mode: "insensitive" },
-                },
-              },
-              {
-                proprietarioAnterior: {
-                  nome: { contains: String(search), mode: "insensitive" },
-                },
-              },
-              {
-                proprietarioNovo: {
-                  nome: { contains: String(search), mode: "insensitive" },
-                },
-              },
-            ],
+        whereClause.OR = [
+          {
+            propriedade: {
+              nome: { contains: String(search), mode: "insensitive" },
+            },
           },
-          include: {
-            propriedade: true,
-            proprietarioAnterior: true,
-            proprietarioNovo: true,
+          {
+            propriedade: {
+              matricula: { contains: String(search), mode: "insensitive" },
+            },
           },
-          orderBy: { dataTransferencia: "desc" },
-        });
-      } else {
-        // Busca sem filtro
-        transferencias = await prisma.transferenciaPropriedade.findMany({
-          include: {
-            propriedade: true,
-            proprietarioAnterior: true,
-            proprietarioNovo: true,
+          {
+            proprietarioAnterior: {
+              nome: { contains: String(search), mode: "insensitive" },
+            },
           },
-          orderBy: { dataTransferencia: "desc" },
+          {
+            proprietarioNovo: {
+              nome: { contains: String(search), mode: "insensitive" },
+            },
+          },
+        ];
+      }
+
+      const includeConfig = {
+        propriedade: true,
+        proprietarioAnterior: true,
+        proprietarioNovo: true,
+      };
+
+      // Se paginação foi solicitada
+      if (pageNum !== undefined && pageSizeNum !== undefined) {
+        const skip = (pageNum - 1) * pageSizeNum;
+        const take = pageSizeNum;
+
+        // Buscar registros paginados e total
+        const [transferencias, total] = await Promise.all([
+          prisma.transferenciaPropriedade.findMany({
+            where: whereClause,
+            include: includeConfig,
+            orderBy: { dataTransferencia: "desc" },
+            skip,
+            take,
+          }),
+          prisma.transferenciaPropriedade.count({ where: whereClause }),
+        ]);
+
+        // Retornar com metadados de paginação
+        return res.status(200).json({
+          data: transferencias,
+          pagination: {
+            page: pageNum,
+            pageSize: pageSizeNum,
+            total,
+            totalPages: Math.ceil(total / pageSizeNum),
+          },
         });
       }
+
+      // Sem paginação - retornar todos os registros
+      const transferencias = await prisma.transferenciaPropriedade.findMany({
+        where: whereClause,
+        include: includeConfig,
+        orderBy: { dataTransferencia: "desc" },
+      });
 
       return res.status(200).json(transferencias);
     } catch (error) {

@@ -3,6 +3,7 @@ import React, { useEffect, useState, ReactNode } from "react";
 import { useNavigate, useParams } from "@tanstack/react-router";
 import SearchBar from "../comum/SearchBar";
 import DataTable, { Column } from "../comum/DataTable";
+import Pagination from "../comum/Pagination";
 import StatusBadge from "../comum/StatusBadge";
 import BaseApiService from "../../services/baseApiService";
 import useApiService from "../../hooks/useApiService";
@@ -120,6 +121,16 @@ interface CadastroBaseProps<T, R> {
       color: "green" | "red" | "yellow" | "blue" | "gray";
     }>;
   };
+
+  /**
+   * Habilitar paginação
+   */
+  enablePagination?: boolean;
+
+  /**
+   * Tamanho inicial da página
+   */
+  initialPageSize?: number;
 }
 
 /**
@@ -147,6 +158,8 @@ function CadastroBase<T extends Record<string, any>, R>({
   showMetrics = false,
   calculateMetrics,
   statusConfig,
+  enablePagination = false,
+  initialPageSize = 50,
 }: CadastroBaseProps<T, R>) {
   const [termoBusca, setTermoBusca] = useState("");
   const [filtroAtivo, setFiltroAtivo] = useState<string | null>(null);
@@ -161,8 +174,8 @@ function CadastroBase<T extends Record<string, any>, R>({
   const canDelete = hasPermission(module, "delete");
 
   // API hook
-  const { data, loading, error, fetchAll, searchByTerm, toggleStatus } =
-    useApiService<T, R>(service);
+  const { data, loading, error, fetchAll, searchByTerm, toggleStatus, pagination } =
+    useApiService<T, R>(service, enablePagination, initialPageSize);
 
   // Load initial data
   useEffect(() => {
@@ -441,6 +454,18 @@ function CadastroBase<T extends Record<string, any>, R>({
           emptyMessage="Nenhum registro encontrado"
           loading={loading}
         />
+
+        {/* Paginação */}
+        {enablePagination && pagination && (
+          <Pagination
+            currentPage={pagination.page}
+            totalPages={pagination.totalPages}
+            pageSize={pagination.pageSize}
+            total={pagination.total}
+            onPageChange={pagination.goToPage}
+            onPageSizeChange={pagination.changePageSize}
+          />
+        )}
       </div>
     </div>
   );
