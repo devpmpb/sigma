@@ -248,8 +248,6 @@ const ArrendamentosPage: React.FC = () => {
       rowKey="id"
       baseUrl="/movimentos/agricultura/arrendamentos"
       module="agricultura"
-      as
-      ModuleType
       FormComponent={ArrendamentoForm}
       showSearch={true}
       searchPlaceholder="Buscar por propriedade, proprietário ou arrendatário..."
@@ -261,6 +259,9 @@ const ArrendamentosPage: React.FC = () => {
       showMetrics={true}
       calculateMetrics={calculateMetrics}
       statusConfig={statusConfig}
+      // Paginação
+      enablePagination={true}
+      initialPageSize={50}
     />
   );
 };

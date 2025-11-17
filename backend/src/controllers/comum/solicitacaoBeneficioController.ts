@@ -36,14 +36,18 @@ export const solicitacaoBeneficioController = {
 
   findAll: async (req: Request, res: Response) => {
       try {
-        const solicitacoes = await prisma.solicitacaoBeneficio.findMany({
-          include: {
-            pessoa: {
+        const { page, pageSize } = req.query;
+
+        // Parâmetros de paginação
+        const pageNum = page ? parseInt(page as string, 10) : undefined;
+        const pageSizeNum = pageSize ? parseInt(pageSize as string, 10) : undefined;
+
+        const includeConfig = {
+          pessoa: {
             select: {
               id: true,
               nome: true,
               cpfCnpj: true,
-
             }
           },
           programa: {
@@ -56,8 +60,40 @@ export const solicitacaoBeneficioController = {
             }
           },
           regraAplicada: true
-          },
-          orderBy: { datasolicitacao: "asc" },
+        };
+
+        // Se paginação foi solicitada
+        if (pageNum !== undefined && pageSizeNum !== undefined) {
+          const skip = (pageNum - 1) * pageSizeNum;
+          const take = pageSizeNum;
+
+          // Buscar registros paginados e total
+          const [solicitacoes, total] = await Promise.all([
+            prisma.solicitacaoBeneficio.findMany({
+              include: includeConfig,
+              orderBy: { datasolicitacao: "desc" },
+              skip,
+              take,
+            }),
+            prisma.solicitacaoBeneficio.count(),
+          ]);
+
+          // Retornar com metadados de paginação
+          return res.status(200).json({
+            data: solicitacoes,
+            pagination: {
+              page: pageNum,
+              pageSize: pageSizeNum,
+              total,
+              totalPages: Math.ceil(total / pageSizeNum),
+            },
+          });
+        }
+
+        // Sem paginação - retornar todos os registros
+        const solicitacoes = await prisma.solicitacaoBeneficio.findMany({
+          include: includeConfig,
+          orderBy: { datasolicitacao: "desc" },
         });
 
         return res.status(200).json(solicitacoes);

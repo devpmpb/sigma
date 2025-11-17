@@ -18,10 +18,10 @@ export function createGenericController<T>(
   options: GenericControllerOptions<T>
 ) {
   return {
-    // Listar todos os registros
+    // Listar todos os registros (com paginação opcional)
     findAll: async (req: Request, res: Response) => {
       try {
-        const { ativo } = req.query;
+        const { ativo, page, pageSize } = req.query;
         const whereClause: any = {};
 
         // Filtrar por status ativo/inativo se o parâmetro for fornecido
@@ -29,6 +29,41 @@ export function createGenericController<T>(
           whereClause.ativo = ativo === "true";
         }
 
+        // Parâmetros de paginação
+        const pageNum = page ? parseInt(page as string, 10) : undefined;
+        const pageSizeNum = pageSize ? parseInt(pageSize as string, 10) : undefined;
+
+        // Se paginação foi solicitada
+        if (pageNum !== undefined && pageSizeNum !== undefined) {
+          const skip = (pageNum - 1) * pageSizeNum;
+          const take = pageSizeNum;
+
+          // Buscar registros paginados e total de registros
+          const [registros, total] = await Promise.all([
+            (prisma as any)[options.modelName].findMany({
+              where: whereClause,
+              orderBy: options.orderBy || { id: "asc" },
+              skip,
+              take,
+            }),
+            (prisma as any)[options.modelName].count({
+              where: whereClause,
+            }),
+          ]);
+
+          // Retornar com metadados de paginação
+          return res.status(200).json({
+            data: registros,
+            pagination: {
+              page: pageNum,
+              pageSize: pageSizeNum,
+              total,
+              totalPages: Math.ceil(total / pageSizeNum),
+            },
+          });
+        }
+
+        // Sem paginação - retornar todos os registros (comportamento antigo)
         const registros = await (prisma as any)[options.modelName].findMany({
           where: whereClause,
           orderBy: options.orderBy || { id: "asc" },

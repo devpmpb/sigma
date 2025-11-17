@@ -24,6 +24,7 @@ enum TipoLogradouro {
   RODOVIA
   LINHA
   ESTRADA
+  OUTROS
 }
 
 enum TipoPropriedade {

@@ -3,6 +3,19 @@ import apiClient from "./apiConfig";
 import { ModuleType } from "../types";
 
 /**
+ * Interface para resposta paginada
+ */
+export interface PaginatedResponse<T> {
+  data: T[];
+  pagination: {
+    page: number;
+    pageSize: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
+/**
  * Classe base para serviços de API genéricos com suporte a módulos
  * Cada serviço deve declarar a qual módulo pertence (obras, agricultura, comum)
  * @template T - Tipo da entidade
@@ -23,11 +36,30 @@ export default class BaseApiService<T, R = Partial<T>> {
   }
 
   /**
-   * Busca todos os registros
+   * Busca todos os registros (sem paginação)
    * @returns Uma promessa com um array de entidades do tipo T
    */
   getAll = async (): Promise<T[]> => {
     const response: AxiosResponse<T[]> = await apiClient.get(this.baseUrl);
+    return response.data;
+  };
+
+  /**
+   * Busca registros paginados
+   * @param page - Número da página (começa em 1)
+   * @param pageSize - Tamanho da página
+   * @returns Uma promessa com resposta paginada
+   */
+  getPaginated = async (
+    page: number = 1,
+    pageSize: number = 50
+  ): Promise<PaginatedResponse<T>> => {
+    const response: AxiosResponse<PaginatedResponse<T>> = await apiClient.get(
+      this.baseUrl,
+      {
+        params: { page, pageSize },
+      }
+    );
     return response.data;
   };
 
