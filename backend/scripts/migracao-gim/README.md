@@ -24,11 +24,12 @@
 ### **Scripts em Andamento:**
 
 - **`15-migrar-enderecos.sql`** ⏳ - Migração de ~8.588 endereços (aguardando Bairro.csv)
+- **`03-migrar-transferencias-propriedade.sql`** ⭐ **NOVO** - Migração de transferências de propriedade
+- **`04-migrar-arrendamentos.sql`** ⭐ **NOVO** - Migração de arrendamentos
 
 ### **Scripts Opcionais (NÃO EXECUTADOS):**
 
 - **`02-migrar-propriedades.sql`** - Já incluído no script 01
-- **`03-migrar-arrendamentos.sql`** - Migração opcional de arrendamentos
 - **`09-migrar-ramos-atividade.sql`** - Migração opcional de 22 ramos do GIM
 - **`popular-ramos-basicos.sql`** - Popular 9 ramos básicos (opcional)
 
@@ -184,10 +185,69 @@ WHERE r.id IS NULL;
 
 ---
 
-**Última atualização:** 2025-01-13
-**Status:** ⏳ MIGRAÇÃO EM ANDAMENTO - Pendente: migração de endereços
+**Última atualização:** 2025-01-17
+**Status:** ⏳ MIGRAÇÃO EM ANDAMENTO - Pendente: transferências, arrendamentos e endereços
+
+**Trabalho realizado em 2025-01-17:**
+- ⭐ Script `03-migrar-transferencias-propriedade.sql` criado
+  - Migra ~407 transferências de propriedade do GIM
+  - Cruza dados de `movimentotransferencia.csv` com `movimentosituacao.csv`
+  - Detecta situação da propriedade em cada transferência (PRÓPRIA, CONDOMÍNIO, USUFRUTO)
+
+- ⭐ Script `04-migrar-arrendamentos.sql` criado
+  - Migra arrendamentos históricos do GIM
+  - Busca proprietário via tabela `areas_gim_completa`
+  - Mapeia status (ativo, cancelado, vencido)
+  - Converte áreas com vírgula para ponto decimal
 
 **Trabalho realizado em 2025-01-13:**
 - ✅ Limpeza de seeds obsoletos (removidos programasLegaisCompleto, produtoresAdicionais, condominosSeed)
 - ✅ Script `15-migrar-enderecos.sql` criado
 - ⏳ Aguardando Bairro.csv para completar migração de endereços
+
+---
+
+## 📚 Guia de Execução - Scripts Novos
+
+### **Script 03: Transferências de Propriedade**
+
+**Arquivos CSV necessários:**
+- `C:/csvs/movimentotransferencia.csv` (407 registros)
+- `C:/csvs/movimentosituacao.csv` (dados de situação)
+
+**Passos:**
+1. Criar tabelas staging
+2. Carregar CSVs via `COPY`
+3. Executar função de busca de situação
+4. Migrar transferências
+5. Validar com queries incluídas no script
+
+**Resultado esperado:** ~407 transferências migradas
+
+---
+
+### **Script 04: Arrendamentos**
+
+**Arquivos CSV necessários:**
+- `C:/csvs/arrendamento.csv`
+
+**Passos:**
+1. Criar tabela staging
+2. Carregar CSV via `COPY`
+3. ⚠️ Corrigir separador decimal (vírgula → ponto) se necessário
+4. Migrar arrendamentos
+5. Validar com queries incluídas no script
+
+**Resultado esperado:** Quantidade variável de arrendamentos históricos
+
+---
+
+## ⚠️ Observações Importantes
+
+### Transferências:
+- **Cruzamento de dados:** O script cruza transferências com movimentos de situação para detectar se a propriedade era PRÓPRIA, CONDOMÍNIO ou USUFRUTO no momento da transferência
+- **IDs não encontrados:** Transferências que referenciam pessoas/propriedades não migradas serão ignoradas e registradas em `log_erros`
+
+### Arrendamentos:
+- **Vírgula decimal:** CSVs brasileiros usam vírgula. O script possui correção automática
+- **codArea:** O arrendamento no GIM referencia `codArea`, que é traduzido para propriedade+proprietário via `areas_gim_completa`
