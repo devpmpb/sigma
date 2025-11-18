@@ -1,17 +1,13 @@
 -- ============================================================================
--- SCRIPT DE CORREÇÃO: PROPRIEDADES COM PROPRIETÁRIOS CORRETOS
+-- SCRIPT DE CORREÇÃO: RECRIAR PROPRIEDADES COM PROPRIETÁRIOS CORRETOS
 -- ============================================================================
 --
--- PROBLEMA IDENTIFICADO:
--- Todas as 871 propriedades foram migradas com proprietarioId = 1 (ERRADO!)
+-- PROBLEMA: Todas as 871 propriedades foram migradas com proprietarioId = 1
 --
--- SOLUÇÃO:
--- 1. Deletar TODAS as propriedades e dados relacionados
--- 2. Recriar propriedades usando staging_gim.areas_gim (que tem cod_pessoa)
--- 3. Recriar map_propriedades
--- 4. Recriar condôminos (múltiplos donos)
+-- SOLUÇÃO: Deletar tudo e recriar usando staging_gim.areas_gim para mapear
+--          o proprietário correto (primeira pessoa não-arrendada vira dono principal)
 --
--- ATENÇÃO: Este script deleta e recria dados!
+-- EXECUÇÃO: Rodar este script INTEIRO de uma vez só
 --
 -- Autor: Claude Code
 -- Data: 2025-01-17
@@ -20,27 +16,6 @@
 -- ============================================================================
 -- PASSO 1: BACKUP E LIMPEZA
 -- ============================================================================
-
-DO $$
-DECLARE
-    v_count_propriedades INTEGER;
-    v_count_condominos INTEGER;
-    v_count_transferencias INTEGER;
-BEGIN
-    -- Contar registros antes de deletar
-    SELECT COUNT(*) INTO v_count_propriedades FROM "Propriedade";
-    SELECT COUNT(*) INTO v_count_condominos FROM "PropriedadeCondomino";
-    SELECT COUNT(*) INTO v_count_transferencias FROM transferencias_propriedade;
-
-    RAISE NOTICE '========================================';
-    RAISE NOTICE 'BACKUP - Registros ANTES da limpeza:';
-    RAISE NOTICE '========================================';
-    RAISE NOTICE 'Propriedades: %', v_count_propriedades;
-    RAISE NOTICE 'Condôminos: %', v_count_condominos;
-    RAISE NOTICE 'Transferências: %', v_count_transferencias;
-    RAISE NOTICE '========================================';
-    RAISE NOTICE '';
-END $$;
 
 -- Deletar em ordem (respeitar FKs)
 DELETE FROM transferencias_propriedade;
@@ -60,86 +35,73 @@ DECLARE
     v_ignorados INTEGER := 0;
     v_errors INTEGER := 0;
     rec RECORD;
-    v_proprietario_principal_gim BIGINT;
-    v_proprietario_principal_sigma INTEGER;
+    v_proprietario_gim BIGINT;
+    v_proprietario_sigma INTEGER;
     v_is_residente BOOLEAN;
     v_situacao_prop "SituacaoPropriedade";
     v_propriedade_id INTEGER;
-    v_area_total NUMERIC(10,2);
 BEGIN
-    RAISE NOTICE 'Iniciando migração CORRETA de Propriedades...';
+    RAISE NOTICE '========================================';
+    RAISE NOTICE 'PASSO 2: MIGRAR PROPRIEDADES';
+    RAISE NOTICE '========================================';
     RAISE NOTICE '';
 
-    -- Para cada propriedade única no CSV
+    -- Para cada propriedade no CSV
     FOR rec IN (
-        SELECT DISTINCT
+        SELECT
             p.cod_propriedade,
-            TRIM(p.nome) as nome,
+            TRIM(p.denominacao) as denominacao,
             TRIM(p.matricula) as matricula,
             TRIM(p.itr) as itr,
             TRIM(p.incra) as incra,
-            p.area_total,
-            TRIM(p.localizacao) as localizacao
+            -- Converter area (vírgula -> ponto)
+            CASE
+                WHEN p.area::TEXT LIKE '%,%'
+                THEN REPLACE(p.area::TEXT, ',', '.')::NUMERIC(10,4)
+                ELSE p.area::NUMERIC(10,4)
+            END as area_total,
+            TRIM(p.situacao) as situacao_csv
         FROM staging_gim.propriedade_csv p
         WHERE p.cod_propriedade IS NOT NULL
         ORDER BY p.cod_propriedade
     ) LOOP
         BEGIN
-            -- ========================================================
-            -- Buscar PROPRIETÁRIO PRINCIPAL via areas_gim
-            -- ========================================================
-            -- Primeiro registro em areas_gim vira dono principal
+            -- Buscar proprietário principal (primeira pessoa NÃO-arrendada na tabela Area)
             SELECT
                 a.cod_pessoa,
                 map.id_sigma,
-                CASE
-                    WHEN UPPER(TRIM(a.residente)) IN ('SIM', 'TRUE', 'T', '1')
-                    THEN TRUE
-                    ELSE FALSE
-                END,
-                CASE
-                    WHEN UPPER(TRIM(a.situacao)) LIKE '%CONDOM%' THEN 'CONDOMINIO'::"SituacaoPropriedade"
-                    WHEN UPPER(TRIM(a.situacao)) LIKE '%USUFRUTO%' THEN 'USUFRUTO'::"SituacaoPropriedade"
-                    ELSE 'PROPRIA'::"SituacaoPropriedade"
-                END
+                CASE WHEN a.residente = 'true' THEN TRUE ELSE FALSE END
             INTO
-                v_proprietario_principal_gim,
-                v_proprietario_principal_sigma,
-                v_is_residente,
-                v_situacao_prop
+                v_proprietario_gim,
+                v_proprietario_sigma,
+                v_is_residente
             FROM staging_gim.areas_gim a
             INNER JOIN staging_gim.map_pessoas map ON map.id_gim = a.cod_pessoa
             WHERE a.cod_propriedade = rec.cod_propriedade
               AND (a.situacao IS NULL OR UPPER(TRIM(a.situacao)) != 'ARRENDADA')
-            ORDER BY a.cod_area ASC -- Primeiro registro vira dono principal
+            ORDER BY a.cod_area ASC
             LIMIT 1;
 
-            -- Se não encontrou proprietário, pular
-            IF v_proprietario_principal_sigma IS NULL THEN
+            -- Se não encontrou proprietário, ignorar
+            IF v_proprietario_sigma IS NULL THEN
                 v_ignorados := v_ignorados + 1;
-
                 INSERT INTO staging_gim.log_erros (etapa, id_gim, erro)
                 VALUES (
                     'PROPRIEDADE_SEM_DONO',
                     rec.cod_propriedade,
-                    FORMAT('Propriedade %s (%s) sem proprietário em areas_gim', rec.cod_propriedade, rec.nome)
+                    FORMAT('Propriedade %s (%s) sem proprietário válido', rec.cod_propriedade, rec.denominacao)
                 );
-
                 CONTINUE;
             END IF;
 
-            -- Calcular área total da propriedade
-            -- (soma de todas as áreas não-arrendadas vinculadas a esta propriedade)
-            -- Nota: áreas_gim.area já foi convertido para NUMERIC no script 05
-            SELECT COALESCE(SUM(area), rec.area_total)
-            INTO v_area_total
-            FROM staging_gim.areas_gim
-            WHERE cod_propriedade = rec.cod_propriedade
-              AND (situacao IS NULL OR UPPER(TRIM(situacao)) != 'ARRENDADA');
+            -- Determinar situação da propriedade
+            v_situacao_prop := CASE
+                WHEN UPPER(rec.situacao_csv) LIKE '%CONDOM%' THEN 'CONDOMINIO'
+                WHEN UPPER(rec.situacao_csv) LIKE '%USUFRUTO%' THEN 'USUFRUTO'
+                ELSE 'PROPRIA'
+            END;
 
-            -- ========================================================
             -- Inserir Propriedade
-            -- ========================================================
             INSERT INTO "Propriedade" (
                 nome,
                 "tipoPropriedade",
@@ -149,68 +111,53 @@ BEGIN
                 incra,
                 situacao,
                 "isproprietarioResidente",
-                localizacao,
                 matricula,
                 "proprietarioId",
                 "createdAt",
                 "updatedAt"
             ) VALUES (
-                rec.nome,
-                'RURAL'::"TipoPropriedade",
-                COALESCE(v_area_total, rec.area_total),
-                'alqueires'::"UnidadeArea",
+                rec.denominacao,
+                'RURAL',
+                rec.area_total,
+                'alqueires',
                 rec.itr,
                 rec.incra,
                 v_situacao_prop,
                 v_is_residente,
-                rec.localizacao,
                 rec.matricula,
-                v_proprietario_principal_sigma,
+                v_proprietario_sigma,
                 NOW(),
                 NOW()
             )
             RETURNING id INTO v_propriedade_id;
 
-            -- ========================================================
-            -- Mapear propriedade (GIM → SIGMA)
-            -- ========================================================
+            -- Mapear GIM -> SIGMA
             INSERT INTO staging_gim.map_propriedades (
                 id_gim,
                 id_sigma,
                 nome,
-                proprietario_principal_gim,
-                proprietario_principal_sigma
+                migrado_em
             ) VALUES (
                 rec.cod_propriedade,
                 v_propriedade_id,
-                rec.nome,
-                v_proprietario_principal_gim,
-                v_proprietario_principal_sigma
+                rec.denominacao,
+                NOW()
             );
 
             v_count := v_count + 1;
 
-            -- Log de progresso
-            IF v_count % 100 = 0 THEN
-                RAISE NOTICE '   ✅ % propriedades migradas...', v_count;
-            END IF;
-
         EXCEPTION WHEN OTHERS THEN
             v_errors := v_errors + 1;
             INSERT INTO staging_gim.log_erros (etapa, id_gim, erro)
-            VALUES ('PROPRIEDADE_CORRECAO', rec.cod_propriedade, SQLERRM);
+            VALUES ('PROPRIEDADE', rec.cod_propriedade, SQLERRM);
         END;
     END LOOP;
 
-    RAISE NOTICE '';
-    RAISE NOTICE '========================================';
-    RAISE NOTICE 'MIGRAÇÃO DE PROPRIEDADES CONCLUÍDA';
-    RAISE NOTICE '========================================';
     RAISE NOTICE 'Propriedades migradas: %', v_count;
-    RAISE NOTICE 'Ignoradas (sem dono): %', v_ignorados;
+    RAISE NOTICE 'Propriedades ignoradas (sem dono): %', v_ignorados;
     RAISE NOTICE 'Erros: %', v_errors;
-    RAISE NOTICE '========================================';
     RAISE NOTICE '';
+
 END $$;
 
 -- ============================================================================
@@ -223,24 +170,18 @@ DECLARE
     v_errors INTEGER := 0;
     rec RECORD;
 BEGIN
-    RAISE NOTICE 'Iniciando migração de Condôminos...';
+    RAISE NOTICE '========================================';
+    RAISE NOTICE 'PASSO 3: MIGRAR CONDÔMINOS';
+    RAISE NOTICE '========================================';
     RAISE NOTICE '';
 
     -- Para cada pessoa adicional que tem área na propriedade
     -- (exceto o dono principal e áreas arrendadas)
     FOR rec IN (
         SELECT
-            map_prop.id_sigma as propriedade_id_sigma,
-            map_prop.id_gim as cod_propriedade_gim,
-            a.cod_area,
-            a.cod_pessoa as cod_pessoa_gim,
-            map_pes.id_sigma as pessoa_id_sigma,
-            prop."proprietarioId" as proprietario_principal_sigma_id,
-            CASE
-                WHEN a.area::TEXT LIKE '%,%'
-                THEN REPLACE(a.area::TEXT, ',', '.')::NUMERIC(10,2)
-                ELSE a.area
-            END as area
+            prop.id as propriedade_id_sigma,
+            map_pes.id_sigma as condomino_id_sigma,
+            a.cod_area
         FROM staging_gim.areas_gim a
         INNER JOIN staging_gim.map_propriedades map_prop
             ON map_prop.id_gim = a.cod_propriedade
@@ -248,23 +189,25 @@ BEGIN
             ON prop.id = map_prop.id_sigma
         INNER JOIN staging_gim.map_pessoas map_pes
             ON map_pes.id_gim = a.cod_pessoa
-        WHERE a.cod_pessoa != prop."proprietarioId" -- Não incluir o dono principal (comparar ID SIGMA)
-          AND (a.situacao IS NULL OR UPPER(TRIM(a.situacao)) != 'ARRENDADA') -- Não incluir arrendadas
+        WHERE a.cod_pessoa IS NOT NULL
           AND a.cod_propriedade IS NOT NULL
-          AND a.cod_pessoa IS NOT NULL
+          -- Excluir o dono principal
+          AND map_pes.id_sigma != prop."proprietarioId"
+          -- Excluir áreas arrendadas
+          AND (a.situacao IS NULL OR UPPER(TRIM(a.situacao)) != 'ARRENDADA')
     ) LOOP
         BEGIN
             INSERT INTO "PropriedadeCondomino" (
-                "propriedadeId",
-                "condominoId",
+                propriedade_id,
+                condomino_id,
                 percentual,
-                "dataInicio",
-                "createdAt",
-                "updatedAt"
+                data_inicio,
+                created_at,
+                updated_at
             ) VALUES (
                 rec.propriedade_id_sigma,
-                rec.pessoa_id_sigma,
-                NULL, -- GIM não tem percentual
+                rec.condomino_id_sigma,
+                NULL,
                 NOW(),
                 NOW(),
                 NOW()
@@ -275,26 +218,13 @@ BEGIN
         EXCEPTION WHEN OTHERS THEN
             v_errors := v_errors + 1;
             INSERT INTO staging_gim.log_erros (etapa, id_gim, erro)
-            VALUES ('CONDOMINO_CORRECAO', rec.cod_area, SQLERRM);
+            VALUES ('CONDOMINO', rec.cod_area, SQLERRM);
         END;
     END LOOP;
 
-    RAISE NOTICE '';
-    RAISE NOTICE '========================================';
-    RAISE NOTICE 'MIGRAÇÃO DE CONDÔMINOS CONCLUÍDA';
-    RAISE NOTICE '========================================';
     RAISE NOTICE 'Condôminos migrados: %', v_count;
     RAISE NOTICE 'Erros: %', v_errors;
-    RAISE NOTICE '========================================';
     RAISE NOTICE '';
-
-    -- Atualizar contador de condôminos
-    UPDATE staging_gim.map_propriedades map
-    SET total_condominos = (
-        SELECT COUNT(*)
-        FROM "PropriedadeCondomino" pc
-        WHERE pc."propriedadeId" = map.id_sigma
-    );
 
 END $$;
 
@@ -308,14 +238,10 @@ DECLARE
     v_ignorados INTEGER := 0;
     v_errors INTEGER := 0;
     rec RECORD;
-    v_propriedade_id INTEGER;
-    v_proprietario_anterior_id INTEGER;
-    v_proprietario_novo_id INTEGER;
-    v_situacao_propriedade "SituacaoPropriedade";
-    v_data_transferencia DATE;
-    v_observacoes TEXT;
 BEGIN
-    RAISE NOTICE 'Recriando Transferências de Propriedade...';
+    RAISE NOTICE '========================================';
+    RAISE NOTICE 'PASSO 4: RECRIAR TRANSFERÊNCIAS';
+    RAISE NOTICE '========================================';
     RAISE NOTICE '';
 
     FOR rec IN (
@@ -325,94 +251,66 @@ BEGIN
             t.cod_proprietario,
             t.cod_novo_proprietario,
             t.data,
-            t.motivo,
-            t.responsavel
+            t.motivo
         FROM staging_gim.transferencias_gim t
-        WHERE t.cod_propriedade IS NOT NULL
-          AND t.cod_proprietario IS NOT NULL
-          AND t.cod_novo_proprietario IS NOT NULL
-        ORDER BY t.data ASC, t.cod_movimento_transferencia ASC
+        ORDER BY t.data ASC
     ) LOOP
         BEGIN
-            -- Mapear IDs (GIM → SIGMA)
-            SELECT id_sigma INTO v_propriedade_id
-            FROM staging_gim.map_propriedades
-            WHERE id_gim = rec.cod_propriedade;
-
-            SELECT id_sigma INTO v_proprietario_anterior_id
-            FROM staging_gim.map_pessoas
-            WHERE id_gim = rec.cod_proprietario;
-
-            SELECT id_sigma INTO v_proprietario_novo_id
-            FROM staging_gim.map_pessoas
-            WHERE id_gim = rec.cod_novo_proprietario;
-
-            IF v_propriedade_id IS NULL OR
-               v_proprietario_anterior_id IS NULL OR
-               v_proprietario_novo_id IS NULL THEN
+            -- Verificar se todos os IDs existem no mapeamento
+            IF NOT EXISTS (SELECT 1 FROM staging_gim.map_propriedades WHERE id_gim = rec.cod_propriedade) THEN
                 v_ignorados := v_ignorados + 1;
                 CONTINUE;
             END IF;
 
-            -- Converter data
-            v_data_transferencia := rec.data::DATE;
+            IF NOT EXISTS (SELECT 1 FROM staging_gim.map_pessoas WHERE id_gim = rec.cod_proprietario) THEN
+                v_ignorados := v_ignorados + 1;
+                CONTINUE;
+            END IF;
 
-            -- Buscar situação da propriedade
-            v_situacao_propriedade := staging_gim.buscar_situacao_pos_transferencia(
-                rec.cod_propriedade,
-                rec.data
-            );
-
-            -- Montar observações
-            v_observacoes := FORMAT(
-                '[GIM #%s] %s%sResponsável: %s',
-                rec.cod_movimento_transferencia,
-                COALESCE(rec.motivo, 'Sem motivo registrado'),
-                E'\n',
-                COALESCE(rec.responsavel, 'Não informado')
-            );
+            IF NOT EXISTS (SELECT 1 FROM staging_gim.map_pessoas WHERE id_gim = rec.cod_novo_proprietario) THEN
+                v_ignorados := v_ignorados + 1;
+                CONTINUE;
+            END IF;
 
             -- Inserir transferência
             INSERT INTO transferencias_propriedade (
-                propriedade_id,
-                proprietario_anterior_id,
-                proprietario_novo_id,
-                situacao_propriedade,
+                cod_propriedade,
+                cod_proprietario_anterior,
+                cod_proprietario_novo,
                 data_transferencia,
-                observacoes,
-                created_at,
-                updated_at
-            ) VALUES (
-                v_propriedade_id,
-                v_proprietario_anterior_id,
-                v_proprietario_novo_id,
-                v_situacao_propriedade,
-                v_data_transferencia,
-                v_observacoes,
-                NOW(),
-                NOW()
-            );
+                observacoes
+            )
+            SELECT
+                map_prop.id_sigma,
+                map_ant.id_sigma,
+                map_novo.id_sigma,
+                rec.data,
+                rec.motivo
+            FROM staging_gim.map_propriedades map_prop
+            CROSS JOIN staging_gim.map_pessoas map_ant
+            CROSS JOIN staging_gim.map_pessoas map_novo
+            WHERE map_prop.id_gim = rec.cod_propriedade
+              AND map_ant.id_gim = rec.cod_proprietario
+              AND map_novo.id_gim = rec.cod_novo_proprietario;
 
             v_count := v_count + 1;
 
         EXCEPTION WHEN OTHERS THEN
             v_errors := v_errors + 1;
+            INSERT INTO staging_gim.log_erros (etapa, id_gim, erro)
+            VALUES ('TRANSFERENCIA', rec.cod_movimento_transferencia, SQLERRM);
         END;
     END LOOP;
 
-    RAISE NOTICE '';
-    RAISE NOTICE '========================================';
-    RAISE NOTICE 'TRANSFERÊNCIAS RECRIADAS';
-    RAISE NOTICE '========================================';
-    RAISE NOTICE 'Transferências migradas: %', v_count;
-    RAISE NOTICE 'Ignoradas: %', v_ignorados;
+    RAISE NOTICE 'Transferências recriadas: %', v_count;
+    RAISE NOTICE 'Transferências ignoradas (IDs não encontrados): %', v_ignorados;
     RAISE NOTICE 'Erros: %', v_errors;
-    RAISE NOTICE '========================================';
     RAISE NOTICE '';
+
 END $$;
 
 -- ============================================================================
--- RELATÓRIO FINAL
+-- PASSO 5: RELATÓRIO FINAL
 -- ============================================================================
 
 DO $$
@@ -420,71 +318,74 @@ DECLARE
     v_total_propriedades INTEGER;
     v_total_condominos INTEGER;
     v_total_transferencias INTEGER;
-    v_propriedades_sem_condomino INTEGER;
-    v_propriedades_com_condomino INTEGER;
     v_total_erros INTEGER;
+    v_propriedades_unicas INTEGER;
+    v_propriedades_multiplas INTEGER;
+    rec RECORD;
 BEGIN
     SELECT COUNT(*) INTO v_total_propriedades FROM "Propriedade";
     SELECT COUNT(*) INTO v_total_condominos FROM "PropriedadeCondomino";
     SELECT COUNT(*) INTO v_total_transferencias FROM transferencias_propriedade;
-    SELECT COUNT(*) INTO v_propriedades_sem_condomino FROM staging_gim.map_propriedades WHERE total_condominos = 0;
-    SELECT COUNT(*) INTO v_propriedades_com_condomino FROM staging_gim.map_propriedades WHERE total_condominos > 0;
-    SELECT COUNT(*) INTO v_total_erros FROM staging_gim.log_erros WHERE etapa LIKE '%CORRECAO%';
+    SELECT COUNT(*) INTO v_total_erros FROM staging_gim.log_erros
+        WHERE etapa IN ('PROPRIEDADE', 'PROPRIEDADE_SEM_DONO', 'CONDOMINO', 'TRANSFERENCIA')
+          AND data_erro > NOW() - INTERVAL '5 minutes';
 
-    RAISE NOTICE '';
+    -- Contar propriedades com 1 só dono vs múltiplos donos
+    SELECT COUNT(*) INTO v_propriedades_unicas
+    FROM "Propriedade" p
+    WHERE NOT EXISTS (
+        SELECT 1 FROM "PropriedadeCondomino" pc
+        WHERE pc.propriedade_id = p.id
+    );
+
+    SELECT COUNT(*) INTO v_propriedades_multiplas
+    FROM "Propriedade" p
+    WHERE EXISTS (
+        SELECT 1 FROM "PropriedadeCondomino" pc
+        WHERE pc.propriedade_id = p.id
+    );
+
     RAISE NOTICE '========================================';
-    RAISE NOTICE '  CORREÇÃO DE PROPRIEDADES CONCLUÍDA';
+    RAISE NOTICE 'MIGRAÇÃO CONCLUÍDA';
     RAISE NOTICE '========================================';
     RAISE NOTICE 'Total de propriedades: %', v_total_propriedades;
-    RAISE NOTICE 'Propriedades com 1 dono: %', v_propriedades_sem_condomino;
-    RAISE NOTICE 'Propriedades com múltiplos donos: %', v_propriedades_com_condomino;
+    RAISE NOTICE '  - Com 1 único dono: %', v_propriedades_unicas;
+    RAISE NOTICE '  - Com múltiplos donos: %', v_propriedades_multiplas;
     RAISE NOTICE 'Total de condôminos: %', v_total_condominos;
-    RAISE NOTICE 'Transferências recriadas: %', v_total_transferencias;
+    RAISE NOTICE 'Total de transferências: %', v_total_transferencias;
     RAISE NOTICE 'Total de erros: %', v_total_erros;
     RAISE NOTICE '========================================';
+
+    -- Mostrar alguns exemplos de proprietários diferentes
     RAISE NOTICE '';
+    RAISE NOTICE 'AMOSTRA: Primeiras 10 propriedades e seus donos:';
+    FOR rec IN (
+        SELECT p.id, p.nome, pes.nome as dono, p."proprietarioId"
+        FROM "Propriedade" p
+        INNER JOIN "Pessoa" pes ON pes.id = p."proprietarioId"
+        ORDER BY p.id
+        LIMIT 10
+    ) LOOP
+        RAISE NOTICE 'Propriedade #% (%) -> Dono: % (ID %)', rec.id, rec.nome, rec.dono, rec."proprietarioId";
+    END LOOP;
+
 END $$;
 
 -- ============================================================================
 -- QUERIES DE VALIDAÇÃO
 -- ============================================================================
 
--- 1. Ver distribuição de proprietários (DEVE ter vários, NÃO só 1!)
+-- Verificar distribuição de proprietários
 SELECT
     "proprietarioId",
-    COUNT(*) as total_propriedades,
-    STRING_AGG(DISTINCT nome, ', ') as exemplos
+    COUNT(*) as qtd_propriedades
 FROM "Propriedade"
 GROUP BY "proprietarioId"
-ORDER BY total_propriedades DESC
+ORDER BY qtd_propriedades DESC
 LIMIT 20;
 
--- 2. Ver propriedades com múltiplos donos
-SELECT
-    p.id,
-    p.nome as propriedade,
-    p_dono.nome as proprietario_principal,
-    COUNT(pc.*) as total_condominos,
-    STRING_AGG(p_cond.nome, ', ') as condominos
-FROM "Propriedade" p
-INNER JOIN "Pessoa" p_dono ON p_dono.id = p."proprietarioId"
-LEFT JOIN "PropriedadeCondomino" pc ON pc."propriedadeId" = p.id AND pc."dataFim" IS NULL
-LEFT JOIN "Pessoa" p_cond ON p_cond.id = pc."condominoId"
-GROUP BY p.id, p.nome, p_dono.nome
-HAVING COUNT(pc.*) > 0
-ORDER BY total_condominos DESC
-LIMIT 20;
-
--- 3. Verificar se ainda tem propriedade com proprietarioId = 1
-SELECT
-    CASE WHEN COUNT(*) = 0 THEN '✅ OK - Nenhuma propriedade com dono = 1'
-         ELSE '❌ ERRO - Ainda tem ' || COUNT(*) || ' propriedades com dono = 1'
-    END as status
-FROM "Propriedade"
-WHERE "proprietarioId" = 1;
-
--- 4. Ver erros de correção
-SELECT *
-FROM staging_gim.log_erros
-WHERE etapa LIKE '%CORRECAO%'
+-- Ver erros recentes
+SELECT * FROM staging_gim.log_erros
+WHERE etapa IN ('PROPRIEDADE', 'PROPRIEDADE_SEM_DONO', 'CONDOMINO', 'TRANSFERENCIA')
+  AND data_erro > NOW() - INTERVAL '5 minutes'
 ORDER BY data_erro DESC;
