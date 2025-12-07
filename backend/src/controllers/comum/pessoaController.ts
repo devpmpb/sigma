@@ -442,49 +442,203 @@ export const pessoaController = {
     }
   },
 
+  getAreaEfetiva: async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { ano } = req.query;
+
+      const whereClause: any = {
+        pessoaId: Number(id),
+      };
+
+      // Se especificou ano, filtra por ano
+      if (ano) {
+        whereClause.anoReferencia = Number(ano);
+      }
+
+      const areasEfetivas = await prisma.areaEfetiva.findMany({
+        where: whereClause,
+        include: {
+          ramoAtividade: true,
+        },
+        orderBy: { anoReferencia: "desc" },
+      });
+
+      return res.status(200).json(areasEfetivas);
+    } catch (error) {
+      console.error("Erro ao buscar área efetiva:", error);
+      return res.status(500).json({ erro: "Erro ao buscar área efetiva" });
+    }
+  },
+
   updateAreaEfetiva: async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      const areaEfetiva = req.body;
+      const pessoaId = Number(id);
+      const { anoReferencia, ...dadosArea } = req.body;
 
-      // Verificar se produtor existe
-      const produtorExistente = await prisma.produtor.findUnique({
-        where: { id: Number(id) },
-        include: { areaEfetiva: true },
+      // Verificar se pessoa existe e é produtor
+      const pessoa = await prisma.pessoa.findUnique({
+        where: { id: pessoaId },
       });
 
-      if (!produtorExistente) {
-        return res.status(404).json({ erro: "Produtor não encontrado" });
+      if (!pessoa) {
+        return res.status(404).json({ erro: "Pessoa não encontrada" });
       }
 
-      const areaEfetivaCalculada = calcularAreaEfetiva(areaEfetiva);
-
-      let result;
-
-      if (produtorExistente.areaEfetiva) {
-        // Atualizar área efetiva existente
-        result = await prisma.areaEfetiva.update({
-          where: { id: Number(id) },
-          data: {
-            ...areaEfetiva,
-            areaEfetiva: areaEfetivaCalculada,
-          },
-        });
-      } else {
-        // Criar nova área efetiva
-        result = await prisma.areaEfetiva.create({
-          data: {
-            id: Number(id),
-            ...areaEfetiva,
-            areaEfetiva: areaEfetivaCalculada,
-          },
+      if (!pessoa.isProdutor) {
+        return res.status(400).json({
+          erro: "Pessoa não é produtor. Marque como produtor primeiro.",
         });
       }
+
+      // Ano de referência - usar ano atual se não informado
+      const ano = anoReferencia || new Date().getFullYear();
+
+      // Calcular área efetiva
+      const areaPropria = Number(dadosArea.areaPropria) || 0;
+      const areaArrendadaRecebida =
+        Number(dadosArea.areaArrendadaRecebida) || 0;
+      const areaArrendadaCedida = Number(dadosArea.areaArrendadaCedida) || 0;
+      const areaEfetivaCalculada =
+        areaPropria + areaArrendadaRecebida - areaArrendadaCedida;
+
+      // Usar upsert para criar ou atualizar
+      const result = await prisma.areaEfetiva.upsert({
+        where: {
+          pessoaId_anoReferencia: {
+            pessoaId,
+            anoReferencia: ano,
+          },
+        },
+        update: {
+          areaPropria,
+          areaArrendadaRecebida,
+          areaArrendadaCedida,
+          areaEfetiva: areaEfetivaCalculada,
+          atividadeProdutiva: dadosArea.atividadeProdutiva || null,
+          ramoAtividadeId: dadosArea.ramoAtividadeId
+            ? Number(dadosArea.ramoAtividadeId)
+            : null,
+        },
+        create: {
+          pessoaId,
+          anoReferencia: ano,
+          areaPropria,
+          areaArrendadaRecebida,
+          areaArrendadaCedida,
+          areaEfetiva: areaEfetivaCalculada,
+          atividadeProdutiva: dadosArea.atividadeProdutiva || null,
+          ramoAtividadeId: dadosArea.ramoAtividadeId
+            ? Number(dadosArea.ramoAtividadeId)
+            : null,
+        },
+        include: {
+          ramoAtividade: true,
+        },
+      });
 
       return res.status(200).json(result);
     } catch (error) {
       console.error("Erro ao atualizar área efetiva:", error);
       return res.status(500).json({ erro: "Erro ao atualizar área efetiva" });
+    }
+  },
+  recalcularAreaEfetiva: async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const pessoaId = Number(id);
+      const { anoReferencia } = req.body;
+
+      const ano = anoReferencia || new Date().getFullYear();
+
+      // Verificar se pessoa existe
+      const pessoa = await prisma.pessoa.findUnique({
+        where: { id: pessoaId },
+      });
+
+      if (!pessoa) {
+        return res.status(404).json({ erro: "Pessoa não encontrada" });
+      }
+
+      // Calcular área própria (soma das propriedades onde é proprietário)
+      const propriedades = await prisma.propriedade.findMany({
+        where: { proprietarioId: pessoaId },
+        select: { areaTotal: true },
+      });
+
+      const areaPropria = propriedades.reduce(
+        (sum, p) => sum + Number(p.areaTotal),
+        0
+      );
+
+      // Calcular área arrendada recebida (arrendamentos onde é arrendatário, ativos)
+      const arrendamentosRecebidos = await prisma.arrendamento.findMany({
+        where: {
+          arrendatarioId: pessoaId,
+          status: "ativo",
+        },
+        select: { areaArrendada: true },
+      });
+
+      const areaArrendadaRecebida = arrendamentosRecebidos.reduce(
+        (sum, a) => sum + Number(a.areaArrendada),
+        0
+      );
+
+      // Calcular área arrendada cedida (arrendamentos onde é proprietário, ativos)
+      const arrendamentosCedidos = await prisma.arrendamento.findMany({
+        where: {
+          proprietarioId: pessoaId,
+          status: "ativo",
+        },
+        select: { areaArrendada: true },
+      });
+
+      const areaArrendadaCedida = arrendamentosCedidos.reduce(
+        (sum, a) => sum + Number(a.areaArrendada),
+        0
+      );
+
+      // Área efetiva = própria + recebida - cedida
+      const areaEfetiva =
+        areaPropria + areaArrendadaRecebida - areaArrendadaCedida;
+
+      // Atualizar ou criar registro
+      const result = await prisma.areaEfetiva.upsert({
+        where: {
+          pessoaId_anoReferencia: {
+            pessoaId,
+            anoReferencia: ano,
+          },
+        },
+        update: {
+          areaPropria,
+          areaArrendadaRecebida,
+          areaArrendadaCedida,
+          areaEfetiva,
+        },
+        create: {
+          pessoaId,
+          anoReferencia: ano,
+          areaPropria,
+          areaArrendadaRecebida,
+          areaArrendadaCedida,
+          areaEfetiva,
+        },
+      });
+
+      return res.status(200).json({
+        ...result,
+        detalhes: {
+          propriedadesCount: propriedades.length,
+          arrendamentosRecebidosCount: arrendamentosRecebidos.length,
+          arrendamentosCedidosCount: arrendamentosCedidos.length,
+        },
+      });
+    } catch (error) {
+      console.error("Erro ao recalcular área efetiva:", error);
+      return res.status(500).json({ erro: "Erro ao recalcular área efetiva" });
     }
   },
 };

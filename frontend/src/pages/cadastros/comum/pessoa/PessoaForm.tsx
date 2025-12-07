@@ -23,6 +23,7 @@ import {
   formatDateForInput,
 } from "../../../../utils/formatters";
 import { useFormData } from "../../../../hooks/useFormData";
+import AreaEfetivaCard from "../../../../components/comum/AreaEfetivaCard";
 
 interface PessoaFormProps {
   id?: string | number;
@@ -74,7 +75,8 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
     [areasRuraisData]
   );
 
-  const loadingDados = loadingLogradouros || loadingBairros || loadingAreasRurais;
+  const loadingDados =
+    loadingLogradouros || loadingBairros || loadingAreasRurais;
 
   // Estado para endereço existente
   const [enderecoExistente, setEnderecoExistente] = useState<any>(null);
@@ -221,10 +223,14 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
 
       // Formatar datas para o formato do input antes de retornar
       if (pessoa.pessoaFisica?.dataNascimento) {
-        pessoa.pessoaFisica.dataNascimento = formatDateForInput(pessoa.pessoaFisica.dataNascimento);
+        pessoa.pessoaFisica.dataNascimento = formatDateForInput(
+          pessoa.pessoaFisica.dataNascimento
+        );
       }
       if (pessoa.pessoaJuridica?.dataFundacao) {
-        pessoa.pessoaJuridica.dataFundacao = formatDateForInput(pessoa.pessoaJuridica.dataFundacao);
+        pessoa.pessoaJuridica.dataFundacao = formatDateForInput(
+          pessoa.pessoaJuridica.dataFundacao
+        );
       }
 
       return pessoa;
@@ -396,10 +402,7 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
             );
             setValue("numero", enderecoExistente.numero || "");
             setValue("complemento", enderecoExistente.complemento || "");
-            setValue(
-              "bairroId",
-              enderecoExistente.bairroId?.toString() || ""
-            );
+            setValue("bairroId", enderecoExistente.bairroId?.toString() || "");
             setValue(
               "areaRuralId",
               enderecoExistente.areaRuralId?.toString() || ""
@@ -713,6 +716,14 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </FormField>
+                </div>
+              )}
+              {values.isProdutor && pessoaId && pessoaId !== "novo" && (
+                <div className="mt-6">
+                  <AreaEfetivaCard
+                    pessoaId={Number(pessoaId)}
+                    isProdutor={values.isProdutor}
+                  />
                 </div>
               )}
             </div>
