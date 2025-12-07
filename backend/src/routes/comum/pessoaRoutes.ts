@@ -61,7 +61,23 @@ router.put(
   requirePermission(ModuloSistema.COMUM, AcaoPermissao.EDIT),
   pessoaController.update
 );
-router.put("/:id/area-efetiva", pessoaController.updateAreaEfetiva);
+router.get(
+  "/:id/area-efetiva",
+  requirePermission(ModuloSistema.COMUM, AcaoPermissao.VIEW),
+  pessoaController.getAreaEfetiva
+);
+
+router.put(
+  "/:id/area-efetiva",
+  requirePermission(ModuloSistema.COMUM, AcaoPermissao.EDIT),
+  pessoaController.updateAreaEfetiva
+);
+
+router.post(
+  "/:id/area-efetiva/recalcular",
+  requirePermission(ModuloSistema.COMUM, AcaoPermissao.EDIT),
+  pessoaController.recalcularAreaEfetiva
+);
 router.delete(
   "/:id",
   requirePermission(ModuloSistema.COMUM, AcaoPermissao.DELETE),

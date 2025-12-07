@@ -1,4 +1,3 @@
-// backend/prisma/schema.prisma - ARQUIVO COMPLETO
 generator client {
   provider = "prisma-client-js"
 }
@@ -8,7 +7,475 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ENUMs existentes
+model Bairro {
+  id        Int        @id @default(autoincrement())
+  nome      String     @unique
+  ativo     Boolean    @default(true)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  enderecos Endereco[]
+}
+
+model AreaRural {
+  id        Int        @id @default(autoincrement())
+  nome      String     @unique
+  ativo     Boolean    @default(true)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  enderecos Endereco[]
+}
+
+model Logradouro {
+  id        Int            @id @default(autoincrement())
+  tipo      TipoLogradouro
+  descricao String
+  cep       String?        @unique
+  ativo     Boolean        @default(true)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  enderecos Endereco[]
+}
+
+model GrupoProduto {
+  id        Int      @id @default(autoincrement())
+  descricao String   @unique
+  ativo     Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model TipoVeiculo {
+  id        Int       @id @default(autoincrement())
+  descricao String    @unique
+  ativo     Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  veiculos  Veiculo[]
+}
+
+model Veiculo {
+  id            Int            @id @default(autoincrement())
+  tipoVeiculoId Int
+  descricao     String
+  placa         String         @unique
+  ativo         Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  tipoVeiculo   TipoVeiculo    @relation(fields: [tipoVeiculoId], references: [id])
+  ordensServico OrdemServico[]
+}
+
+model Pessoa {
+  id                             Int                        @id @default(autoincrement())
+  tipoPessoa                     TipoPessoa
+  nome                           String
+  cpfCnpj                        String                     @unique
+  telefone                       String?
+  email                          String?
+  ativo                          Boolean                    @default(true)
+  isProdutor                     Boolean?                   @default(false)
+  inscricaoEstadualProdutor      String?
+  createdAt                      DateTime                   @default(now())
+  updatedAt                      DateTime                   @updatedAt
+  areasEfetivas                  AreaEfetiva[]
+  arrendamentos                  Arrendamento[]             @relation("arrendatario")
+  arrendou                       Arrendamento[]             @relation("proprietario")
+  enderecos                      Endereco[]
+  pessoaFisica                   PessoaFisica?
+  pessoaJuridica                 PessoaJuridica?
+  propriedadesComoNuProprietario Propriedade[]              @relation("NuProprietario")
+  propriedades                   Propriedade[]
+  condominios                    PropriedadeCondomino[]     @relation("PropriedadeCondominos")
+  solicitacoesBeneficio          SolicitacaoBeneficio[]
+  telefones                      Telefone[]
+  ordensServico                  OrdemServico[]
+  transferenciasComoNuNovo       TransferenciaPropriedade[] @relation("TransferenciaNuProprietarioNovo")
+  transferenciasComoAnterior     TransferenciaPropriedade[] @relation("TransferenciaProprietarioAnterior")
+  transferenciasComoNovo         TransferenciaPropriedade[] @relation("TransferenciaProprietarioNovo")
+}
+
+model PessoaFisica {
+  id             Int       @id
+  rg             String?
+  dataNascimento DateTime?
+  pessoa         Pessoa    @relation(fields: [id], references: [id])
+}
+
+model PessoaJuridica {
+  id                 Int       @id
+  nomeFantasia       String?
+  inscricaoEstadual  String?
+  inscricaoMunicipal String?
+  dataFundacao       DateTime?
+  representanteLegal String?
+  pessoa             Pessoa    @relation(fields: [id], references: [id])
+}
+
+model Telefone {
+  id        Int          @id @default(autoincrement())
+  pessoaId  Int
+  ddd       String?
+  numero    String
+  ramal     String?
+  tipo      TipoTelefone @default(CELULAR)
+  principal Boolean      @default(false)
+  ativo     Boolean      @default(true)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  pessoa    Pessoa       @relation(fields: [pessoaId], references: [id], onDelete: Cascade)
+
+  @@index([pessoaId])
+  @@index([pessoaId, principal])
+}
+
+model Endereco {
+  id              Int           @id @default(autoincrement())
+  pessoaId        Int
+  logradouroId    Int?
+  numero          String?
+  complemento     String?
+  bairroId        Int?
+  areaRuralId     Int?
+  referenciaRural String?
+  coordenadas     String?
+  tipoEndereco    TipoEndereco
+  principal       Boolean       @default(false)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  areaRural       AreaRural?    @relation(fields: [areaRuralId], references: [id])
+  bairro          Bairro?       @relation(fields: [bairroId], references: [id])
+  logradouro      Logradouro?   @relation(fields: [logradouroId], references: [id])
+  pessoa          Pessoa        @relation(fields: [pessoaId], references: [id])
+  propriedades    Propriedade[]
+}
+
+model AreaEfetiva {
+  id                    Int                 @id @default(autoincrement())
+  pessoaId              Int
+  anoReferencia         Int
+  areaPropria           Decimal             @default(0) @db.Decimal(10, 2)
+  areaArrendadaRecebida Decimal             @default(0) @db.Decimal(10, 2)
+  areaArrendadaCedida   Decimal             @default(0) @db.Decimal(10, 2)
+  areaEfetiva           Decimal             @default(0) @db.Decimal(10, 2)
+  atividadeProdutiva    AtividadeProdutiva?
+  ramoAtividadeId       Int?
+  updatedAt             DateTime            @default(now()) @updatedAt
+  pessoa                Pessoa              @relation(fields: [pessoaId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  ramoAtividade         RamoAtividade?      @relation(fields: [ramoAtividadeId], references: [id], onUpdate: NoAction)
+
+  @@unique([pessoaId, anoReferencia])
+  @@index([pessoaId])
+  @@index([ramoAtividadeId])
+  @@index([anoReferencia])
+}
+
+model Propriedade {
+  id                      Int                        @id @default(autoincrement())
+  nome                    String
+  tipoPropriedade         TipoPropriedade            @default(RURAL)
+  numero                  String?
+  areaTotal               Decimal                    @db.Decimal(10, 2)
+  unidadeArea             String                     @default("alqueires")
+  itr                     String?
+  incra                   String?
+  atividadeProdutiva      AtividadeProdutiva?
+  situacao                SituacaoPropriedade
+  isproprietarioResidente Boolean                    @default(false)
+  localizacao             String?
+  matricula               String?
+  proprietarioId          Int
+  nuProprietarioId        Int?
+  createdAt               DateTime                   @default(now())
+  updatedAt               DateTime                   @updatedAt
+  enderecoId              Int?
+  arrendamentos           Arrendamento[]
+  endereco                Endereco?                  @relation(fields: [enderecoId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  nuProprietario          Pessoa?                    @relation("NuProprietario", fields: [nuProprietarioId], references: [id])
+  proprietario            Pessoa                     @relation(fields: [proprietarioId], references: [id])
+  condominos              PropriedadeCondomino[]
+  transferencias          TransferenciaPropriedade[]
+}
+
+model TransferenciaPropriedade {
+  id                     Int                 @id @default(autoincrement())
+  propriedadeId          Int                 @map("propriedade_id")
+  proprietarioAnteriorId Int                 @map("proprietario_anterior_id")
+  proprietarioNovoId     Int                 @map("proprietario_novo_id")
+  dataTransferencia      DateTime            @map("data_transferencia") @db.Date
+  observacoes            String?
+  createdAt              DateTime            @default(now()) @map("created_at")
+  updatedAt              DateTime            @updatedAt @map("updated_at")
+  nuProprietarioNovoId   Int?                @map("nu_proprietario_novo_id")
+  situacaoPropriedade    SituacaoPropriedade @default(PROPRIA) @map("situacao_propriedade")
+  nuProprietarioNovo     Pessoa?             @relation("TransferenciaNuProprietarioNovo", fields: [nuProprietarioNovoId], references: [id])
+  propriedade            Propriedade         @relation(fields: [propriedadeId], references: [id])
+  proprietarioAnterior   Pessoa              @relation("TransferenciaProprietarioAnterior", fields: [proprietarioAnteriorId], references: [id])
+  proprietarioNovo       Pessoa              @relation("TransferenciaProprietarioNovo", fields: [proprietarioNovoId], references: [id])
+
+  @@index([propriedadeId])
+  @@index([dataTransferencia])
+  @@map("transferencias_propriedade")
+}
+
+model PropriedadeCondomino {
+  id            Int         @id(map: "propriedades_condominos_pkey") @default(autoincrement())
+  propriedadeId Int         @map("propriedade_id")
+  condominoId   Int         @map("condomino_id")
+  percentual    Decimal?    @db.Decimal(5, 2)
+  dataInicio    DateTime    @default(now()) @map("data_inicio")
+  dataFim       DateTime?   @map("data_fim")
+  observacoes   String?
+  createdAt     DateTime    @default(now()) @map("created_at")
+  updatedAt     DateTime    @updatedAt @map("updated_at")
+  condomino     Pessoa      @relation("PropriedadeCondominos", fields: [condominoId], references: [id], map: "propriedades_condominos_condomino_id_fkey")
+  propriedade   Propriedade @relation(fields: [propriedadeId], references: [id], onDelete: Cascade, map: "propriedades_condominos_propriedade_id_fkey")
+
+  @@unique([propriedadeId, condominoId, dataFim], map: "propriedades_condominos_propriedade_id_condomino_id_data_fi_key")
+  @@index([condominoId], map: "propriedades_condominos_condomino_id_idx")
+  @@index([propriedadeId], map: "propriedades_condominos_propriedade_id_idx")
+  @@map("PropriedadeCondomino")
+}
+
+model Arrendamento {
+  id                 Int                 @id @default(autoincrement())
+  propriedadeId      Int
+  proprietarioId     Int
+  arrendatarioId     Int
+  areaArrendada      Decimal             @db.Decimal(10, 2)
+  dataInicio         DateTime
+  dataFim            DateTime?
+  status             String              @default("ativo")
+  documentoUrl       String?
+  residente          Boolean             @default(false)
+  atividadeProdutiva AtividadeProdutiva?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  arrendatario       Pessoa              @relation("arrendatario", fields: [arrendatarioId], references: [id])
+  propriedade        Propriedade         @relation(fields: [propriedadeId], references: [id])
+  proprietario       Pessoa              @relation("proprietario", fields: [proprietarioId], references: [id])
+}
+
+model SolicitacaoBeneficio {
+  id                   Int                    @id @default(autoincrement())
+  pessoaId             Int
+  programaId           Int
+  datasolicitacao      DateTime               @default(now())
+  status               String                 @default("pendente")
+  observacoes          String?
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+  calculoDetalhes      Json?
+  quantidadeSolicitada Decimal?               @db.Decimal(10, 2)
+  regraAplicadaId      Int?
+  valorCalculado       Decimal?               @db.Decimal(10, 2)
+  enquadramento        String?
+  pessoa               Pessoa                 @relation(fields: [pessoaId], references: [id])
+  programa             Programa               @relation(fields: [programaId], references: [id])
+  regraAplicada        RegrasNegocio?         @relation(fields: [regraAplicadaId], references: [id])
+  historico            HistoricoSolicitacao[]
+}
+
+model RamoAtividade {
+  id            Int                     @id @default(autoincrement())
+  nome          String                  @unique
+  descricao     String?
+  categoria     AtividadeProdutiva
+  ativo         Boolean                 @default(true)
+  createdAt     DateTime                @default(now())
+  updatedAt     DateTime                @updatedAt
+  areasEfetivas AreaEfetiva[]
+  programas     ProgramaRamoAtividade[]
+
+  @@index([categoria])
+  @@index([ativo])
+}
+
+model Programa {
+  id             Int                     @id @default(autoincrement())
+  nome           String
+  descricao      String?
+  leiNumero      String?
+  tipoPrograma   TipoPrograma
+  secretaria     TipoPerfil
+  ativo          Boolean                 @default(true)
+  createdAt      DateTime                @default(now())
+  updatedAt      DateTime                @updatedAt
+  ramosAtividade ProgramaRamoAtividade[]
+  regras         RegrasNegocio[]
+  solicitacoes   SolicitacaoBeneficio[]
+}
+
+model ProgramaRamoAtividade {
+  programaId      Int
+  ramoAtividadeId Int
+  createdAt       DateTime      @default(now())
+  programa        Programa      @relation(fields: [programaId], references: [id], onDelete: Cascade)
+  ramoAtividade   RamoAtividade @relation(fields: [ramoAtividadeId], references: [id], onDelete: Cascade)
+
+  @@id([programaId, ramoAtividadeId])
+  @@index([programaId])
+  @@index([ramoAtividadeId])
+}
+
+model RegrasNegocio {
+  id              Int                    @id @default(autoincrement())
+  programaId      Int
+  tipoRegra       String
+  parametro       Json
+  valorBeneficio  Decimal                @db.Decimal(10, 2)
+  limiteBeneficio Json?
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+  programa        Programa               @relation(fields: [programaId], references: [id])
+  solicitacoes    SolicitacaoBeneficio[]
+}
+
+model HistoricoSolicitacao {
+  id             Int                  @id @default(autoincrement())
+  solicitacaoId  Int
+  statusAnterior String?
+  statusNovo     String
+  usuarioId      Int?
+  motivo         String?
+  observacoes    String?
+  createdAt      DateTime             @default(now())
+  solicitacao    SolicitacaoBeneficio @relation(fields: [solicitacaoId], references: [id], onDelete: Cascade)
+
+  @@index([solicitacaoId])
+  @@index([createdAt])
+  @@map("historico_solicitacoes")
+}
+
+model TipoServico {
+  id          Int                 @id @default(autoincrement())
+  nome        String              @unique
+  unidade     String
+  ativo       Boolean             @default(true)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  faixasPreco FaixaPrecoServico[]
+  ordens      OrdemServico[]
+
+  @@map("tipos_servico")
+}
+
+model FaixaPrecoServico {
+  id              Int         @id @default(autoincrement())
+  tipoServicoId   Int
+  quantidadeMin   Int
+  quantidadeMax   Int?
+  multiplicadorVR Decimal     @db.Decimal(4, 2)
+  ativo           Boolean     @default(true)
+  vigenciaInicio  DateTime    @default(now())
+  vigenciaFim     DateTime?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  tipoServico     TipoServico @relation(fields: [tipoServicoId], references: [id], onDelete: Cascade)
+
+  @@index([tipoServicoId])
+  @@map("faixas_preco_servico")
+}
+
+model OrdemServico {
+  id                   Int         @id @default(autoincrement())
+  numeroOrdem          String      @unique
+  pessoaId             Int
+  veiculoId            Int
+  dataServico          DateTime
+  horaInicio           String?
+  horaFim              String?
+  valorReferencial     Decimal     @default(180.00) @db.Decimal(10, 2)
+  valorCalculado       Decimal     @db.Decimal(10, 2)
+  observacoes          String?
+  status               String      @default("pendente")
+  usuarioId            Int?
+  enderecoServico      String?
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+  tipoServicoId        Int
+  quantidadeSolicitada Decimal     @db.Decimal(6, 2)
+  pessoa               Pessoa      @relation(fields: [pessoaId], references: [id])
+  tipoServico          TipoServico @relation(fields: [tipoServicoId], references: [id])
+  veiculo              Veiculo     @relation(fields: [veiculoId], references: [id])
+
+  @@index([tipoServicoId])
+  @@map("ordens_servico")
+}
+
+model Usuario {
+  id              Int             @id @default(autoincrement())
+  nome            String
+  email           String          @unique
+  senha           String
+  ativo           Boolean         @default(true)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  perfilId        Int
+  ultimoLogin     DateTime?
+  tentativasLogin Int             @default(0)
+  bloqueadoAte    DateTime?
+  perfil          Perfil          @relation(fields: [perfilId], references: [id])
+  sessoes         UsuarioSessao[]
+}
+
+model Perfil {
+  id         Int               @id @default(autoincrement())
+  nome       TipoPerfil        @unique
+  descricao  String?
+  ativo      Boolean           @default(true)
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+  permissoes PerfilPermissao[]
+  usuarios   Usuario[]
+}
+
+model Permissao {
+  id        Int               @id @default(autoincrement())
+  modulo    ModuloSistema
+  acao      AcaoPermissao
+  descricao String?
+  ativo     Boolean           @default(true)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+  perfis    PerfilPermissao[]
+
+  @@unique([modulo, acao])
+}
+
+model PerfilPermissao {
+  id          Int       @id @default(autoincrement())
+  perfilId    Int
+  permissaoId Int
+  createdAt   DateTime  @default(now())
+  perfil      Perfil    @relation(fields: [perfilId], references: [id])
+  permissao   Permissao @relation(fields: [permissaoId], references: [id])
+
+  @@unique([perfilId, permissaoId])
+}
+
+model UsuarioSessao {
+  id           Int       @id @default(autoincrement())
+  usuarioId    Int
+  token        String    @unique
+  refreshToken String?   @unique
+  expiresAt    DateTime
+  createdAt    DateTime  @default(now())
+  revokedAt    DateTime?
+  ipAddress    String?
+  userAgent    String?
+  usuario      Usuario   @relation(fields: [usuarioId], references: [id])
+}
+
+model AuditoriaLogin {
+  id        Int      @id @default(autoincrement())
+  email     String
+  sucesso   Boolean
+  ipAddress String?
+  userAgent String?
+  motivo    String?
+  createdAt DateTime @default(now())
+}
+
 enum TipoEndereco {
   RESIDENCIAL
   COMERCIAL
@@ -39,14 +506,12 @@ enum TipoPessoa {
   JURIDICA
 }
 
-// NOVO ENUM ADICIONADO
 enum SituacaoPropriedade {
   PROPRIA
   CONDOMINIO
   USUFRUTO
 }
 
-// ENUMs para Autenticação
 enum TipoPerfil {
   ADMIN
   OBRAS
@@ -92,543 +557,4 @@ enum TipoTelefone {
   RESIDENCIAL
   COMERCIAL
   OUTRO
-}
-
-// Modelos existentes
-model Bairro {
-  id        Int        @id @default(autoincrement())
-  nome      String     @unique
-  ativo     Boolean    @default(true)
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  enderecos Endereco[]
-}
-
-model AreaRural {
-  id        Int        @id @default(autoincrement())
-  nome      String     @unique // Ex: "Linha São Francisco", "Estrada do Açude"
-  ativo     Boolean    @default(true)
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  enderecos Endereco[]
-}
-
-model Logradouro {
-  id           Int            @id @default(autoincrement())
-  tipo         TipoLogradouro
-  descricao    String
-  cep          String?        @unique
-  ativo        Boolean        @default(true)
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
-  enderecos    Endereco[]
-  propriedades Propriedade[] // NOVA RELAÇÃO
-}
-
-model GrupoProduto {
-  id        Int      @id @default(autoincrement())
-  descricao String   @unique
-  ativo     Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model TipoVeiculo {
-  id        Int       @id @default(autoincrement())
-  descricao String    @unique
-  ativo     Boolean   @default(true)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  veiculos  Veiculo[]
-}
-
-model Veiculo {
-  id            Int            @id @default(autoincrement())
-  tipoVeiculoId Int
-  tipoVeiculo   TipoVeiculo    @relation(fields: [tipoVeiculoId], references: [id])
-  descricao     String
-  placa         String         @unique
-  ativo         Boolean        @default(true)
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  ordensServico OrdemServico[]
-}
-
-model Pessoa {
-  id                        Int          @id @default(autoincrement())
-  tipoPessoa                TipoPessoa
-  nome                      String // Razão social para PJ, nome completo para PF
-  cpfCnpj                   String       @unique
-  telefone                  String?      // DEPRECATED - manter por compatibilidade, usar relação telefones[]
-  email                     String?
-  ativo                     Boolean      @default(true)
-  isProdutor                Boolean?     @default(false)
-  inscricaoEstadualProdutor String?
-  areaEfetiva               AreaEfetiva?
-  createdAt                 DateTime     @default(now())
-  updatedAt                 DateTime     @updatedAt
-
-  // Relacionamentos
-  telefones                  Telefone[]
-  enderecos                  Endereco[]
-  propriedades               Propriedade[]
-  transferenciasComoAnterior TransferenciaPropriedade[] @relation("TransferenciaProprietarioAnterior")
-  transferenciasComoNovo     TransferenciaPropriedade[] @relation("TransferenciaProprietarioNovo")
-  pessoaFisica               PessoaFisica?
-  pessoaJuridica             PessoaJuridica?
-  solicitacoesBeneficio      SolicitacaoBeneficio[]
-  ordensServico              OrdemServico[]
-  arrendamentos              Arrendamento[]             @relation("arrendatario")
-  arrendou                   Arrendamento[]             @relation("proprietario")
-  propriedadesComoNuProprietario Propriedade[]          @relation("NuProprietario")
-  condominios                PropriedadeCondomino[]     @relation("PropriedadeCondominos")
-  transferenciasComoNuNovo   TransferenciaPropriedade[] @relation("TransferenciaNuProprietarioNovo")
-}
-
-model PessoaFisica {
-  id             Int       @id
-  pessoa         Pessoa    @relation(fields: [id], references: [id])
-  rg             String?
-  dataNascimento DateTime?
-}
-
-model PessoaJuridica {
-  id                 Int       @id
-  pessoa             Pessoa    @relation(fields: [id], references: [id])
-  nomeFantasia       String?
-  inscricaoEstadual  String?
-  inscricaoMunicipal String?
-  dataFundacao       DateTime?
-  representanteLegal String?
-}
-
-model Telefone {
-  id        Int          @id @default(autoincrement())
-  pessoaId  Int
-  pessoa    Pessoa       @relation(fields: [pessoaId], references: [id], onDelete: Cascade)
-  ddd       String?      // 2-3 caracteres
-  numero    String       // Número limpo (apenas dígitos)
-  ramal     String?
-  tipo      TipoTelefone @default(CELULAR)
-  principal Boolean      @default(false) // Telefone principal da pessoa
-  ativo     Boolean      @default(true)
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
-
-  @@index([pessoaId])
-  @@index([pessoaId, principal]) // Otimizar busca por telefone principal
-}
-
-model Endereco {
-  id       Int    @id @default(autoincrement())
-  pessoaId Int
-  pessoa   Pessoa @relation(fields: [pessoaId], references: [id])
-
-  // Para endereços urbanos
-  logradouroId Int?
-  logradouro   Logradouro? @relation(fields: [logradouroId], references: [id])
-  numero       String?
-  complemento  String?
-  bairroId     Int?
-  bairro       Bairro?     @relation(fields: [bairroId], references: [id])
-
-  // Para endereços rurais
-  areaRuralId     Int?
-  areaRural       AreaRural? @relation(fields: [areaRuralId], references: [id])
-  referenciaRural String?
-
-  // Campos comuns
-  coordenadas  String? // Latitude,Longitude
-  tipoEndereco TipoEndereco
-  principal    Boolean      @default(false)
-
-  // Relação com propriedade (se este endereço referencia uma propriedade da pessoa)
-  propriedadeId Int?
-  propriedade   Propriedade? @relation(fields: [propriedadeId], references: [id])
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model AreaEfetiva {
-  id                    Int                @id
-  pessoaId              Int?
-  pessoa                Pessoa             @relation(fields: [id], references: [id])
-  anoReferencia         Int
-  areaPropria           Decimal            @db.Decimal(10, 2)
-  areaArrendadaRecebida Decimal            @db.Decimal(10, 2)
-  areaArrendadaCedida   Decimal            @db.Decimal(10, 2)
-  areaEfetiva           Decimal            @db.Decimal(10, 2)
-  atividadeProdutiva    AtividadeProdutiva? // ENUM (mantido para compatibilidade)
-  ramoAtividadeId       Int?               // Nova relação (mais flexível)
-  ramoAtividade         RamoAtividade?     @relation(fields: [ramoAtividadeId], references: [id])
-  updatedAt             DateTime           @updatedAt
-
-  @@index([ramoAtividadeId])
-}
-
-model Propriedade {
-  id              Int             @id @default(autoincrement())
-  nome            String
-  tipoPropriedade TipoPropriedade @default(RURAL)
-
-  logradouroId Int?
-  logradouro   Logradouro? @relation(fields: [logradouroId], references: [id])
-  numero       String?
-
-  areaTotal   Decimal @db.Decimal(10, 2)
-  unidadeArea String  @default("alqueires")
-
-  itr                String?
-  incra              String?
-  atividadeProdutiva AtividadeProdutiva?
-
-  situacao                SituacaoPropriedade
-  isproprietarioResidente Boolean             @default(false)
-  localizacao             String?
-  matricula               String?
-  proprietarioId          Int
-  proprietario            Pessoa              @relation(fields: [proprietarioId], references: [id])
-
-  nuProprietarioId Int?
-  nuProprietario   Pessoa? @relation("NuProprietario", fields: [nuProprietarioId], references: [id])
-
-  // Relacionamentos
-  arrendamentos  Arrendamento[]
-  enderecos      Endereco[]
-  transferencias TransferenciaPropriedade[]
-  condominos     PropriedadeCondomino[] // ✅ ADICIONAR ESTA LINHA
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model TransferenciaPropriedade {
-  id                     Int      @id @default(autoincrement())
-  propriedadeId          Int      @map("propriedade_id")
-  proprietarioAnteriorId Int      @map("proprietario_anterior_id")
-  proprietarioNovoId     Int      @map("proprietario_novo_id")
-  
-  // ✅ ADICIONAR ESTES CAMPOS
-  situacaoPropriedade    SituacaoPropriedade @default(PROPRIA) @map("situacao_propriedade")
-  nuProprietarioNovoId   Int?     @map("nu_proprietario_novo_id") // Para transferência de usufruto
-  
-  dataTransferencia      DateTime @map("data_transferencia") @db.Date
-  observacoes            String?  @db.Text
-  createdAt              DateTime @default(now()) @map("created_at")
-  updatedAt              DateTime @updatedAt @map("updated_at")
-
-  // Relacionamentos
-  propriedade          Propriedade @relation(fields: [propriedadeId], references: [id])
-  proprietarioAnterior Pessoa      @relation("TransferenciaProprietarioAnterior", fields: [proprietarioAnteriorId], references: [id])
-  proprietarioNovo     Pessoa      @relation("TransferenciaProprietarioNovo", fields: [proprietarioNovoId], references: [id])
-  
-  nuProprietarioNovo   Pessoa?     @relation("TransferenciaNuProprietarioNovo", fields: [nuProprietarioNovoId], references: [id])
-
-  @@index([propriedadeId])
-  @@index([dataTransferencia])
-  @@map("transferencias_propriedade")
-}
-
-model PropriedadeCondomino {
-  id            Int         @id @default(autoincrement())
-  propriedadeId Int         @map("propriedade_id")
-  condominoId   Int         @map("condomino_id")
-  percentual    Decimal?    @db.Decimal(5, 2) // Percentual de participação (opcional)
-  dataInicio    DateTime    @default(now()) @map("data_inicio")
-  dataFim       DateTime?   @map("data_fim") // Null = condomínio ativo
-  observacoes   String?     @db.Text
-  createdAt     DateTime    @default(now()) @map("created_at")
-  updatedAt     DateTime    @updatedAt @map("updated_at")
-
-  // Relacionamentos
-  propriedade Propriedade @relation(fields: [propriedadeId], references: [id], onDelete: Cascade)
-  condomino   Pessoa      @relation("PropriedadeCondominos", fields: [condominoId], references: [id])
-
-  @@unique([propriedadeId, condominoId, dataFim]) // Evita duplicatas
-  @@index([propriedadeId])
-  @@index([condominoId])
-  @@map("propriedades_condominos")
-}
-
-model Arrendamento {
-  id             Int         @id @default(autoincrement())
-  propriedadeId  Int
-  propriedade    Propriedade @relation(fields: [propriedadeId], references: [id])
-  proprietarioId Int
-  proprietario   Pessoa      @relation("proprietario", fields: [proprietarioId], references: [id])
-  arrendatarioId Int
-  arrendatario   Pessoa      @relation("arrendatario", fields: [arrendatarioId], references: [id])
-  areaArrendada  Decimal     @db.Decimal(10, 2)
-  dataInicio     DateTime
-  dataFim        DateTime?
-  status         String      @default("ativo")
-  documentoUrl   String?
-  residente      Boolean     @default(false) // Se o arrendatário será residente da terra
-  atividadeProdutiva AtividadeProdutiva?  // Atividade produtiva do arrendamento
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
-}
-
-// Modelo para solicitações de benefícios
-model SolicitacaoBeneficio {
-  id              Int      @id @default(autoincrement())
-  pessoaId        Int
-  pessoa          Pessoa   @relation(fields: [pessoaId], references: [id])
-  programaId      Int
-  programa        Programa @relation(fields: [programaId], references: [id])
-  datasolicitacao DateTime @default(now())
-  status          String   @default("pendente")
-  observacoes     String?
-
-  // NOVOS CAMPOS: Cálculo automático de benefício
-  regraAplicadaId   Int?           // Qual regra foi aplicada
-  regraAplicada     RegrasNegocio? @relation(fields: [regraAplicadaId], references: [id])
-  valorCalculado    Decimal?       @db.Decimal(10, 2) // Valor calculado automaticamente
-  quantidadeSolicitada Decimal?    @db.Decimal(10, 2) // Quantidade solicitada (toneladas, unidades, etc)
-  calculoDetalhes   Json?          // Detalhes do cálculo (área, condições atendidas, etc)
-
-  // MIGRAÇÃO GIM: Campo para enquadramento (P = Pequeno, G = Grande)
-  enquadramento     String?        // 'P' (pequeno produtor) ou 'G' (grande produtor)
-
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  // Relacionamento com histórico
-  historico       HistoricoSolicitacao[]
-}
-
-// Modelo para ramos de atividade (flexível, permite cadastrar novos)
-model RamoAtividade {
-  id          Int                    @id @default(autoincrement())
-  nome        String                 @unique
-  descricao   String?
-  categoria   AtividadeProdutiva // Agrupamento por categoria
-  ativo       Boolean                @default(true)
-  createdAt   DateTime               @default(now())
-  updatedAt   DateTime               @updatedAt
-
-  areasEfetivas AreaEfetiva[]
-  programas     ProgramaRamoAtividade[]
-
-  @@index([categoria])
-  @@index([ativo])
-}
-
-// Modelo para programas de incentivo
-model Programa {
-  id           Int          @id @default(autoincrement())
-  nome         String
-  descricao    String?
-  leiNumero    String?
-  tipoPrograma TipoPrograma
-  secretaria   TipoPerfil
-  ativo        Boolean      @default(true)
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
-
-  solicitacoes SolicitacaoBeneficio[]
-  regras       RegrasNegocio[]
-  ramosAtividade ProgramaRamoAtividade[]
-}
-
-// Relação N:N entre Programa e RamoAtividade (define quais ramos podem acessar cada programa)
-model ProgramaRamoAtividade {
-  programaId      Int
-  programa        Programa       @relation(fields: [programaId], references: [id], onDelete: Cascade)
-  ramoAtividadeId Int
-  ramoAtividade   RamoAtividade  @relation(fields: [ramoAtividadeId], references: [id], onDelete: Cascade)
-  createdAt       DateTime       @default(now())
-
-  @@id([programaId, ramoAtividadeId])
-  @@index([programaId])
-  @@index([ramoAtividadeId])
-}
-
-// Modelo para regras de negócio dos programas
-model RegrasNegocio {
-  id              Int      @id @default(autoincrement())
-  programaId      Int
-  programa        Programa @relation(fields: [programaId], references: [id])
-  tipoRegra       String // 'area_efetiva', 'area_construcao', etc.
-  parametro       Json // Estrutura JSON com condições
-  valorBeneficio  Decimal  @db.Decimal(10, 2)
-  limiteBeneficio Json? // Estrutura JSON com limites
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  // Relacionamento com solicitações que usaram esta regra
-  solicitacoes    SolicitacaoBeneficio[]
-}
-
-// Modelo para histórico de mudanças de status das solicitações
-model HistoricoSolicitacao {
-  id              Int                  @id @default(autoincrement())
-  solicitacaoId   Int
-  solicitacao     SolicitacaoBeneficio @relation(fields: [solicitacaoId], references: [id], onDelete: Cascade)
-  statusAnterior  String? // Null para o primeiro registro
-  statusNovo      String
-  usuarioId       Int? // Usuário que fez a mudança (se aplicável)
-  motivo          String? // Motivo da mudança (rejeição, aprovação, etc)
-  observacoes     String? @db.Text
-  createdAt       DateTime             @default(now())
-
-  @@index([solicitacaoId])
-  @@index([createdAt])
-  @@map("historico_solicitacoes")
-}
-
-model TipoServico {
-  id        Int      @id @default(autoincrement())
-  nome      String   @unique // "Carga de terra", "Caminhão truck", "Pá carregadeira", "PATROLA"
-  unidade   String // "carga" ou "hora"
-  ativo     Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  faixasPreco FaixaPrecoServico[]
-  ordens      OrdemServico[]
-
-  @@map("tipos_servico")
-}
-
-model FaixaPrecoServico {
-  id              Int         @id @default(autoincrement())
-  tipoServicoId   Int
-  tipoServico     TipoServico @relation(fields: [tipoServicoId], references: [id], onDelete: Cascade)
-  quantidadeMin   Int // Ex: 1, 4, 11
-  quantidadeMax   Int? // Ex: 3, 10, null (sem limite superior)
-  multiplicadorVR Decimal     @db.Decimal(4, 2) // 0.10, 0.30, 0.50, 0.35, 0.40
-  ativo           Boolean     @default(true)
-  vigenciaInicio  DateTime    @default(now())
-  vigenciaFim     DateTime?
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
-
-  @@index([tipoServicoId])
-  @@map("faixas_preco_servico")
-}
-
-model OrdemServico {
-  id                   Int         @id @default(autoincrement())
-  numeroOrdem          String      @unique // Número sequencial da ordem
-  pessoaId             Int // Solicitante do serviço
-  pessoa               Pessoa      @relation(fields: [pessoaId], references: [id])
-  tipoServicoId        Int // Tipo de serviço solicitado
-  tipoServico          TipoServico @relation(fields: [tipoServicoId], references: [id])
-  quantidadeSolicitada Decimal     @db.Decimal(6, 2) // Quantidade de cargas ou horas solicitadas
-  veiculoId            Int // Veículo que executará o serviço
-  veiculo              Veiculo     @relation(fields: [veiculoId], references: [id])
-  dataServico          DateTime // Data em que o serviço será executado
-  horaInicio           String? // Hora de início (formato HH:mm) - Preenchida após execução
-  horaFim              String? // Hora de fim (formato HH:mm) - Preenchida após execução
-  valorReferencial     Decimal     @default(180.00) @db.Decimal(10, 2) // Valor referencial (VR) do ano
-  valorCalculado       Decimal     @db.Decimal(10, 2) // Valor calculado automaticamente
-  observacoes          String? // Observações adicionais
-  status               String      @default("pendente") // pendente, em_execucao, concluida, cancelada
-  usuarioId            Int? // Usuário que criou a ordem
-  enderecoServico      String? // Local onde será executado o serviço
-  createdAt            DateTime    @default(now())
-  updatedAt            DateTime    @updatedAt
-
-  @@index([tipoServicoId])
-  @@map("ordens_servico")
-}
-
-// MODELOS DE AUTENTICAÇÃO
-model Usuario {
-  id        Int      @id @default(autoincrement())
-  nome      String
-  email     String   @unique
-  senha     String // Hash da senha
-  ativo     Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relacionamentos
-  perfilId Int
-  perfil   Perfil @relation(fields: [perfilId], references: [id])
-
-  // Sessões ativas do usuário
-  sessoes UsuarioSessao[]
-
-  // Auditoria
-  ultimoLogin     DateTime?
-  tentativasLogin Int       @default(0)
-  bloqueadoAte    DateTime?
-}
-
-// Perfis de usuário (Admin, Obras, Agricultura, etc)
-model Perfil {
-  id        Int        @id @default(autoincrement())
-  nome      TipoPerfil @unique
-  descricao String?
-  ativo     Boolean    @default(true)
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-
-  // Relacionamentos
-  usuarios   Usuario[]
-  permissoes PerfilPermissao[]
-}
-
-// Permissões disponíveis no sistema
-model Permissao {
-  id        Int           @id @default(autoincrement())
-  modulo    ModuloSistema
-  acao      AcaoPermissao
-  descricao String?
-  ativo     Boolean       @default(true)
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
-
-  // Relacionamentos
-  perfis PerfilPermissao[]
-
-  // Índice composto para evitar duplicatas
-  @@unique([modulo, acao])
-}
-
-// Relacionamento Many-to-Many entre Perfil e Permissão
-model PerfilPermissao {
-  id Int @id @default(autoincrement())
-
-  perfilId    Int
-  permissaoId Int
-
-  perfil    Perfil    @relation(fields: [perfilId], references: [id])
-  permissao Permissao @relation(fields: [permissaoId], references: [id])
-
-  createdAt DateTime @default(now())
-
-  // Evita permissões duplicadas para o mesmo perfil
-  @@unique([perfilId, permissaoId])
-}
-
-// Sessões ativas dos usuários (para controle de login)
-model UsuarioSessao {
-  id           Int       @id @default(autoincrement())
-  usuarioId    Int
-  token        String    @unique
-  refreshToken String?   @unique
-  expiresAt    DateTime
-  createdAt    DateTime  @default(now())
-  revokedAt    DateTime?
-
-  // IP e User Agent para auditoria
-  ipAddress String?
-  userAgent String?
-
-  usuario Usuario @relation(fields: [usuarioId], references: [id])
-}
-
-// Log de auditoria para ações sensíveis
-model AuditoriaLogin {
-  id        Int      @id @default(autoincrement())
-  email     String
-  sucesso   Boolean
-  ipAddress String?
-  userAgent String?
-  motivo    String? // "senha_incorreta", "usuario_bloqueado", etc
-  createdAt DateTime @default(now())
 }
