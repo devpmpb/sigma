@@ -399,12 +399,11 @@ export const propriedadeController = {
               tipoPessoa: true,
             },
           },
-          logradouro: {
-            select: {
-              id: true,
-              tipo: true,
-              descricao: true,
-              cep: true,
+          endereco: {
+            include: {
+              logradouro: true,
+              bairro: true,
+              areaRural: true,
             },
           },
           nuProprietario: {
@@ -444,12 +443,11 @@ export const propriedadeController = {
               tipoPessoa: true,
             },
           },
-          logradouro: {
-            select: {
-              id: true,
-              tipo: true,
-              descricao: true,
-              cep: true,
+          endereco: {
+            include: {
+              logradouro: true,
+              bairro: true,
+              areaRural: true,
             },
           },
           nuProprietario: {
@@ -490,12 +488,11 @@ export const propriedadeController = {
               tipoPessoa: true,
             },
           },
-          logradouro: {
-            select: {
-              id: true,
-              tipo: true,
-              descricao: true,
-              cep: true,
+          endereco: {
+            include: {
+              logradouro: true,
+              bairro: true,
+              areaRural: true,
             },
           },
           nuProprietario: {
@@ -659,12 +656,8 @@ export const propriedadeController = {
     try {
       const { tipo } = req.params;
 
-      if (!Object.values(TipoPropriedade).includes(tipo as TipoPropriedade)) {
-        return res.status(400).json({ erro: "Tipo de propriedade inválido" });
-      }
-
       const propriedades = await prisma.propriedade.findMany({
-        where: { tipoPropriedade: tipo as TipoPropriedade },
+        where: { tipoPropriedade: tipo as any },
         include: {
           proprietario: {
             select: {
@@ -674,12 +667,11 @@ export const propriedadeController = {
               tipoPessoa: true,
             },
           },
-          logradouro: {
-            select: {
-              id: true,
-              tipo: true,
-              descricao: true,
-              cep: true,
+          endereco: {
+            include: {
+              logradouro: true,
+              bairro: true,
+              areaRural: true,
             },
           },
         },
@@ -700,18 +692,8 @@ export const propriedadeController = {
     try {
       const { situacao } = req.params;
 
-      if (
-        !Object.values(SituacaoPropriedade).includes(
-          situacao as SituacaoPropriedade
-        )
-      ) {
-        return res
-          .status(400)
-          .json({ erro: "Situação de propriedade inválida" });
-      }
-
       const propriedades = await prisma.propriedade.findMany({
-        where: { situacao: situacao as SituacaoPropriedade },
+        where: { situacao: situacao as any },
         include: {
           proprietario: {
             select: {
@@ -721,12 +703,11 @@ export const propriedadeController = {
               tipoPessoa: true,
             },
           },
-          logradouro: {
-            select: {
-              id: true,
-              tipo: true,
-              descricao: true,
-              cep: true,
+          endereco: {
+            include: {
+              logradouro: true,
+              bairro: true,
+              areaRural: true,
             },
           },
         },
