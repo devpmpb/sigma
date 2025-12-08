@@ -1,5 +1,5 @@
 // frontend/src/pages/cadastros/comum/pessoa/PessoaForm.tsx
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import { useParams } from "@tanstack/react-router";
 import pessoaService, {
   Pessoa,
@@ -79,7 +79,7 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
     loadingLogradouros || loadingBairros || loadingAreasRurais;
 
   // Estado para endereço existente
-  const [enderecoExistente, setEnderecoExistente] = useState<any>(null);
+  const enderecoExistenteRef = useRef<any>(null);
 
   // Valor inicial para o formulário com campos de endereço
   const initialValues: PessoaFormData = {
@@ -218,7 +218,7 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
 
         if (enderecoPrincipal) {
           // Guardar referência para o update
-          setEnderecoExistente(enderecoPrincipal);
+          enderecoExistenteRef.current = enderecoPrincipal;
 
           // Retornar pessoa COM os campos de endereço já preenchidos
           return {
@@ -323,8 +323,11 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
         };
 
         // Se já existe um endereço, atualizar, senão criar
-        if (enderecoExistente) {
-          await enderecoService.update(enderecoExistente.id, enderecoData);
+        if (enderecoExistenteRef.current) {
+          await enderecoService.update(
+            enderecoExistenteRef.current.id,
+            enderecoData
+          );
         } else {
           await enderecoService.create(enderecoData);
         }
