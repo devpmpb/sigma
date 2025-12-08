@@ -114,31 +114,6 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
     coordenadas: "",
   };
 
-  // ✅ REMOVIDO: carregarDadosAuxiliares() - agora usa React Query!
-  // Dados auxiliares são carregados automaticamente pelos hooks useFormData acima
-
-  // Carregar endereço existente se estiver editando
-  useEffect(() => {
-    if (pessoaId && pessoaId !== "novo") {
-      carregarEnderecoExistente();
-    }
-  }, [pessoaId]);
-
-  const carregarEnderecoExistente = async () => {
-    try {
-      const enderecos = await enderecoService.getEnderecosByPessoa(
-        Number(pessoaId)
-      );
-      const enderecoPrincipal =
-        enderecos.find((e) => e.principal) || enderecos[0];
-      if (enderecoPrincipal) {
-        setEnderecoExistente(enderecoPrincipal);
-      }
-    } catch (error) {
-      console.error("Erro ao carregar endereço:", error);
-    }
-  };
-
   // Validação do formulário
   const validate = (values: PessoaFormData) => {
     const errors: Record<string, string> = {};
@@ -231,6 +206,36 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
         pessoa.pessoaJuridica.dataFundacao = formatDateForInput(
           pessoa.pessoaJuridica.dataFundacao
         );
+      }
+
+      // ✅ CORREÇÃO: Buscar e incluir dados de endereço no retorno
+      try {
+        const enderecos = await enderecoService.getEnderecosByPessoa(
+          Number(id)
+        );
+        const enderecoPrincipal =
+          enderecos.find((e) => e.principal) || enderecos[0];
+
+        if (enderecoPrincipal) {
+          // Guardar referência para o update
+          setEnderecoExistente(enderecoPrincipal);
+
+          // Retornar pessoa COM os campos de endereço já preenchidos
+          return {
+            ...pessoa,
+            incluirEndereco: true,
+            tipoEndereco: enderecoPrincipal.tipoEndereco,
+            logradouroId: enderecoPrincipal.logradouroId?.toString() || "",
+            numero: enderecoPrincipal.numero || "",
+            complemento: enderecoPrincipal.complemento || "",
+            bairroId: enderecoPrincipal.bairroId?.toString() || "",
+            areaRuralId: enderecoPrincipal.areaRuralId?.toString() || "",
+            referenciaRural: enderecoPrincipal.referenciaRural || "",
+            coordenadas: enderecoPrincipal.coordenadas || "",
+          };
+        }
+      } catch (error) {
+        console.error("Erro ao carregar endereço:", error);
       }
 
       return pessoa;
@@ -390,30 +395,6 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
             setValue("referenciaRural", "");
           }
         };
-
-        // Carregar dados do endereço ao editar
-        useEffect(() => {
-          if (pessoaId && pessoaId !== "novo" && enderecoExistente) {
-            setValue("incluirEndereco", true);
-            setValue("tipoEndereco", enderecoExistente.tipoEndereco);
-            setValue(
-              "logradouroId",
-              enderecoExistente.logradouroId?.toString() || ""
-            );
-            setValue("numero", enderecoExistente.numero || "");
-            setValue("complemento", enderecoExistente.complemento || "");
-            setValue("bairroId", enderecoExistente.bairroId?.toString() || "");
-            setValue(
-              "areaRuralId",
-              enderecoExistente.areaRuralId?.toString() || ""
-            );
-            setValue(
-              "referenciaRural",
-              enderecoExistente.referenciaRural || ""
-            );
-            setValue("coordenadas", enderecoExistente.coordenadas || "");
-          }
-        }, [pessoaId, enderecoExistente, setValue]);
 
         return (
           <div className="space-y-8">
