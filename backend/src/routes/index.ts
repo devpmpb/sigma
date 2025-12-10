@@ -27,6 +27,7 @@ import {
 } from "../middleware/authMiddleware";
 import { ModuloSistema } from "@prisma/client";
 import veiculoRoutes from "./comum/veiculoRoutes";
+import saldoRoutes from "./comum/saldoRoutes";
 
 const router = Router();
 
@@ -37,7 +38,11 @@ router.use("/auth", authRoutes);
 router.use(authenticateToken);
 
 // ADMINISTRAÇÃO (requer acesso ao módulo ADMIN)
-router.use("/usuarios", requireModuleAccess(ModuloSistema.ADMIN), usuarioRoutes);
+router.use(
+  "/usuarios",
+  requireModuleAccess(ModuloSistema.ADMIN),
+  usuarioRoutes
+);
 router.use("/perfis", requireModuleAccess(ModuloSistema.ADMIN), perfilRoutes);
 
 // COMUM (requer pelo menos acesso ao módulo comum)
@@ -132,6 +137,12 @@ router.use(
   "/relatorios/arrendamentos",
   requireModuleAccess(ModuloSistema.AGRICULTURA),
   relatorioArrendamentoRoutes
+);
+
+router.use(
+  "/api/comum/saldo",
+  requireModuleAccess(ModuloSistema.COMUM),
+  saldoRoutes
 );
 
 export default router;
