@@ -5,3 +5,4 @@ export { default as FormField } from "./FormField";
 export { default as SearchBar } from "./SearchBar";
 export { default as StatusBadge } from "./StatusBadge";
 export { default as HistoricoSolicitacao } from "./HistoricoSolicitacao";
+export { default as SaldoCard } from "./SaldoCard";

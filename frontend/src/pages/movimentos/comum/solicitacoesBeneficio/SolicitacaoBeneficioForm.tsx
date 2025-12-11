@@ -15,6 +15,7 @@ import pessoaService, {
 import { FormBase } from "../../../../components/cadastro";
 import { FormField, HistoricoSolicitacao } from "../../../../components/comum";
 import AsyncSearchSelect from "../../../../components/comum/AsyncSearchSelect";
+import { SaldoCard } from "../../../../components/comum";
 
 interface SolicitacaoBeneficioFormProps {
   id?: string | number;
@@ -34,13 +35,17 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
 
   const [programaSelecionado, setProgramaSelecionado] =
     useState<Programa | null>(null);
-  const [pessoaSelecionada, setPessoaSelecionada] = useState<Pessoa | null>(null);
+  const [pessoaSelecionada, setPessoaSelecionada] = useState<Pessoa | null>(
+    null
+  );
 
   // Estados para labels iniciais (quando editando)
   const [programaInitialLabel, setProgramaInitialLabel] = useState<string>("");
-  const [programaInitialSubLabel, setProgramaInitialSubLabel] = useState<string>("");
+  const [programaInitialSubLabel, setProgramaInitialSubLabel] =
+    useState<string>("");
   const [pessoaInitialLabel, setPessoaInitialLabel] = useState<string>("");
-  const [pessoaInitialSubLabel, setPessoaInitialSubLabel] = useState<string>("");
+  const [pessoaInitialSubLabel, setPessoaInitialSubLabel] =
+    useState<string>("");
 
   // NOVO: Estados para cálculo automático
   const [calculando, setCalculando] = useState(false);
@@ -69,11 +74,12 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
       const todosProgramas = await programaService.getAll();
       const termoLower = termo.toLowerCase();
 
-      return todosProgramas.filter((p) =>
-        p.ativo &&
-        (p.nome.toLowerCase().includes(termoLower) ||
-         p.descricao?.toLowerCase().includes(termoLower) ||
-         p.leiNumero?.toLowerCase().includes(termoLower))
+      return todosProgramas.filter(
+        (p) =>
+          p.ativo &&
+          (p.nome.toLowerCase().includes(termoLower) ||
+            p.descricao?.toLowerCase().includes(termoLower) ||
+            p.leiNumero?.toLowerCase().includes(termoLower))
       );
     } catch (error) {
       console.error("Erro ao buscar programas:", error);
@@ -113,7 +119,11 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
   };
 
   // Função para atualizar programa selecionado
-  const handleProgramaChange = (programaId: number | null, programa: Programa | undefined, setValue: any) => {
+  const handleProgramaChange = (
+    programaId: number | null,
+    programa: Programa | undefined,
+    setValue: any
+  ) => {
     setProgramaSelecionado(programa || null);
     setValue("programaId", programaId || 0);
     setValue("pessoaId", 0); // Resetar pessoa selecionada
@@ -141,7 +151,7 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
         quantidadeSolicitada:
           quantidade && quantidade > 0 ? quantidade : undefined,
       });
-
+      console.log("📥 FRONTEND - Resultado recebido:", resultado);
       setCalculoResultado(resultado);
     } catch (error: any) {
       console.error("Erro ao calcular benefício:", error);
@@ -179,7 +189,9 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
           setProgramaSelecionado(solicitacao.programa);
           setProgramaInitialLabel(solicitacao.programa.nome);
           setProgramaInitialSubLabel(
-            `${programaService.formatarSecretaria(solicitacao.programa.secretaria)} - ${solicitacao.programa.tipoPrograma}`
+            `${programaService.formatarSecretaria(
+              solicitacao.programa.secretaria
+            )} - ${solicitacao.programa.tipoPrograma}`
           );
         }
 
@@ -235,7 +247,6 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
     return Object.keys(errors).length > 0 ? errors : null;
   };
 
-
   return (
     <FormBase<SolicitacaoBeneficio, SolicitacaoBeneficioDTO>
       title="Solicitação de Benefício"
@@ -263,14 +274,20 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
             <div>
               <AsyncSearchSelect<Programa>
                 label="Programa"
-                value={values.programaId && values.programaId !== 0 ? values.programaId : null}
+                value={
+                  values.programaId && values.programaId !== 0
+                    ? values.programaId
+                    : null
+                }
                 onChange={(value, programa) => {
                   handleProgramaChange(value, programa, setValue);
                 }}
                 searchFunction={searchProgramas}
                 getOptionLabel={(programa) => programa.nome}
                 getOptionSubLabel={(programa) =>
-                  `${programaService.formatarSecretaria(programa.secretaria)} - ${programa.tipoPrograma}`
+                  `${programaService.formatarSecretaria(
+                    programa.secretaria
+                  )} - ${programa.tipoPrograma}`
                 }
                 getId={(programa) => programa.id}
                 placeholder="Digite o nome do programa..."
@@ -281,7 +298,10 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
               />
               {programaSelecionado && (
                 <p className="mt-1 text-sm text-gray-600">
-                  Secretaria: {programaService.formatarSecretaria(programaSelecionado.secretaria)}
+                  Secretaria:{" "}
+                  {programaService.formatarSecretaria(
+                    programaSelecionado.secretaria
+                  )}
                 </p>
               )}
               {!programaSelecionado && (
@@ -298,16 +318,27 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
                     ? "Produtor"
                     : "Pessoa"
                 }
-                value={values.pessoaId && values.pessoaId !== 0 ? values.pessoaId : null}
+                value={
+                  values.pessoaId && values.pessoaId !== 0
+                    ? values.pessoaId
+                    : null
+                }
                 onChange={(value, pessoa) => {
                   setValue("pessoaId", value || 0);
                   setPessoaSelecionada(pessoa || null);
                   // Calcular automaticamente quando pessoa for selecionada
-                  if (value && value !== 0 && values.programaId && values.programaId !== 0) {
+                  if (
+                    value &&
+                    value !== 0 &&
+                    values.programaId &&
+                    values.programaId !== 0
+                  ) {
                     calcularBeneficioAutomatico(
                       value,
                       values.programaId,
-                      typeof quantidadeSolicitada === "number" ? quantidadeSolicitada : undefined
+                      typeof quantidadeSolicitada === "number"
+                        ? quantidadeSolicitada
+                        : undefined
                     );
                   }
                 }}
@@ -336,6 +367,16 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
                 </p>
               )}
             </div>
+
+            {/* SALDO DISPONÍVEL */}
+            {values.pessoaId > 0 && values.programaId > 0 && (
+              <div className="col-span-1 md:col-span-2">
+                <SaldoCard
+                  pessoaId={values.pessoaId}
+                  programaId={values.programaId}
+                />
+              </div>
+            )}
 
             {/* NOVO: Campo de quantidade solicitada - READONLY se estiver editando */}
             {programaSelecionado && values.pessoaId !== 0 && (

@@ -29,7 +29,7 @@ export {
   type PessoaFisicaData,
   type PessoaJuridicaData,
   type AreaEfetiva,
-  type AreaEfetivaDTO
+  type AreaEfetivaDTO,
 } from "./comum/pessoaService";
 export type {
   Propriedade,
@@ -84,3 +84,11 @@ export type {
   TransferenciaPropriedade,
   TransferenciaPropiedadeDTO,
 } from "./comum/transferenciaPropiedadeService";
+
+export { default as saldoService } from "./comum/saldoService";
+export type {
+  SaldoDisponivel,
+  SaldoRapido,
+  VerificacaoDisponibilidade,
+  SaldosPorPessoa,
+} from "./comum/saldoService";

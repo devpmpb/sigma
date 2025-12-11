@@ -73,8 +73,6 @@ function getPeriodoReferencia(periodicidade: Periodicidade): {
     case "BIENAL":
       // Se estamos em ano par, período é [ano-1, ano]
       // Se estamos em ano ímpar, período é [ano, ano+1]
-      // Exemplo 2025 (ímpar): período 2025-2026
-      // Exemplo 2024 (par): período 2024-2025
       const inicioBienal = anoAtual % 2 === 0 ? anoAtual : anoAtual;
       return {
         inicio: new Date(inicioBienal, 0, 1),
@@ -110,30 +108,103 @@ function getPeriodoReferencia(periodicidade: Periodicidade): {
 }
 
 /**
+ * Encontra a regra correta baseada na área efetiva do produtor
+ */
+async function encontrarRegraAplicavel(
+  pessoaId: number,
+  regras: any[],
+  anoReferencia: number
+): Promise<{ regra: any | null; areaEfetiva: number }> {
+  // Buscar área efetiva do produtor
+  let areaEfetivaRecord = await prisma.areaEfetiva.findFirst({
+    where: { pessoaId, anoReferencia },
+  });
+
+  // Se não tem do ano atual, busca o mais recente
+  if (!areaEfetivaRecord) {
+    areaEfetivaRecord = await prisma.areaEfetiva.findFirst({
+      where: { pessoaId },
+      orderBy: { anoReferencia: "desc" },
+    });
+  }
+
+  if (!areaEfetivaRecord) {
+    return { regra: null, areaEfetiva: 0 };
+  }
+
+  const areaEmAlqueires = Number(areaEfetivaRecord.areaEfetiva);
+
+  // Procurar regra que se aplica à área do produtor
+  for (const regra of regras) {
+    const parametro = regra.parametro as any;
+
+    // Regras baseadas em área
+    if (
+      regra.tipoRegra === "area_efetiva" ||
+      regra.tipoRegra === "area_propriedade"
+    ) {
+      const areaMaxima = parametro.area_maxima ?? parametro.valor ?? null;
+      const areaMinima = parametro.area_minima ?? 0;
+
+      let regraAtendida = false;
+
+      // Verificar se a área se encaixa na regra
+      if (areaMaxima === null || areaMaxima === 0) {
+        // Sem limite máximo - qualquer área acima do mínimo
+        if (areaEmAlqueires >= areaMinima) {
+          regraAtendida = true;
+        }
+      } else if (areaMinima === 0 || areaMinima === null) {
+        // Sem limite mínimo - qualquer área até o máximo
+        if (areaEmAlqueires <= areaMaxima) {
+          regraAtendida = true;
+        }
+      } else {
+        // Faixa definida
+        if (areaEmAlqueires >= areaMinima && areaEmAlqueires <= areaMaxima) {
+          regraAtendida = true;
+        }
+      }
+
+      if (regraAtendida) {
+        return { regra, areaEfetiva: areaEmAlqueires };
+      }
+    }
+  }
+
+  // Se nenhuma regra de área se aplicou, retorna a primeira regra (fallback)
+  return { regra: regras[0] || null, areaEfetiva: areaEmAlqueires };
+}
+
+/**
  * Calcula o limite do produtor baseado na área e regras do programa
  */
 async function calcularLimitePorArea(
   pessoaId: number,
   regra: any,
-  anoReferencia: number
+  anoReferencia: number,
+  areaEfetiva?: number
 ): Promise<CalculoLimite> {
   const detalhes: string[] = [];
 
-  // Buscar área efetiva do produtor
-  const areaEfetiva = await prisma.areaEfetiva.findFirst({
-    where: { pessoaId, anoReferencia },
-    orderBy: { anoReferencia: "desc" },
-  });
+  // Se já temos a área, usar ela; senão buscar
+  let area = areaEfetiva;
+  if (area === undefined) {
+    const areaEfetivaRecord = await prisma.areaEfetiva.findFirst({
+      where: { pessoaId, anoReferencia },
+      orderBy: { anoReferencia: "desc" },
+    });
 
-  if (!areaEfetiva) {
-    return {
-      limiteCalculado: 0,
-      baseCalculo: "SEM_AREA",
-      detalhes: ["Produtor não possui área efetiva cadastrada"],
-    };
+    if (!areaEfetivaRecord) {
+      return {
+        limiteCalculado: 0,
+        baseCalculo: "SEM_AREA",
+        detalhes: ["Produtor não possui área efetiva cadastrada"],
+      };
+    }
+    area = Number(areaEfetivaRecord.areaEfetiva);
   }
 
-  const area = Number(areaEfetiva.areaEfetiva);
   detalhes.push(`Área efetiva: ${area.toFixed(2)} alqueires`);
 
   const limite = regra.limiteBeneficio as any;
@@ -243,8 +314,13 @@ export async function calcularSaldoDisponivel(
     return soma + Number(sol.quantidadeSolicitada || 0);
   }, 0);
 
-  // 5. Buscar regra aplicável ao produtor e calcular limite
-  const regraAplicavel = programa.regras[0]; // TODO: lógica para encontrar regra correta
+  // 5. CORRIGIDO: Encontrar regra aplicável baseada na área do produtor
+  const { regra: regraAplicavel, areaEfetiva } = await encontrarRegraAplicavel(
+    pessoaId,
+    programa.regras,
+    anoAtual
+  );
+
   let limiteTotal = Number(programa.limiteMaximoFamilia) || 0;
   let valorPorUnidade = 0;
   let detalhesCalculo: string[] = [];
@@ -253,7 +329,8 @@ export async function calcularSaldoDisponivel(
     const calculoLimite = await calcularLimitePorArea(
       pessoaId,
       regraAplicavel,
-      anoAtual
+      anoAtual,
+      areaEfetiva // Passa a área já encontrada para evitar busca duplicada
     );
     if (calculoLimite.limiteCalculado > 0) {
       limiteTotal = calculoLimite.limiteCalculado;

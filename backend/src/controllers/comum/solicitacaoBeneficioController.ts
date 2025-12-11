@@ -2,8 +2,14 @@
 import { Request, Response } from "express";
 import prisma from "../../utils/prisma";
 import { createGenericController } from "../GenericController";
-import { calcularBeneficio, verificarLimitesPeriodo } from "../../services/calculoBeneficioService";
-import { registrarMudancaStatus, buscarHistoricoFormatado } from "../../services/historicoService";
+import {
+  calcularBeneficio,
+  verificarLimitesPeriodo,
+} from "../../services/calculoBeneficioService";
+import {
+  registrarMudancaStatus,
+  buscarHistoricoFormatado,
+} from "../../services/historicoService";
 
 // Status das solicitações
 export enum StatusSolicitacao {
@@ -11,7 +17,7 @@ export enum StatusSolicitacao {
   EM_ANALISE = "em_analise",
   APROVADA = "aprovada",
   REJEITADA = "rejeitada",
-  CANCELADA = "cancelada"
+  CANCELADA = "cancelada",
 }
 
 // Interface para dados da solicitação
@@ -27,7 +33,7 @@ export interface SolicitacaoBeneficioData {
 const genericController = createGenericController({
   modelName: "solicitacaoBeneficio",
   displayName: "Solicitação de Benefício",
-  orderBy: { datasolicitacao: "desc" }
+  orderBy: { datasolicitacao: "desc" },
 });
 
 // Métodos específicos
@@ -35,75 +41,77 @@ export const solicitacaoBeneficioController = {
   ...genericController,
 
   findAll: async (req: Request, res: Response) => {
-      try {
-        const { page, pageSize } = req.query;
+    try {
+      const { page, pageSize } = req.query;
 
-        // Parâmetros de paginação
-        const pageNum = page ? parseInt(page as string, 10) : undefined;
-        const pageSizeNum = pageSize ? parseInt(pageSize as string, 10) : undefined;
+      // Parâmetros de paginação
+      const pageNum = page ? parseInt(page as string, 10) : undefined;
+      const pageSizeNum = pageSize
+        ? parseInt(pageSize as string, 10)
+        : undefined;
 
-        const includeConfig = {
-          pessoa: {
-            select: {
-              id: true,
-              nome: true,
-              cpfCnpj: true,
-            }
+      const includeConfig = {
+        pessoa: {
+          select: {
+            id: true,
+            nome: true,
+            cpfCnpj: true,
           },
-          programa: {
-            select: {
-              id: true,
-              nome: true,
-              tipoPrograma: true,
-              secretaria: true,
-              ativo: true
-            }
+        },
+        programa: {
+          select: {
+            id: true,
+            nome: true,
+            tipoPrograma: true,
+            secretaria: true,
+            ativo: true,
           },
-          regraAplicada: true
-        };
+        },
+        regraAplicada: true,
+      };
 
-        // Se paginação foi solicitada
-        if (pageNum !== undefined && pageSizeNum !== undefined) {
-          const skip = (pageNum - 1) * pageSizeNum;
-          const take = pageSizeNum;
+      // Se paginação foi solicitada
+      if (pageNum !== undefined && pageSizeNum !== undefined) {
+        const skip = (pageNum - 1) * pageSizeNum;
+        const take = pageSizeNum;
 
-          // Buscar registros paginados e total
-          const [solicitacoes, total] = await Promise.all([
-            prisma.solicitacaoBeneficio.findMany({
-              include: includeConfig,
-              orderBy: { datasolicitacao: "desc" },
-              skip,
-              take,
-            }),
-            prisma.solicitacaoBeneficio.count(),
-          ]);
+        // Buscar registros paginados e total
+        const [solicitacoes, total] = await Promise.all([
+          prisma.solicitacaoBeneficio.findMany({
+            include: includeConfig,
+            orderBy: { datasolicitacao: "desc" },
+            skip,
+            take,
+          }),
+          prisma.solicitacaoBeneficio.count(),
+        ]);
 
-          // Retornar com metadados de paginação
-          return res.status(200).json({
-            data: solicitacoes,
-            pagination: {
-              page: pageNum,
-              pageSize: pageSizeNum,
-              total,
-              totalPages: Math.ceil(total / pageSizeNum),
-            },
-          });
-        }
-
-        // Sem paginação - retornar todos os registros
-        const solicitacoes = await prisma.solicitacaoBeneficio.findMany({
-          include: includeConfig,
-          orderBy: { datasolicitacao: "desc" },
-        });
-
-        return res.status(200).json(solicitacoes);
-      } catch (error) {
-        console.error("Erro ao listar solicitações:", error);
-        return res.status(500).json({
-          erro: "Erro ao listar solicitações",
+        // Retornar com metadados de paginação
+        return res.status(200).json({
+          data: solicitacoes,
+          pagination: {
+            page: pageNum,
+            pageSize: pageSizeNum,
+            total,
+            totalPages: Math.ceil(total / pageSizeNum),
+          },
         });
       }
-    },
+
+      // Sem paginação - retornar todos os registros
+      const solicitacoes = await prisma.solicitacaoBeneficio.findMany({
+        include: includeConfig,
+        orderBy: { datasolicitacao: "desc" },
+      });
+
+      return res.status(200).json(solicitacoes);
+    } catch (error) {
+      console.error("Erro ao listar solicitações:", error);
+      return res.status(500).json({
+        erro: "Erro ao listar solicitações",
+      });
+    }
+  },
 
   // SOBRESCREVER: Método findById com relacionamentos
   async findById(req: Request, res: Response) {
@@ -120,8 +128,8 @@ export const solicitacaoBeneficioController = {
               cpfCnpj: true,
               telefone: true,
               email: true,
-              isProdutor: true
-            }
+              isProdutor: true,
+            },
           },
           programa: {
             select: {
@@ -131,11 +139,11 @@ export const solicitacaoBeneficioController = {
               secretaria: true,
               ativo: true,
               descricao: true,
-              leiNumero: true
-            }
+              leiNumero: true,
+            },
           },
-          regraAplicada: true
-        }
+          regraAplicada: true,
+        },
       });
 
       if (!solicitacao) {
@@ -170,20 +178,22 @@ export const solicitacaoBeneficioController = {
       if (errors.length > 0) {
         return res.status(400).json({
           erro: "Dados inválidos",
-          detalhes: errors
+          detalhes: errors,
         });
       }
 
       // Validação assíncrona 1: Verificar se programa existe e está ativo
       const programa = await prisma.programa.findUnique({
         where: { id: data.programaId },
-        select: { ativo: true, nome: true }
+        select: { ativo: true, nome: true },
       });
 
       if (!programa) {
         errors.push("Programa não encontrado");
       } else if (!programa.ativo) {
-        errors.push(`O programa "${programa.nome}" está inativo e não pode receber novas solicitações`);
+        errors.push(
+          `O programa "${programa.nome}" está inativo e não pode receber novas solicitações`
+        );
       }
 
       // Validação assíncrona 2: Verificar duplicidade
@@ -192,29 +202,31 @@ export const solicitacaoBeneficioController = {
           pessoaId: data.pessoaId,
           programaId: data.programaId,
           status: {
-            in: ['pendente', 'em_analise', 'aprovada']
-          }
+            in: ["pendente", "em_analise"],
+          },
         },
         select: {
           id: true,
           status: true,
-          datasolicitacao: true
-        }
+          datasolicitacao: true,
+        },
       });
 
       if (solicitacaoExistente) {
-        const dataFormatada = new Date(solicitacaoExistente.datasolicitacao).toLocaleDateString('pt-BR');
+        const dataFormatada = new Date(
+          solicitacaoExistente.datasolicitacao
+        ).toLocaleDateString("pt-BR");
         errors.push(
           `Já existe uma solicitação ativa (${solicitacaoExistente.status}) ` +
-          `para este programa criada em ${dataFormatada}. ` +
-          `Aguarde a conclusão da solicitação anterior ou cancele-a antes de criar uma nova.`
+            `para este programa criada em ${dataFormatada}. ` +
+            `Aguarde a conclusão da solicitação anterior ou cancele-a antes de criar uma nova.`
         );
       }
 
       if (errors.length > 0) {
         return res.status(400).json({
           erro: "Validação falhou",
-          detalhes: errors
+          detalhes: errors,
         });
       }
 
@@ -224,25 +236,25 @@ export const solicitacaoBeneficioController = {
           pessoaId: data.pessoaId,
           programaId: data.programaId,
           observacoes: data.observacoes,
-          status: data.status || "pendente"
+          status: data.status || "pendente",
         },
         include: {
           pessoa: {
             select: {
               id: true,
               nome: true,
-              cpfCnpj: true
-            }
+              cpfCnpj: true,
+            },
           },
           programa: {
             select: {
               id: true,
               nome: true,
               tipoPrograma: true,
-              secretaria: true
-            }
-          }
-        }
+              secretaria: true,
+            },
+          },
+        },
       });
 
       // Registrar no histórico
@@ -274,18 +286,18 @@ export const solicitacaoBeneficioController = {
               id: true,
               nome: true,
               cpfCnpj: true,
-            }
+            },
           },
           programa: {
             select: {
               id: true,
               nome: true,
               tipoPrograma: true,
-              secretaria: true
-            }
-          }
+              secretaria: true,
+            },
+          },
         },
-        orderBy: { datasolicitacao: "desc" }
+        orderBy: { datasolicitacao: "desc" },
       });
 
       res.json(solicitacoes);
@@ -308,18 +320,18 @@ export const solicitacaoBeneficioController = {
               id: true,
               nome: true,
               cpfCnpj: true,
-            }
+            },
           },
           programa: {
             select: {
               id: true,
               nome: true,
               tipoPrograma: true,
-              secretaria: true
-            }
-          }
+              secretaria: true,
+            },
+          },
         },
-        orderBy: { datasolicitacao: "desc" }
+        orderBy: { datasolicitacao: "desc" },
       });
 
       res.json(solicitacoes);
@@ -337,8 +349,8 @@ export const solicitacaoBeneficioController = {
       const solicitacoes = await prisma.solicitacaoBeneficio.findMany({
         where: {
           programa: {
-            secretaria: secretaria.toUpperCase() as any
-          }
+            secretaria: secretaria.toUpperCase() as any,
+          },
         },
         include: {
           pessoa: {
@@ -346,18 +358,18 @@ export const solicitacaoBeneficioController = {
               id: true,
               nome: true,
               cpfCnpj: true,
-            }
+            },
           },
           programa: {
             select: {
               id: true,
               nome: true,
               tipoPrograma: true,
-              secretaria: true
-            }
-          }
+              secretaria: true,
+            },
+          },
         },
-        orderBy: { datasolicitacao: "desc" }
+        orderBy: { datasolicitacao: "desc" },
       });
 
       res.json(solicitacoes);
@@ -375,7 +387,7 @@ export const solicitacaoBeneficioController = {
 
       if (!pessoaId || !programaId) {
         return res.status(400).json({
-          erro: "Pessoa e Programa são obrigatórios"
+          erro: "Pessoa e Programa são obrigatórios",
         });
       }
 
@@ -399,7 +411,7 @@ export const solicitacaoBeneficioController = {
       res.json({
         sucesso: true,
         calculo: resultado,
-        limitePeriodo: verificacaoLimite
+        limitePeriodo: verificacaoLimite,
       });
     } catch (error) {
       console.error("Erro ao calcular benefício:", error);
@@ -410,18 +422,19 @@ export const solicitacaoBeneficioController = {
   // NOVO: Criar solicitação com cálculo automático
   async createComCalculo(req: Request, res: Response) {
     try {
-      const { pessoaId, programaId, quantidadeSolicitada, observacoes } = req.body;
+      const { pessoaId, programaId, quantidadeSolicitada, observacoes } =
+        req.body;
 
       console.log("🔍 BACKEND - createComCalculo recebeu:", {
         pessoaId,
         programaId,
         quantidadeSolicitada,
-        observacoes
+        observacoes,
       });
 
       if (!pessoaId || !programaId) {
         return res.status(400).json({
-          erro: "Pessoa e Programa são obrigatórios"
+          erro: "Pessoa e Programa são obrigatórios",
         });
       }
 
@@ -431,13 +444,15 @@ export const solicitacaoBeneficioController = {
       // Validação 1: Verificar se programa existe e está ativo
       const programa = await prisma.programa.findUnique({
         where: { id: parseInt(programaId) },
-        select: { ativo: true, nome: true }
+        select: { ativo: true, nome: true },
       });
 
       if (!programa) {
         errors.push("Programa não encontrado");
       } else if (!programa.ativo) {
-        errors.push(`O programa "${programa.nome}" está inativo e não pode receber novas solicitações`);
+        errors.push(
+          `O programa "${programa.nome}" está inativo e não pode receber novas solicitações`
+        );
       }
 
       // Validação 2: Verificar duplicidade - não permitir solicitação ativa duplicada
@@ -446,29 +461,31 @@ export const solicitacaoBeneficioController = {
           pessoaId: parseInt(pessoaId),
           programaId: parseInt(programaId),
           status: {
-            in: ['pendente', 'em_analise', 'aprovada']
-          }
+            in: ["pendente", "em_analise"],
+          },
         },
         select: {
           id: true,
           status: true,
-          datasolicitacao: true
-        }
+          datasolicitacao: true,
+        },
       });
 
       if (solicitacaoExistente) {
-        const dataFormatada = new Date(solicitacaoExistente.datasolicitacao).toLocaleDateString('pt-BR');
+        const dataFormatada = new Date(
+          solicitacaoExistente.datasolicitacao
+        ).toLocaleDateString("pt-BR");
         errors.push(
           `Já existe uma solicitação ativa (${solicitacaoExistente.status}) ` +
-          `para este programa criada em ${dataFormatada}. ` +
-          `Aguarde a conclusão da solicitação anterior ou cancele-a antes de criar uma nova.`
+            `para este programa criada em ${dataFormatada}. ` +
+            `Aguarde a conclusão da solicitação anterior ou cancele-a antes de criar uma nova.`
         );
       }
 
       if (errors.length > 0) {
         return res.status(400).json({
           erro: "Validação falhou",
-          detalhes: errors
+          detalhes: errors,
         });
       }
 
@@ -483,7 +500,7 @@ export const solicitacaoBeneficioController = {
         regraAplicadaId: calculo.regraAplicadaId,
         valorCalculado: calculo.valorCalculado,
         quantidadeSolicitada: quantidadeSolicitada,
-        temDetalhes: !!calculo.calculoDetalhes
+        temDetalhes: !!calculo.calculoDetalhes,
       });
 
       // Verificar limites se há regra aplicada
@@ -498,7 +515,7 @@ export const solicitacaoBeneficioController = {
           return res.status(400).json({
             erro: "Limite de benefícios atingido",
             detalhes: [verificacaoLimite.mensagem],
-            informacoes: verificacaoLimite.detalhes
+            informacoes: verificacaoLimite.detalhes,
           });
         }
       }
@@ -513,27 +530,29 @@ export const solicitacaoBeneficioController = {
           // Dados calculados
           regraAplicadaId: calculo.regraAplicadaId,
           valorCalculado: calculo.valorCalculado,
-          quantidadeSolicitada: quantidadeSolicitada ? parseFloat(quantidadeSolicitada) : null,
-          calculoDetalhes: calculo.calculoDetalhes as any
+          quantidadeSolicitada: quantidadeSolicitada
+            ? parseFloat(quantidadeSolicitada)
+            : null,
+          calculoDetalhes: calculo.calculoDetalhes as any,
         },
         include: {
           pessoa: {
             select: {
               id: true,
               nome: true,
-              cpfCnpj: true
-            }
+              cpfCnpj: true,
+            },
           },
           programa: {
             select: {
               id: true,
               nome: true,
               tipoPrograma: true,
-              secretaria: true
-            }
+              secretaria: true,
+            },
           },
-          regraAplicada: true
-        }
+          regraAplicada: true,
+        },
       });
 
       // Registrar no histórico
@@ -552,8 +571,8 @@ export const solicitacaoBeneficioController = {
         solicitacao,
         calculo: {
           mensagem: calculo.mensagem,
-          avisos: calculo.avisos
-        }
+          avisos: calculo.avisos,
+        },
       });
     } catch (error) {
       console.error("Erro ao criar solicitação:", error);
@@ -584,7 +603,7 @@ export const solicitacaoBeneficioController = {
       // Buscar status atual
       const solicitacaoAtual = await prisma.solicitacaoBeneficio.findUnique({
         where: { id: parseInt(id) },
-        select: { status: true }
+        select: { status: true },
       });
 
       if (!solicitacaoAtual) {
@@ -596,25 +615,25 @@ export const solicitacaoBeneficioController = {
         where: { id: parseInt(id) },
         data: {
           status,
-          observacoes
+          observacoes,
         },
         include: {
           pessoa: {
             select: {
               id: true,
               nome: true,
-              cpfCnpj: true
-            }
+              cpfCnpj: true,
+            },
           },
           programa: {
             select: {
               id: true,
               nome: true,
               tipoPrograma: true,
-              secretaria: true
-            }
-          }
-        }
+              secretaria: true,
+            },
+          },
+        },
       });
 
       // Registrar mudança no histórico
@@ -630,7 +649,7 @@ export const solicitacaoBeneficioController = {
       res.json({
         sucesso: true,
         mensagem: "Status da solicitação atualizado com sucesso",
-        solicitacao
+        solicitacao,
       });
     } catch (error) {
       console.error("Erro ao atualizar status:", error);
@@ -641,57 +660,53 @@ export const solicitacaoBeneficioController = {
   // Obter estatísticas das solicitações
   async getEstatisticas(req: Request, res: Response) {
     try {
-      const [
-        totalSolicitacoes,
-        porStatus,
-        porSecretaria,
-        porPrograma
-      ] = await Promise.all([
-        // Total de solicitações
-        prisma.solicitacaoBeneficio.count(),
-        
-        // Por status
-        prisma.solicitacaoBeneficio.groupBy({
-          by: ['status'],
-          _count: { id: true }
-        }),
-        
-        // Por secretaria
-        prisma.solicitacaoBeneficio.groupBy({
-          by: ['programaId'],
-          _count: { id: true }
-        }),
-        
-        // Programas mais solicitados
-        prisma.solicitacaoBeneficio.groupBy({
-          by: ['programaId'],
-          _count: { id: true },
-          orderBy: { _count: { id: 'desc' } },
-          take: 5
-        })
-      ]);
+      const [totalSolicitacoes, porStatus, porSecretaria, porPrograma] =
+        await Promise.all([
+          // Total de solicitações
+          prisma.solicitacaoBeneficio.count(),
+
+          // Por status
+          prisma.solicitacaoBeneficio.groupBy({
+            by: ["status"],
+            _count: { id: true },
+          }),
+
+          // Por secretaria
+          prisma.solicitacaoBeneficio.groupBy({
+            by: ["programaId"],
+            _count: { id: true },
+          }),
+
+          // Programas mais solicitados
+          prisma.solicitacaoBeneficio.groupBy({
+            by: ["programaId"],
+            _count: { id: true },
+            orderBy: { _count: { id: "desc" } },
+            take: 5,
+          }),
+        ]);
 
       // Buscar nomes dos programas
-      const programaIds = porPrograma.map(p => p.programaId);
+      const programaIds = porPrograma.map((p) => p.programaId);
       const programas = await prisma.programa.findMany({
         where: { id: { in: programaIds } },
-        select: { id: true, nome: true, secretaria: true }
+        select: { id: true, nome: true, secretaria: true },
       });
 
-      const programasComNomes = porPrograma.map(p => ({
+      const programasComNomes = porPrograma.map((p) => ({
         ...p,
-        programa: programas.find(prog => prog.id === p.programaId)
+        programa: programas.find((prog) => prog.id === p.programaId),
       }));
 
       res.json({
         totalSolicitacoes,
         porStatus,
         porSecretaria,
-        programasMaisSolicitados: programasComNomes
+        programasMaisSolicitados: programasComNomes,
       });
     } catch (error) {
       console.error("Erro ao buscar estatísticas:", error);
       res.status(500).json({ erro: "Erro interno do servidor" });
     }
-  }
+  },
 };
