@@ -291,18 +291,23 @@ model RamoAtividade {
 }
 
 model Programa {
-  id             Int                     @id @default(autoincrement())
-  nome           String
-  descricao      String?
-  leiNumero      String?
-  tipoPrograma   TipoPrograma
-  secretaria     TipoPerfil
-  ativo          Boolean                 @default(true)
-  createdAt      DateTime                @default(now())
-  updatedAt      DateTime                @updatedAt
-  ramosAtividade ProgramaRamoAtividade[]
-  regras         RegrasNegocio[]
-  solicitacoes   SolicitacaoBeneficio[]
+  id                  Int                     @id @default(autoincrement())
+  nome                String
+  descricao           String?
+  leiNumero           String?
+  tipoPrograma        TipoPrograma
+  secretaria          TipoPerfil
+  ativo               Boolean                 @default(true)
+  createdAt           DateTime                @default(now())
+  updatedAt           DateTime                @updatedAt
+  periodicidade       Periodicidade           @default(ANUAL)
+  unidadeLimite       String?                 @db.VarChar(50)
+  limiteMaximoFamilia Decimal?                @db.Decimal(10, 2)
+  ramosAtividade      ProgramaRamoAtividade[]
+  regras              RegrasNegocio[]
+  solicitacoes        SolicitacaoBeneficio[]
+
+  @@index([periodicidade])
 }
 
 model ProgramaRamoAtividade {
@@ -476,6 +481,13 @@ model AuditoriaLogin {
   createdAt DateTime @default(now())
 }
 
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model v_programas_gim {
+  count BigInt?
+
+  @@ignore
+}
+
 enum TipoEndereco {
   RESIDENCIAL
   COMERCIAL
@@ -557,4 +569,11 @@ enum TipoTelefone {
   RESIDENCIAL
   COMERCIAL
   OUTRO
+}
+
+enum Periodicidade {
+  ANUAL
+  BIENAL
+  TRIENAL
+  UNICO
 }

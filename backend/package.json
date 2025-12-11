@@ -38,7 +38,7 @@
     "secrets:generate": "node -e \"console.log('JWT_SECRET=' + require('crypto').randomBytes(64).toString('hex')); console.log('JWT_REFRESH_SECRET=' + require('crypto').randomBytes(64).toString('hex'));\""
   },
   "dependencies": {
-    "@prisma/client": "^6.16.2",
+    "@prisma/client": "^6.19.0",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
@@ -52,16 +52,18 @@
     "@types/express": "^4.17.21",
     "@types/jest": "^29.5.14",
     "@types/jsonwebtoken": "^9.0.5",
-    "@types/node": "^20.10.6",
+    "@types/node": "^20.19.26",
     "@typescript-eslint/eslint-plugin": "^8.33.1",
     "@typescript-eslint/parser": "^8.33.1",
+    "@vitejs/plugin-react": "^5.1.2",
     "eslint": "^9.31.0",
     "jest": "^29.7.0",
     "prettier": "^3.1.1",
-    "prisma": "^6.16.2",
+    "prisma": "^6.19.0",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "vite": "^7.2.7"
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts "

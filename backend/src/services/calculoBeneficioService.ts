@@ -154,15 +154,8 @@ export async function calcularBeneficio(
             );
             quantidadeFinal = limiteQtd;
           }
-
           // Aplicar percentual se houver
-          if (limite?.percentual) {
-            percentualAplicado = limite.percentual;
-            valorCalculado =
-              quantidadeFinal * valorBase * (percentualAplicado / 100);
-          } else {
-            valorCalculado = quantidadeFinal * valorBase;
-          }
+          valorCalculado = quantidadeFinal * valorBase;
         } else {
           // Sem quantidade - apenas retorna info da regra
           avisos.push("Informe a quantidade desejada para calcular o valor");

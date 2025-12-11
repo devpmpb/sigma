@@ -1,5 +1,5 @@
 // frontend/src/pages/cadastros/comum/pessoa/PessoaForm.tsx
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import { useParams } from "@tanstack/react-router";
 import pessoaService, {
   Pessoa,
@@ -79,7 +79,7 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
     loadingLogradouros || loadingBairros || loadingAreasRurais;
 
   // Estado para endereço existente
-  const [enderecoExistente, setEnderecoExistente] = useState<any>(null);
+  const enderecoExistenteRef = useRef<any>(null);
 
   // Valor inicial para o formulário com campos de endereço
   const initialValues: PessoaFormData = {
@@ -112,31 +112,6 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
     areaRuralId: "",
     referenciaRural: "",
     coordenadas: "",
-  };
-
-  // ✅ REMOVIDO: carregarDadosAuxiliares() - agora usa React Query!
-  // Dados auxiliares são carregados automaticamente pelos hooks useFormData acima
-
-  // Carregar endereço existente se estiver editando
-  useEffect(() => {
-    if (pessoaId && pessoaId !== "novo") {
-      carregarEnderecoExistente();
-    }
-  }, [pessoaId]);
-
-  const carregarEnderecoExistente = async () => {
-    try {
-      const enderecos = await enderecoService.getEnderecosByPessoa(
-        Number(pessoaId)
-      );
-      const enderecoPrincipal =
-        enderecos.find((e) => e.principal) || enderecos[0];
-      if (enderecoPrincipal) {
-        setEnderecoExistente(enderecoPrincipal);
-      }
-    } catch (error) {
-      console.error("Erro ao carregar endereço:", error);
-    }
   };
 
   // Validação do formulário
@@ -233,6 +208,36 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
         );
       }
 
+      // ✅ CORREÇÃO: Buscar e incluir dados de endereço no retorno
+      try {
+        const enderecos = await enderecoService.getEnderecosByPessoa(
+          Number(id)
+        );
+        const enderecoPrincipal =
+          enderecos.find((e) => e.principal) || enderecos[0];
+
+        if (enderecoPrincipal) {
+          // Guardar referência para o update
+          enderecoExistenteRef.current = enderecoPrincipal;
+
+          // Retornar pessoa COM os campos de endereço já preenchidos
+          return {
+            ...pessoa,
+            incluirEndereco: true,
+            tipoEndereco: enderecoPrincipal.tipoEndereco,
+            logradouroId: enderecoPrincipal.logradouroId?.toString() || "",
+            numero: enderecoPrincipal.numero || "",
+            complemento: enderecoPrincipal.complemento || "",
+            bairroId: enderecoPrincipal.bairroId?.toString() || "",
+            areaRuralId: enderecoPrincipal.areaRuralId?.toString() || "",
+            referenciaRural: enderecoPrincipal.referenciaRural || "",
+            coordenadas: enderecoPrincipal.coordenadas || "",
+          };
+        }
+      } catch (error) {
+        console.error("Erro ao carregar endereço:", error);
+      }
+
       return pessoa;
     },
     getAll: pessoaService.getAll,
@@ -318,8 +323,11 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
         };
 
         // Se já existe um endereço, atualizar, senão criar
-        if (enderecoExistente) {
-          await enderecoService.update(enderecoExistente.id, enderecoData);
+        if (enderecoExistenteRef.current) {
+          await enderecoService.update(
+            enderecoExistenteRef.current.id,
+            enderecoData
+          );
         } else {
           await enderecoService.create(enderecoData);
         }
@@ -390,30 +398,6 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
             setValue("referenciaRural", "");
           }
         };
-
-        // Carregar dados do endereço ao editar
-        useEffect(() => {
-          if (pessoaId && pessoaId !== "novo" && enderecoExistente) {
-            setValue("incluirEndereco", true);
-            setValue("tipoEndereco", enderecoExistente.tipoEndereco);
-            setValue(
-              "logradouroId",
-              enderecoExistente.logradouroId?.toString() || ""
-            );
-            setValue("numero", enderecoExistente.numero || "");
-            setValue("complemento", enderecoExistente.complemento || "");
-            setValue("bairroId", enderecoExistente.bairroId?.toString() || "");
-            setValue(
-              "areaRuralId",
-              enderecoExistente.areaRuralId?.toString() || ""
-            );
-            setValue(
-              "referenciaRural",
-              enderecoExistente.referenciaRural || ""
-            );
-            setValue("coordenadas", enderecoExistente.coordenadas || "");
-          }
-        }, [pessoaId, enderecoExistente, setValue]);
 
         return (
           <div className="space-y-8">

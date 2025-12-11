@@ -14,6 +14,8 @@ import pessoaService, {
 } from "../../../../services/comum/pessoaService";
 import { FormBase } from "../../../../components/cadastro";
 import { FormField, HistoricoSolicitacao } from "../../../../components/comum";
+import AsyncSearchSelect from "../../../../components/comum/AsyncSearchSelect";
+import { SaldoCard } from "../../../../components/comum";
 
 interface SolicitacaoBeneficioFormProps {
   id?: string | number;
@@ -31,12 +33,19 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
   const params = useParams({ strict: false }) as any;
   const solicitacaoId = id || params.id;
 
-  const [programas, setProgramas] = useState<Programa[]>([]);
-  const [pessoas, setPessoas] = useState<Pessoa[]>([]);
   const [programaSelecionado, setProgramaSelecionado] =
     useState<Programa | null>(null);
-  const [loadingProgramas, setLoadingProgramas] = useState(false);
-  const [loadingPessoas, setLoadingPessoas] = useState(false);
+  const [pessoaSelecionada, setPessoaSelecionada] = useState<Pessoa | null>(
+    null
+  );
+
+  // Estados para labels iniciais (quando editando)
+  const [programaInitialLabel, setProgramaInitialLabel] = useState<string>("");
+  const [programaInitialSubLabel, setProgramaInitialSubLabel] =
+    useState<string>("");
+  const [pessoaInitialLabel, setPessoaInitialLabel] = useState<string>("");
+  const [pessoaInitialSubLabel, setPessoaInitialSubLabel] =
+    useState<string>("");
 
   // NOVO: Estados para cálculo automático
   const [calculando, setCalculando] = useState(false);
@@ -55,62 +64,70 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
     status: StatusSolicitacao.PENDENTE,
   };
 
-  // Carregar programas
-  useEffect(() => {
-    const loadProgramas = async () => {
-      setLoadingProgramas(true);
-      try {
-        const programasAtivos = await programaService.getAll();
-        setProgramas(programasAtivos.filter((p) => p.ativo));
-      } catch (error) {
-        console.error("Erro ao carregar programas:", error);
-      } finally {
-        setLoadingProgramas(false);
+  // Busca de programas para AsyncSearchSelect
+  const searchProgramas = async (termo: string): Promise<Programa[]> => {
+    if (!termo || termo.length < 2) {
+      return [];
+    }
+    try {
+      // Buscar todos os programas ativos e filtrar no frontend
+      const todosProgramas = await programaService.getAll();
+      const termoLower = termo.toLowerCase();
+
+      return todosProgramas.filter(
+        (p) =>
+          p.ativo &&
+          (p.nome.toLowerCase().includes(termoLower) ||
+            p.descricao?.toLowerCase().includes(termoLower) ||
+            p.leiNumero?.toLowerCase().includes(termoLower))
+      );
+    } catch (error) {
+      console.error("Erro ao buscar programas:", error);
+      return [];
+    }
+  };
+
+  // Busca de pessoas para AsyncSearchSelect (baseado no programa selecionado)
+  const searchPessoas = async (termo: string): Promise<Pessoa[]> => {
+    if (!termo || termo.length < 2) {
+      return [];
+    }
+    if (!programaSelecionado) {
+      return [];
+    }
+
+    try {
+      let pessoasDisponiveis: Pessoa[] = [];
+
+      if (programaSelecionado.secretaria === TipoPerfil.AGRICULTURA) {
+        // Para agricultura, buscar apenas pessoas que são produtores
+        const todasPessoas = await pessoaService.buscarPorTermo(termo);
+        pessoasDisponiveis = todasPessoas.filter(
+          (pessoa) => pessoa.ativo && pessoa.isProdutor
+        );
+      } else {
+        // Para obras, qualquer pessoa ativa
+        const todasPessoas = await pessoaService.buscarPorTermo(termo);
+        pessoasDisponiveis = todasPessoas.filter((pessoa) => pessoa.ativo);
       }
-    };
 
-    loadProgramas();
-  }, []);
-
-  // Carregar pessoas baseado no programa selecionado
-  useEffect(() => {
-    const loadPessoas = async () => {
-      if (!programaSelecionado) {
-        setPessoas([]);
-        return;
-      }
-
-      setLoadingPessoas(true);
-      try {
-        let pessoasDisponiveis: Pessoa[] = [];
-
-        if (programaSelecionado.secretaria === TipoPerfil.AGRICULTURA) {
-          // Para agricultura, buscar apenas pessoas que são produtores
-          const todasPessoas = await pessoaService.getProdutores();
-          pessoasDisponiveis = todasPessoas.filter((pessoa) => pessoa.ativo);
-        } else {
-          // Para obras, qualquer pessoa ativa
-          const todasPessoas = await pessoaService.getAll();
-          pessoasDisponiveis = todasPessoas.filter((pessoa) => pessoa.ativo);
-        }
-
-        setPessoas(pessoasDisponiveis);
-      } catch (error) {
-        console.error("Erro ao carregar pessoas:", error);
-      } finally {
-        setLoadingPessoas(false);
-      }
-    };
-
-    loadPessoas();
-  }, [programaSelecionado]);
+      return pessoasDisponiveis;
+    } catch (error) {
+      console.error("Erro ao buscar pessoas:", error);
+      return [];
+    }
+  };
 
   // Função para atualizar programa selecionado
-  const handleProgramaChange = (programaId: number, setValue: any) => {
-    const programa = programas.find((p) => p.id === programaId);
+  const handleProgramaChange = (
+    programaId: number | null,
+    programa: Programa | undefined,
+    setValue: any
+  ) => {
     setProgramaSelecionado(programa || null);
-    setValue("programaId", programaId);
+    setValue("programaId", programaId || 0);
     setValue("pessoaId", 0); // Resetar pessoa selecionada
+    setPessoaSelecionada(null); // Limpar pessoa selecionada
     setCalculoResultado(null); // Limpar cálculo anterior
   };
 
@@ -134,7 +151,7 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
         quantidadeSolicitada:
           quantidade && quantidade > 0 ? quantidade : undefined,
       });
-
+      console.log("📥 FRONTEND - Resultado recebido:", resultado);
       setCalculoResultado(resultado);
     } catch (error: any) {
       console.error("Erro ao calcular benefício:", error);
@@ -167,12 +184,25 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
         );
         console.log("📦 Solicitação carregada:", solicitacao);
 
-        // 1. Carregar programa selecionado para aparecer no select
+        // 1. Carregar programa selecionado e seus labels para o AsyncSearchSelect
         if (solicitacao.programa) {
           setProgramaSelecionado(solicitacao.programa);
+          setProgramaInitialLabel(solicitacao.programa.nome);
+          setProgramaInitialSubLabel(
+            `${programaService.formatarSecretaria(
+              solicitacao.programa.secretaria
+            )} - ${solicitacao.programa.tipoPrograma}`
+          );
         }
 
-        // 2. Carregar quantidade solicitada
+        // 2. Carregar pessoa selecionada e seus labels para o AsyncSearchSelect
+        if (solicitacao.pessoa) {
+          setPessoaSelecionada(solicitacao.pessoa);
+          setPessoaInitialLabel(solicitacao.pessoa.nome);
+          setPessoaInitialSubLabel(solicitacao.pessoa.cpfCnpj);
+        }
+
+        // 3. Carregar quantidade solicitada
         const quantidadeCarregada = solicitacao.quantidadeSolicitada
           ? Number(solicitacao.quantidadeSolicitada)
           : "";
@@ -184,10 +214,7 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
         );
         setQuantidadeSolicitada(quantidadeCarregada);
 
-        // Atualizar também no FormBase
-        // Nota: o setValue será passado pelo FormBase depois que renderizar
-
-        // 3. Recalcular o benefício com os dados carregados (atualiza o cálculo)
+        // 4. Recalcular o benefício com os dados carregados (atualiza o cálculo)
         if (solicitacao.pessoaId && solicitacao.programaId) {
           await calcularBeneficioAutomatico(
             solicitacao.pessoaId,
@@ -220,23 +247,6 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
     return Object.keys(errors).length > 0 ? errors : null;
   };
 
-  // Função para converter strings para números
-  const handleSelectChange = (
-    e: React.ChangeEvent<HTMLSelectElement>,
-    handleChange: any,
-    setValue: any
-  ) => {
-    const { name, value } = e.target;
-
-    // Converter para número se for pessoaId ou programaId
-    if (name === "pessoaId" || name === "programaId") {
-      const numericValue = value === "" ? 0 : parseInt(value, 10);
-      setValue(name, numericValue);
-    } else {
-      handleChange(e);
-    }
-  };
-
   return (
     <FormBase<SolicitacaoBeneficio, SolicitacaoBeneficioDTO>
       title="Solicitação de Benefício"
@@ -261,100 +271,112 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField
-              name="programaId"
-              label="Programa"
-              error={errors.programaId}
-              touched={touched.programaId}
-              required
-              helpText={
-                programaSelecionado
-                  ? `Secretaria: ${programaService.formatarSecretaria(
-                      programaSelecionado.secretaria
-                    )}`
-                  : "Selecione o programa para definir as pessoas disponíveis"
-              }
-            >
-              <select
-                id="programaId"
-                name="programaId"
-                value={values.programaId}
-                onChange={(e) => {
-                  handleSelectChange(e, handleChange, setValue);
-                  handleProgramaChange(Number(e.target.value), setValue);
+            <div>
+              <AsyncSearchSelect<Programa>
+                label="Programa"
+                value={
+                  values.programaId && values.programaId !== 0
+                    ? values.programaId
+                    : null
+                }
+                onChange={(value, programa) => {
+                  handleProgramaChange(value, programa, setValue);
                 }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                disabled={loadingProgramas}
-              >
-                <option value={0}>
-                  {loadingProgramas ? "Carregando..." : "Selecione um programa"}
-                </option>
-                {programas.map((programa) => (
-                  <option key={programa.id} value={programa.id}>
-                    [{programaService.formatarSecretaria(programa.secretaria)}]{" "}
-                    {programa.nome}
-                  </option>
-                ))}
-              </select>
-            </FormField>
+                searchFunction={searchProgramas}
+                getOptionLabel={(programa) => programa.nome}
+                getOptionSubLabel={(programa) =>
+                  `${programaService.formatarSecretaria(
+                    programa.secretaria
+                  )} - ${programa.tipoPrograma}`
+                }
+                getId={(programa) => programa.id}
+                placeholder="Digite o nome do programa..."
+                required
+                error={errors.programaId}
+                initialLabel={programaInitialLabel || undefined}
+                initialSubLabel={programaInitialSubLabel || undefined}
+              />
+              {programaSelecionado && (
+                <p className="mt-1 text-sm text-gray-600">
+                  Secretaria:{" "}
+                  {programaService.formatarSecretaria(
+                    programaSelecionado.secretaria
+                  )}
+                </p>
+              )}
+              {!programaSelecionado && (
+                <p className="mt-1 text-sm text-gray-500">
+                  Selecione o programa para definir as pessoas disponíveis
+                </p>
+              )}
+            </div>
 
-            <FormField
-              name="pessoaId"
-              label={
-                programaSelecionado?.secretaria === TipoPerfil.AGRICULTURA
-                  ? "Produtor"
-                  : "Pessoa"
-              }
-              error={errors.pessoaId}
-              touched={touched.pessoaId}
-              required
-              helpText={
-                programaSelecionado?.secretaria === TipoPerfil.AGRICULTURA
-                  ? "Apenas produtores rurais podem solicitar benefícios de agricultura"
-                  : "Qualquer pessoa pode solicitar benefícios de obras"
-              }
-            >
-              <select
-                id="pessoaId"
-                name="pessoaId"
-                value={values.pessoaId}
-                onChange={(e) => {
-                  handleSelectChange(e, handleChange, setValue);
-                  // NOVO: Calcular automaticamente quando pessoa for selecionada
-                  const pessoaId = parseInt(e.target.value);
+            <div>
+              <AsyncSearchSelect<Pessoa>
+                label={
+                  programaSelecionado?.secretaria === TipoPerfil.AGRICULTURA
+                    ? "Produtor"
+                    : "Pessoa"
+                }
+                value={
+                  values.pessoaId && values.pessoaId !== 0
+                    ? values.pessoaId
+                    : null
+                }
+                onChange={(value, pessoa) => {
+                  setValue("pessoaId", value || 0);
+                  setPessoaSelecionada(pessoa || null);
+                  // Calcular automaticamente quando pessoa for selecionada
                   if (
-                    pessoaId &&
-                    pessoaId !== 0 &&
+                    value &&
+                    value !== 0 &&
                     values.programaId &&
                     values.programaId !== 0
                   ) {
                     calcularBeneficioAutomatico(
-                      pessoaId,
+                      value,
                       values.programaId,
-                      quantidadeSolicitada
+                      typeof quantidadeSolicitada === "number"
+                        ? quantidadeSolicitada
+                        : undefined
                     );
                   }
                 }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                disabled={!programaSelecionado || loadingPessoas}
-              >
-                <option value={0}>
-                  {!programaSelecionado
+                searchFunction={searchPessoas}
+                getOptionLabel={(pessoa) => pessoa.nome}
+                getOptionSubLabel={(pessoa) => pessoa.cpfCnpj}
+                getId={(pessoa) => pessoa.id}
+                placeholder={
+                  !programaSelecionado
                     ? "Selecione um programa primeiro"
-                    : loadingPessoas
-                    ? "Carregando..."
                     : programaSelecionado.secretaria === TipoPerfil.AGRICULTURA
-                    ? "Selecione um produtor"
-                    : "Selecione uma pessoa"}
-                </option>
-                {pessoas.map((pessoa) => (
-                  <option key={pessoa.id} value={pessoa.id}>
-                    {pessoa.nome} - {pessoa.cpfCnpj}
-                    {pessoa.isProdutor}
-                  </option>
-                ))}
-              </select>
-            </FormField>
+                    ? "Digite o nome ou CPF do produtor..."
+                    : "Digite o nome ou CPF/CNPJ da pessoa..."
+                }
+                disabled={!programaSelecionado}
+                required
+                error={errors.pessoaId}
+                initialLabel={pessoaInitialLabel || undefined}
+                initialSubLabel={pessoaInitialSubLabel || undefined}
+              />
+              {programaSelecionado && (
+                <p className="mt-1 text-sm text-gray-500">
+                  {programaSelecionado.secretaria === TipoPerfil.AGRICULTURA
+                    ? "Apenas produtores rurais podem solicitar benefícios de agricultura"
+                    : "Qualquer pessoa pode solicitar benefícios de obras"}
+                </p>
+              )}
+            </div>
+
+            {/* SALDO DISPONÍVEL */}
+            {values.pessoaId > 0 && values.programaId > 0 && (
+              <div className="col-span-1 md:col-span-2">
+                <SaldoCard
+                  pessoaId={values.pessoaId}
+                  programaId={values.programaId}
+                />
+              </div>
+            )}
 
             {/* NOVO: Campo de quantidade solicitada - READONLY se estiver editando */}
             {programaSelecionado && values.pessoaId !== 0 && (

@@ -106,7 +106,15 @@ function FormBase<T extends Record<string, any>, R>({
       } catch (err: any) {
         console.error("Erro ao salvar registro:", err);
 
-        if (err.response?.data?.message) {
+        if (err.response?.data?.detalhes) {
+          // Formato: { erro: "...", detalhes: ["msg1", "msg2"] }
+          const detalhes = err.response.data.detalhes;
+          setError(Array.isArray(detalhes) ? detalhes.join(". ") : detalhes);
+        } else if (err.response?.data?.erro) {
+          // Formato: { erro: "mensagem" }
+          setError(err.response.data.erro);
+        } else if (err.response?.data?.message) {
+          // Formato: { message: "mensagem" }
           setError(err.response.data.message);
         } else if (err.response?.status === 409) {
           setError("Já existe um registro com este nome ou código.");
