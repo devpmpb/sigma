@@ -10,6 +10,7 @@ import {
   registrarMudancaStatus,
   buscarHistoricoFormatado,
 } from "../../services/historicoService";
+import { verificarDisponibilidade } from "../../services/saldoBeneficioService";
 
 // Status das solicitações
 export enum StatusSolicitacao {
@@ -425,13 +426,6 @@ export const solicitacaoBeneficioController = {
       const { pessoaId, programaId, quantidadeSolicitada, observacoes } =
         req.body;
 
-      console.log("🔍 BACKEND - createComCalculo recebeu:", {
-        pessoaId,
-        programaId,
-        quantidadeSolicitada,
-        observacoes,
-      });
-
       if (!pessoaId || !programaId) {
         return res.status(400).json({
           erro: "Pessoa e Programa são obrigatórios",
@@ -471,6 +465,19 @@ export const solicitacaoBeneficioController = {
         },
       });
 
+      // Validação 3: Verificar saldo disponível
+      if (quantidadeSolicitada && parseFloat(quantidadeSolicitada) > 0) {
+        const verificacaoSaldo = await verificarDisponibilidade(
+          parseInt(pessoaId),
+          parseInt(programaId),
+          parseFloat(quantidadeSolicitada)
+        );
+
+        if (!verificacaoSaldo.permitido) {
+          errors.push(verificacaoSaldo.mensagem);
+        }
+      }
+
       if (solicitacaoExistente) {
         const dataFormatada = new Date(
           solicitacaoExistente.datasolicitacao
@@ -495,13 +502,6 @@ export const solicitacaoBeneficioController = {
         parseInt(programaId),
         quantidadeSolicitada ? parseFloat(quantidadeSolicitada) : undefined
       );
-
-      console.log("💰 BACKEND - Resultado do cálculo:", {
-        regraAplicadaId: calculo.regraAplicadaId,
-        valorCalculado: calculo.valorCalculado,
-        quantidadeSolicitada: quantidadeSolicitada,
-        temDetalhes: !!calculo.calculoDetalhes,
-      });
 
       // Verificar limites se há regra aplicada
       if (calculo.regraAplicadaId) {

@@ -154,7 +154,6 @@ export async function calcularBeneficio(
             );
             quantidadeFinal = limiteQtd;
           }
-          console.log(limite.percentual);
           // Aplicar percentual se houver
           valorCalculado = quantidadeFinal * valorBase;
         } else {
