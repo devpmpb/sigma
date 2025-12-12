@@ -15,6 +15,7 @@ export interface ResultadoCalculo {
     percentualAplicado?: number;
     limiteAplicado?: any;
     observacoes?: string[];
+    quantidadeAnimais?: number;
   };
   mensagem: string;
   avisos?: string[];
@@ -285,6 +286,173 @@ export async function calcularBeneficio(
           valorCalculado > 0
             ? `Benefício calculado: R$ ${valorCalculado.toFixed(2)}`
             : "Informe a quantidade",
+        avisos: avisos.length > 0 ? avisos : undefined,
+      };
+    }
+
+    if (regra.tipoRegra === "semen_sexado") {
+      const quantidadeAnimais = dadosAdicionais?.quantidadeAnimais || 0;
+      const vacasMin = parametro.quantidade_vacas_min || 0;
+      const vacasMax = parametro.quantidade_vacas_max || Infinity;
+      const enquadramento = parametro.enquadramento || "UNICO";
+
+      // Se não informou quantidade de animais, pedir
+      if (!quantidadeAnimais || quantidadeAnimais <= 0) {
+        avisos.push(
+          "Informe a quantidade de vacas para determinar o enquadramento"
+        );
+        continue; // Tentar próxima regra
+      }
+
+      // Verificar se enquadra nesta regra
+      const enquadrado =
+        quantidadeAnimais >= vacasMin && quantidadeAnimais <= vacasMax;
+
+      if (enquadrado) {
+        const valorBase = Number(regra.valorBeneficio);
+        let valorCalculado = 0;
+        const limiteQtd = limite?.quantidade_maxima || 5; // Padrão 5 doses
+
+        if (quantidadeSolicitada && quantidadeSolicitada > 0) {
+          let quantidadeFinal = quantidadeSolicitada;
+
+          if (quantidadeFinal > limiteQtd) {
+            avisos.push(
+              `Quantidade solicitada (${quantidadeSolicitada}) excede o limite de ${limiteQtd} doses. Limitado a ${limiteQtd}.`
+            );
+            quantidadeFinal = limiteQtd;
+          }
+
+          valorCalculado = quantidadeFinal * valorBase;
+        } else {
+          avisos.push("Informe a quantidade de doses desejada");
+        }
+
+        return {
+          regraAplicadaId: regra.id,
+          valorCalculado: Number(valorCalculado.toFixed(2)),
+          enquadramento: enquadramento,
+          calculoDetalhes: {
+            areaEfetiva: areaEmAlqueires,
+            quantidadeAnimais: quantidadeAnimais,
+            regraAtendida: "semen_sexado",
+            condicao: `${vacasMin} ≤ vacas ≤ ${vacasMax === Infinity ? "∞" : vacasMax}`,
+            valorBase,
+            quantidadeSolicitada,
+            limiteAplicado: limite,
+            observacoes: [
+              `Quantidade de vacas: ${quantidadeAnimais}`,
+              `Enquadramento: ${enquadramento}`,
+              `Valor por dose: R$ ${valorBase.toFixed(2)}`,
+              `Limite: ${limiteQtd} doses/ano`,
+              quantidadeSolicitada
+                ? `Doses solicitadas: ${quantidadeSolicitada}`
+                : "",
+            ].filter(Boolean),
+          },
+          mensagem:
+            quantidadeSolicitada && valorCalculado > 0
+              ? `Benefício calculado: R$ ${valorCalculado.toFixed(2)}`
+              : `Produtor enquadrado como ${enquadramento}. Informe a quantidade de doses.`,
+          avisos: avisos.length > 0 ? avisos : undefined,
+        };
+      }
+    }
+
+    // REGRAS DE SUÍNOS (matrizes)
+    if (regra.tipoRegra === "semen_suino") {
+      const quantidadeMatrizes = dadosAdicionais?.quantidadeAnimais || 0;
+      const valorBase = Number(regra.valorBeneficio); // R$ 34/matriz
+      let valorCalculado = 0;
+
+      if (!quantidadeMatrizes || quantidadeMatrizes <= 0) {
+        avisos.push(
+          "Informe a quantidade de matrizes (conforme relatório ADAPAR)"
+        );
+        continue;
+      }
+
+      // Quantidade solicitada = número de matrizes a subsidiar
+      const quantidadeFinal = quantidadeSolicitada || quantidadeMatrizes;
+      valorCalculado = quantidadeFinal * valorBase;
+
+      return {
+        regraAplicadaId: regra.id,
+        valorCalculado: Number(valorCalculado.toFixed(2)),
+        calculoDetalhes: {
+          quantidadeAnimais: quantidadeMatrizes,
+          regraAtendida: "semen_suino",
+          valorBase,
+          quantidadeSolicitada: quantidadeFinal,
+          observacoes: [
+            `Matrizes informadas: ${quantidadeMatrizes}`,
+            `Valor por matriz: R$ ${valorBase.toFixed(2)}`,
+            `Matrizes a subsidiar: ${quantidadeFinal}`,
+          ],
+        },
+        mensagem: `Benefício calculado: R$ ${valorCalculado.toFixed(2)} (${quantidadeFinal} matrizes × R$ ${valorBase.toFixed(2)})`,
+        avisos: avisos.length > 0 ? avisos : undefined,
+      };
+    }
+
+    // REGRAS DE ULTRASSOM
+    if (regra.tipoRegra === "ultrassom") {
+      const quantidadeAnimais = dadosAdicionais?.quantidadeAnimais || 0;
+      const valorBase = Number(regra.valorBeneficio); // R$ 5/exame
+      const percentual = limite?.percentual || 50;
+      const examePorAnimal = limite?.quantidade_por_animal || 2;
+      const limiteExames = limite?.quantidade_maxima || 100;
+
+      if (!quantidadeAnimais || quantidadeAnimais <= 0) {
+        avisos.push("Informe a quantidade de animais");
+        continue;
+      }
+
+      // Quantidade solicitada = número de exames
+      let quantidadeExames = quantidadeSolicitada || 0;
+      const maxExamesPorRebanho = quantidadeAnimais * examePorAnimal;
+
+      if (!quantidadeExames) {
+        avisos.push(
+          `Informe a quantidade de exames (máx ${Math.min(maxExamesPorRebanho, limiteExames)} exames)`
+        );
+      }
+
+      if (quantidadeExames > limiteExames) {
+        avisos.push(`Quantidade limitada a ${limiteExames} exames/ano`);
+        quantidadeExames = limiteExames;
+      }
+
+      if (quantidadeExames > maxExamesPorRebanho) {
+        avisos.push(
+          `Máximo ${examePorAnimal} exames por animal (${maxExamesPorRebanho} exames para ${quantidadeAnimais} animais)`
+        );
+        quantidadeExames = maxExamesPorRebanho;
+      }
+
+      // Reembolso de 50% até R$ 5/exame
+      const valorCalculado = quantidadeExames * valorBase;
+
+      return {
+        regraAplicadaId: regra.id,
+        valorCalculado: Number(valorCalculado.toFixed(2)),
+        calculoDetalhes: {
+          quantidadeAnimais,
+          regraAtendida: "ultrassom",
+          valorBase,
+          quantidadeSolicitada: quantidadeExames,
+          percentualAplicado: percentual,
+          observacoes: [
+            `Animais: ${quantidadeAnimais}`,
+            `Exames solicitados: ${quantidadeExames}`,
+            `Reembolso: ${percentual}% até R$ ${valorBase.toFixed(2)}/exame`,
+            `Limite: ${examePorAnimal} exames/animal/ano, máx ${limiteExames}/produtor`,
+          ],
+        },
+        mensagem:
+          quantidadeExames > 0
+            ? `Benefício calculado: R$ ${valorCalculado.toFixed(2)} (${quantidadeExames} exames)`
+            : "Informe a quantidade de exames",
         avisos: avisos.length > 0 ? avisos : undefined,
       };
     }

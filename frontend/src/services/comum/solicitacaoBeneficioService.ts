@@ -288,6 +288,7 @@ class SolicitacaoBeneficioService extends BaseApiService<
     pessoaId: number;
     programaId: number;
     quantidadeSolicitada?: number;
+    dadosAdicionais?: { quantidadeAnimais?: number };
   }): Promise<{
     sucesso: boolean;
     calculo: {

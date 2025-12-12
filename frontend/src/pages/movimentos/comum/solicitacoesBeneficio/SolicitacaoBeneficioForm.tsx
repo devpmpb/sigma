@@ -54,6 +54,9 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
     number | string
   >(""); // Inicia vazio ao invés de 0
   const [dadosCarregados, setDadosCarregados] = useState(false); // Controla se já carregou dados do edit
+  const [quantidadeAnimais, setQuantidadeAnimais] = useState<number | string>(
+    ""
+  );
 
   // Valor inicial para o formulário
   const initialValues: SolicitacaoBeneficioDTO = {
@@ -129,13 +132,15 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
     setValue("pessoaId", 0); // Resetar pessoa selecionada
     setPessoaSelecionada(null); // Limpar pessoa selecionada
     setCalculoResultado(null); // Limpar cálculo anterior
+    setQuantidadeAnimais("");
   };
 
   // NOVO: Função para calcular benefício automaticamente
   const calcularBeneficioAutomatico = async (
     pessoaId: number,
     programaId: number,
-    quantidade?: number
+    quantidade?: number,
+    dadosAdicionais?: { quantidadeAnimais?: number }
   ) => {
     // Só calcular se tiver pessoa E programa selecionados
     if (!pessoaId || pessoaId === 0 || !programaId || programaId === 0) {
@@ -150,6 +155,12 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
         programaId,
         quantidadeSolicitada:
           quantidade && quantidade > 0 ? quantidade : undefined,
+        dadosAdicionais: dadosAdicionais || {
+          quantidadeAnimais:
+            typeof quantidadeAnimais === "number"
+              ? quantidadeAnimais
+              : undefined,
+        },
       });
       console.log("📥 FRONTEND - Resultado recebido:", resultado);
       setCalculoResultado(resultado);
@@ -378,6 +389,56 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
               </div>
             )}
 
+            {/* Campo de quantidade de animais - só aparece para programas específicos */}
+            {programaSelecionado &&
+              (programaSelecionado.unidadeLimite === "doses" ||
+                programaSelecionado.unidadeLimite === "matrizes" ||
+                programaSelecionado.unidadeLimite === "exames") && (
+                <FormField
+                  name="quantidadeAnimais"
+                  label={
+                    programaSelecionado.unidadeLimite === "matrizes"
+                      ? "Quantidade de Matrizes (ADAPAR)"
+                      : programaSelecionado.unidadeLimite === "exames"
+                      ? "Quantidade de Animais no Rebanho"
+                      : "Quantidade de Vacas"
+                  }
+                  helpText={
+                    programaSelecionado.unidadeLimite === "matrizes"
+                      ? "Informe conforme relatório ADAPAR"
+                      : "Informe o total de animais para determinar o enquadramento"
+                  }
+                >
+                  <input
+                    type="number"
+                    id="quantidadeAnimais"
+                    value={quantidadeAnimais}
+                    onChange={(e) => {
+                      const valor =
+                        e.target.value === "" ? "" : parseInt(e.target.value);
+                      setQuantidadeAnimais(valor);
+                      // Recalcular automaticamente
+                      if (values.pessoaId && values.programaId) {
+                        calcularBeneficioAutomatico(
+                          values.pessoaId,
+                          values.programaId,
+                          typeof quantidadeSolicitada === "number"
+                            ? quantidadeSolicitada
+                            : undefined,
+                          {
+                            quantidadeAnimais:
+                              typeof valor === "number" ? valor : undefined,
+                          }
+                        );
+                      }
+                    }}
+                    min="0"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Ex: 30"
+                  />
+                </FormField>
+              )}
+
             {/* NOVO: Campo de quantidade solicitada - READONLY se estiver editando */}
             {programaSelecionado && values.pessoaId !== 0 && (
               <FormField
@@ -393,7 +454,7 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
                         calculoResultado.calculo.calculoDetalhes.limiteAplicado
                           .unidade || "unidades"
                       }`
-                    : "Quantidade de toneladas, unidades, etc (opcional para alguns programas)"
+                    : "Toneladas, unidades, doses, etc"
                 }
               >
                 <input
@@ -447,7 +508,7 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
                       ? "border-yellow-400 bg-yellow-50"
                       : "border-gray-300"
                   }`}
-                  placeholder="Ex: 10 (toneladas)"
+                  placeholder="Ex: 10"
                 />
                 {/* Aviso visual quando exceder o limite */}
                 {calculoResultado?.calculo?.calculoDetalhes?.limiteAplicado
@@ -473,6 +534,49 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
                   )}
               </FormField>
             )}
+
+            {/* Campo de quantidade de animais - só aparece para programas que precisam */}
+            {programaSelecionado &&
+              (["semen_sexado", "semen_suino", "ultrassom"].some((tipo) =>
+                programaSelecionado.regras?.some((r) => r.tipoRegra === tipo)
+              ) ||
+                programaSelecionado.unidadeLimite?.includes("vacas") ||
+                programaSelecionado.unidadeLimite?.includes("matrizes") ||
+                programaSelecionado.unidadeLimite?.includes("exames")) && (
+                <FormField
+                  name="quantidadeAnimais"
+                  label={
+                    programaSelecionado.unidadeLimite?.includes("matrizes")
+                      ? "Quantidade de Matrizes (ADAPAR)"
+                      : "Quantidade de Vacas/Animais"
+                  }
+                  helpText="Informe a quantidade total de animais do seu rebanho"
+                >
+                  <input
+                    type="number"
+                    id="quantidadeAnimais"
+                    value={quantidadeAnimais}
+                    onChange={(e) => {
+                      const valor = e.target.value;
+                      setQuantidadeAnimais(valor === "" ? "" : parseInt(valor));
+                      // Recalcular automaticamente
+                      if (values.pessoaId && values.programaId) {
+                        calcularBeneficioAutomatico(
+                          values.pessoaId,
+                          values.programaId,
+                          typeof quantidadeSolicitada === "number"
+                            ? quantidadeSolicitada
+                            : undefined,
+                          { quantidadeAnimais: parseInt(valor) || 0 }
+                        );
+                      }
+                    }}
+                    min="0"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Ex: 30"
+                  />
+                </FormField>
+              )}
 
             {solicitacaoId && solicitacaoId !== "novo" && (
               <FormField

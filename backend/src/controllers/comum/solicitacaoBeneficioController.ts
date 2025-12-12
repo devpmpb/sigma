@@ -423,8 +423,13 @@ export const solicitacaoBeneficioController = {
   // NOVO: Criar solicitação com cálculo automático
   async createComCalculo(req: Request, res: Response) {
     try {
-      const { pessoaId, programaId, quantidadeSolicitada, observacoes } =
-        req.body;
+      const {
+        pessoaId,
+        programaId,
+        quantidadeSolicitada,
+        observacoes,
+        dadosAdicionais,
+      } = req.body;
 
       if (!pessoaId || !programaId) {
         return res.status(400).json({
@@ -500,7 +505,8 @@ export const solicitacaoBeneficioController = {
       const calculo = await calcularBeneficio(
         parseInt(pessoaId),
         parseInt(programaId),
-        quantidadeSolicitada ? parseFloat(quantidadeSolicitada) : undefined
+        quantidadeSolicitada ? parseFloat(quantidadeSolicitada) : undefined,
+        dadosAdicionais
       );
 
       // Verificar limites se há regra aplicada

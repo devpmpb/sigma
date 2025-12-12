@@ -22,10 +22,13 @@ export interface Programa {
   descricao: string | null;
   leiNumero: string | null;
   tipoPrograma: TipoPrograma;
-  secretaria: TipoPerfil; // NOVO CAMPO ADICIONADO
+  secretaria: TipoPerfil;
   ativo: boolean;
   createdAt: string;
   updatedAt: string;
+  periodicidade?: string;
+  unidadeLimite?: string;
+  limiteMaximoFamilia?: number;
   // Relacionamentos opcionais
   regras?: RegrasNegocio[];
   _count?: {
