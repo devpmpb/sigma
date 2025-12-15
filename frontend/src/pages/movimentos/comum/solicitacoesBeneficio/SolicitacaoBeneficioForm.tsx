@@ -39,10 +39,7 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
     null
   );
 
-  // Estados para labels iniciais (quando editando)
-  const [programaInitialLabel, setProgramaInitialLabel] = useState<string>("");
-  const [programaInitialSubLabel, setProgramaInitialSubLabel] =
-    useState<string>("");
+  // Estados para labels iniciais (quando editando) - apenas para pessoa (AsyncSearchSelect)
   const [pessoaInitialLabel, setPessoaInitialLabel] = useState<string>("");
   const [pessoaInitialSubLabel, setPessoaInitialSubLabel] =
     useState<string>("");
@@ -58,6 +55,10 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
     ""
   );
 
+  // Estado para lista de programas ativos (dropdown)
+  const [programasAtivos, setProgramasAtivos] = useState<Programa[]>([]);
+  const [carregandoProgramas, setCarregandoProgramas] = useState(true);
+
   // Valor inicial para o formulário
   const initialValues: SolicitacaoBeneficioDTO = {
     pessoaId: 0,
@@ -67,28 +68,23 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
     status: StatusSolicitacao.PENDENTE,
   };
 
-  // Busca de programas para AsyncSearchSelect
-  const searchProgramas = async (termo: string): Promise<Programa[]> => {
-    if (!termo || termo.length < 2) {
-      return [];
-    }
-    try {
-      // Buscar todos os programas ativos e filtrar no frontend
-      const todosProgramas = await programaService.getAll();
-      const termoLower = termo.toLowerCase();
-
-      return todosProgramas.filter(
-        (p) =>
-          p.ativo &&
-          (p.nome.toLowerCase().includes(termoLower) ||
-            p.descricao?.toLowerCase().includes(termoLower) ||
-            p.leiNumero?.toLowerCase().includes(termoLower))
-      );
-    } catch (error) {
-      console.error("Erro ao buscar programas:", error);
-      return [];
-    }
-  };
+  // Carrega programas ativos ao montar o componente
+  useEffect(() => {
+    const carregarProgramas = async () => {
+      setCarregandoProgramas(true);
+      try {
+        const todosProgramas = await programaService.getAll();
+        const ativos = todosProgramas.filter((p) => p.ativo);
+        console.log("📋 Programas ativos carregados:", ativos.length);
+        setProgramasAtivos(ativos);
+      } catch (error) {
+        console.error("❌ Erro ao carregar programas:", error);
+      } finally {
+        setCarregandoProgramas(false);
+      }
+    };
+    carregarProgramas();
+  }, []);
 
   // Busca de pessoas para AsyncSearchSelect (baseado no programa selecionado)
   const searchPessoas = async (termo: string): Promise<Pessoa[]> => {
@@ -195,15 +191,9 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
         );
         console.log("📦 Solicitação carregada:", solicitacao);
 
-        // 1. Carregar programa selecionado e seus labels para o AsyncSearchSelect
+        // 1. Carregar programa selecionado
         if (solicitacao.programa) {
           setProgramaSelecionado(solicitacao.programa);
-          setProgramaInitialLabel(solicitacao.programa.nome);
-          setProgramaInitialSubLabel(
-            `${programaService.formatarSecretaria(
-              solicitacao.programa.secretaria
-            )} - ${solicitacao.programa.tipoPrograma}`
-          );
         }
 
         // 2. Carregar pessoa selecionada e seus labels para o AsyncSearchSelect
@@ -282,45 +272,50 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <AsyncSearchSelect<Programa>
-                label="Programa"
-                value={
-                  values.programaId && values.programaId !== 0
-                    ? values.programaId
-                    : null
-                }
-                onChange={(value, programa) => {
-                  handleProgramaChange(value, programa, setValue);
+            <FormField
+              name="programaId"
+              label="Programa"
+              required
+              error={errors.programaId}
+            >
+              <select
+                id="programaId"
+                name="programaId"
+                value={values.programaId || ""}
+                onChange={(e) => {
+                  const programaId = e.target.value ? parseInt(e.target.value) : null;
+                  const programa = programasAtivos.find((p) => p.id === programaId);
+                  handleProgramaChange(programaId, programa, setValue);
                 }}
-                searchFunction={searchProgramas}
-                getOptionLabel={(programa) => programa.nome}
-                getOptionSubLabel={(programa) =>
-                  `${programaService.formatarSecretaria(
-                    programa.secretaria
-                  )} - ${programa.tipoPrograma}`
-                }
-                getId={(programa) => programa.id}
-                placeholder="Digite o nome do programa..."
-                required
-                error={errors.programaId}
-                initialLabel={programaInitialLabel || undefined}
-                initialSubLabel={programaInitialSubLabel || undefined}
-              />
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                disabled={carregandoProgramas}
+              >
+                <option value="">
+                  {carregandoProgramas ? "Carregando programas..." : "Selecione um programa"}
+                </option>
+                {programasAtivos.map((programa) => (
+                  <option key={programa.id} value={programa.id}>
+                    {programa.nome} ({programaService.formatarSecretaria(programa.secretaria)})
+                  </option>
+                ))}
+              </select>
               {programaSelecionado && (
                 <p className="mt-1 text-sm text-gray-600">
                   Secretaria:{" "}
                   {programaService.formatarSecretaria(
                     programaSelecionado.secretaria
                   )}
+                  {programaSelecionado.leiNumero && (
+                    <> | Lei: {programaSelecionado.leiNumero}</>
+                  )}
                 </p>
               )}
-              {!programaSelecionado && (
+              {!programaSelecionado && !carregandoProgramas && (
                 <p className="mt-1 text-sm text-gray-500">
                   Selecione o programa para definir as pessoas disponíveis
                 </p>
               )}
-            </div>
+            </FormField>
 
             <div>
               <AsyncSearchSelect<Pessoa>
