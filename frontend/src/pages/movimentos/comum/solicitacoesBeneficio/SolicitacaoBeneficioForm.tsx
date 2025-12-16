@@ -59,6 +59,10 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
   const [programasAtivos, setProgramasAtivos] = useState<Programa[]>([]);
   const [carregandoProgramas, setCarregandoProgramas] = useState(true);
 
+  // Estado para modalidade (quando programa tem múltiplas opções)
+  const [modalidadeSelecionada, setModalidadeSelecionada] = useState<string>("");
+  const [modalidadesDisponiveis, setModalidadesDisponiveis] = useState<string[]>([]);
+
   // Valor inicial para o formulário
   const initialValues: SolicitacaoBeneficioDTO = {
     pessoaId: 0,
@@ -129,6 +133,9 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
     setPessoaSelecionada(null); // Limpar pessoa selecionada
     setCalculoResultado(null); // Limpar cálculo anterior
     setQuantidadeAnimais("");
+    // Limpar modalidade ao trocar de programa
+    setModalidadeSelecionada("");
+    setModalidadesDisponiveis([]);
   };
 
   // NOVO: Função para calcular benefício automaticamente
@@ -136,7 +143,8 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
     pessoaId: number,
     programaId: number,
     quantidade?: number,
-    dadosAdicionais?: { quantidadeAnimais?: number }
+    dadosAdicionais?: { quantidadeAnimais?: number },
+    modalidade?: string // Adicionar modalidade como parâmetro
   ) => {
     // Só calcular se tiver pessoa E programa selecionados
     if (!pessoaId || pessoaId === 0 || !programaId || programaId === 0) {
@@ -157,9 +165,15 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
               ? quantidadeAnimais
               : undefined,
         },
+        modalidade: modalidade || modalidadeSelecionada || undefined, // Passar modalidade
       });
       console.log("📥 FRONTEND - Resultado recebido:", resultado);
       setCalculoResultado(resultado);
+
+      // Se o resultado trouxer modalidades disponíveis, atualizar estado
+      if (resultado.calculo?.calculoDetalhes?.modalidadesDisponiveis) {
+        setModalidadesDisponiveis(resultado.calculo.calculoDetalhes.modalidadesDisponiveis);
+      }
     } catch (error: any) {
       console.error("Erro ao calcular benefício:", error);
       setCalculoResultado({
@@ -243,6 +257,11 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
 
     if (!values.programaId || values.programaId === 0) {
       errors.programaId = "Programa é obrigatório";
+    }
+
+    // Validar modalidade quando programa tem múltiplas opções
+    if (modalidadesDisponiveis.length > 0 && !modalidadeSelecionada) {
+      errors.modalidade = "Selecione uma modalidade de benefício";
     }
 
     return Object.keys(errors).length > 0 ? errors : null;
@@ -384,6 +403,48 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
               </div>
             )}
 
+            {/* SELEÇÃO DE MODALIDADE - só aparece quando programa tem múltiplas modalidades */}
+            {modalidadesDisponiveis.length > 0 && (
+              <div className="col-span-1 md:col-span-2">
+                <FormField
+                  name="modalidade"
+                  label="Modalidade do Benefício"
+                  required
+                  helpText="Selecione como deseja receber o benefício"
+                >
+                  <select
+                    id="modalidade"
+                    value={modalidadeSelecionada}
+                    onChange={(e) => {
+                      const novaModalidade = e.target.value;
+                      setModalidadeSelecionada(novaModalidade);
+                      setValue("modalidade", novaModalidade); // Atualizar no FormBase para salvar
+                      // Recalcular com a nova modalidade
+                      if (values.pessoaId && values.programaId && novaModalidade) {
+                        calcularBeneficioAutomatico(
+                          values.pessoaId,
+                          values.programaId,
+                          typeof quantidadeSolicitada === "number"
+                            ? quantidadeSolicitada
+                            : undefined,
+                          undefined,
+                          novaModalidade
+                        );
+                      }
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Selecione uma modalidade</option>
+                    {modalidadesDisponiveis.map((mod) => (
+                      <option key={mod} value={mod}>
+                        {mod.replace(/_/g, " ")}
+                      </option>
+                    ))}
+                  </select>
+                </FormField>
+              </div>
+            )}
+
             {/* Campo de quantidade de animais - só aparece para programas específicos */}
             {programaSelecionado &&
               (programaSelecionado.unidadeLimite === "doses" ||
@@ -409,21 +470,27 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
                     id="quantidadeAnimais"
                     value={quantidadeAnimais}
                     onChange={(e) => {
-                      const valor =
-                        e.target.value === "" ? "" : parseInt(e.target.value);
-                      setQuantidadeAnimais(valor);
-                      // Recalcular automaticamente
+                      const valorString = e.target.value;
+                      const valorNumerico = valorString === "" ? "" : parseInt(valorString, 10);
+                      setQuantidadeAnimais(valorNumerico);
+
+                      console.log("🐄 Quantidade animais alterada:", valorNumerico);
+
+                      // Recalcular automaticamente - usar o valor numérico diretamente
                       if (values.pessoaId && values.programaId) {
+                        const qtdAnimais = typeof valorNumerico === "number" && !isNaN(valorNumerico)
+                          ? valorNumerico
+                          : undefined;
+
+                        console.log("🔄 Recalculando com animais:", qtdAnimais);
+
                         calcularBeneficioAutomatico(
                           values.pessoaId,
                           values.programaId,
                           typeof quantidadeSolicitada === "number"
                             ? quantidadeSolicitada
                             : undefined,
-                          {
-                            quantidadeAnimais:
-                              typeof valor === "number" ? valor : undefined,
-                          }
+                          { quantidadeAnimais: qtdAnimais }
                         );
                       }
                     }}
@@ -530,48 +597,7 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
               </FormField>
             )}
 
-            {/* Campo de quantidade de animais - só aparece para programas que precisam */}
-            {programaSelecionado &&
-              (["semen_sexado", "semen_suino", "ultrassom"].some((tipo) =>
-                programaSelecionado.regras?.some((r) => r.tipoRegra === tipo)
-              ) ||
-                programaSelecionado.unidadeLimite?.includes("vacas") ||
-                programaSelecionado.unidadeLimite?.includes("matrizes") ||
-                programaSelecionado.unidadeLimite?.includes("exames")) && (
-                <FormField
-                  name="quantidadeAnimais"
-                  label={
-                    programaSelecionado.unidadeLimite?.includes("matrizes")
-                      ? "Quantidade de Matrizes (ADAPAR)"
-                      : "Quantidade de Vacas/Animais"
-                  }
-                  helpText="Informe a quantidade total de animais do seu rebanho"
-                >
-                  <input
-                    type="number"
-                    id="quantidadeAnimais"
-                    value={quantidadeAnimais}
-                    onChange={(e) => {
-                      const valor = e.target.value;
-                      setQuantidadeAnimais(valor === "" ? "" : parseInt(valor));
-                      // Recalcular automaticamente
-                      if (values.pessoaId && values.programaId) {
-                        calcularBeneficioAutomatico(
-                          values.pessoaId,
-                          values.programaId,
-                          typeof quantidadeSolicitada === "number"
-                            ? quantidadeSolicitada
-                            : undefined,
-                          { quantidadeAnimais: parseInt(valor) || 0 }
-                        );
-                      }
-                    }}
-                    min="0"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Ex: 30"
-                  />
-                </FormField>
-              )}
+            {/* Campo de quantidade de animais - REMOVIDO (duplicado com o campo acima) */}
 
             {solicitacaoId && solicitacaoId !== "novo" && (
               <FormField
