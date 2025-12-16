@@ -383,8 +383,7 @@ export const solicitacaoBeneficioController = {
   // NOVO: Calcular benefício para uma solicitação
   async calcularBeneficio(req: Request, res: Response) {
     try {
-      const { pessoaId, programaId } = req.body;
-      const { quantidadeSolicitada } = req.body;
+      const { pessoaId, programaId, quantidadeSolicitada, dadosAdicionais, modalidade } = req.body;
 
       if (!pessoaId || !programaId) {
         return res.status(400).json({
@@ -396,7 +395,9 @@ export const solicitacaoBeneficioController = {
       const resultado = await calcularBeneficio(
         parseInt(pessoaId),
         parseInt(programaId),
-        quantidadeSolicitada ? parseFloat(quantidadeSolicitada) : undefined
+        quantidadeSolicitada ? parseFloat(quantidadeSolicitada) : undefined,
+        dadosAdicionais,
+        modalidade // Passar modalidade para filtrar regras
       );
 
       // Verificar limites de período se uma regra foi aplicada
@@ -423,8 +424,14 @@ export const solicitacaoBeneficioController = {
   // NOVO: Criar solicitação com cálculo automático
   async createComCalculo(req: Request, res: Response) {
     try {
-      const { pessoaId, programaId, quantidadeSolicitada, observacoes } =
-        req.body;
+      const {
+        pessoaId,
+        programaId,
+        quantidadeSolicitada,
+        observacoes,
+        dadosAdicionais,
+        modalidade, // Nova opção para modalidade do benefício
+      } = req.body;
 
       if (!pessoaId || !programaId) {
         return res.status(400).json({
@@ -500,7 +507,9 @@ export const solicitacaoBeneficioController = {
       const calculo = await calcularBeneficio(
         parseInt(pessoaId),
         parseInt(programaId),
-        quantidadeSolicitada ? parseFloat(quantidadeSolicitada) : undefined
+        quantidadeSolicitada ? parseFloat(quantidadeSolicitada) : undefined,
+        dadosAdicionais,
+        modalidade // Passar modalidade para filtrar regras
       );
 
       // Verificar limites se há regra aplicada
@@ -527,6 +536,7 @@ export const solicitacaoBeneficioController = {
           programaId: parseInt(programaId),
           observacoes,
           status: "pendente",
+          modalidade: modalidade || null, // Salvar modalidade selecionada
           // Dados calculados
           regraAplicadaId: calculo.regraAplicadaId,
           valorCalculado: calculo.valorCalculado,

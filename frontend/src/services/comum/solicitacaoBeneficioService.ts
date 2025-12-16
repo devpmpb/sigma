@@ -68,6 +68,7 @@ export interface SolicitacaoBeneficioDTO {
   quantidadeSolicitada?: number;
   observacoes?: string;
   status?: StatusSolicitacao;
+  modalidade?: string; // APLICACAO_SUBSIDIADA, RETIRADA_SEMEN, REEMBOLSO, etc.
 }
 
 export interface EstatisticasSolicitacao {
@@ -116,6 +117,7 @@ class SolicitacaoBeneficioService extends BaseApiService<
         ? Number(data.quantidadeSolicitada)
         : undefined,
       observacoes: data.observacoes,
+      modalidade: data.modalidade, // Passar modalidade para o backend
     };
 
     console.log("📤 Enviando para createComCalculo:", dadosParaEnviar);
@@ -288,6 +290,8 @@ class SolicitacaoBeneficioService extends BaseApiService<
     pessoaId: number;
     programaId: number;
     quantidadeSolicitada?: number;
+    dadosAdicionais?: { quantidadeAnimais?: number };
+    modalidade?: string; // Para programas com múltiplas modalidades
   }): Promise<{
     sucesso: boolean;
     calculo: {
@@ -315,6 +319,7 @@ class SolicitacaoBeneficioService extends BaseApiService<
     programaId: number;
     quantidadeSolicitada?: number;
     observacoes?: string;
+    modalidade?: string; // Para programas com múltiplas modalidades
   }): Promise<{
     sucesso: boolean;
     mensagem: string;

@@ -262,6 +262,7 @@ model SolicitacaoBeneficio {
   datasolicitacao      DateTime               @default(now())
   status               String                 @default("pendente")
   observacoes          String?
+  modalidade           String?                // APLICACAO_SUBSIDIADA, RETIRADA_SEMEN, REEMBOLSO, etc.
   createdAt            DateTime               @default(now())
   updatedAt            DateTime               @updatedAt
   calculoDetalhes      Json?

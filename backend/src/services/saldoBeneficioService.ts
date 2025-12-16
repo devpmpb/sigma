@@ -109,6 +109,7 @@ function getPeriodoReferencia(periodicidade: Periodicidade): {
 
 /**
  * Encontra a regra correta baseada na área efetiva do produtor
+ * ou retorna a primeira regra para programas sem critério de área
  */
 async function encontrarRegraAplicavel(
   pessoaId: number,
@@ -128,11 +129,24 @@ async function encontrarRegraAplicavel(
     });
   }
 
+  const areaEmAlqueires = areaEfetivaRecord
+    ? Number(areaEfetivaRecord.areaEfetiva)
+    : 0;
+
+  // Verificar se alguma regra é baseada em área
+  const temRegraDeArea = regras.some(
+    (r) => r.tipoRegra === "area_efetiva" || r.tipoRegra === "area_propriedade"
+  );
+
+  // Se não tem regras de área, retorna a primeira regra disponível
+  if (!temRegraDeArea) {
+    return { regra: regras[0] || null, areaEfetiva: areaEmAlqueires };
+  }
+
+  // Se tem regras de área mas não tem área cadastrada, não pode calcular
   if (!areaEfetivaRecord) {
     return { regra: null, areaEfetiva: 0 };
   }
-
-  const areaEmAlqueires = Number(areaEfetivaRecord.areaEfetiva);
 
   // Procurar regra que se aplica à área do produtor
   for (const regra of regras) {
@@ -178,6 +192,7 @@ async function encontrarRegraAplicavel(
 
 /**
  * Calcula o limite do produtor baseado na área e regras do programa
+ * Também suporta regras que não são baseadas em área (inseminação, ultrassom, etc.)
  */
 async function calcularLimitePorArea(
   pessoaId: number,
@@ -186,10 +201,41 @@ async function calcularLimitePorArea(
   areaEfetiva?: number
 ): Promise<CalculoLimite> {
   const detalhes: string[] = [];
+  const limite = regra.limiteBeneficio as any;
 
-  // Se já temos a área, usar ela; senão buscar
+  // Verificar se é regra baseada em área
+  const regraBaseadaEmArea =
+    regra.tipoRegra === "area_efetiva" || regra.tipoRegra === "area_propriedade";
+
+  // Para regras NÃO baseadas em área (inseminação, ultrassom, semen_sexado, etc.)
+  if (!regraBaseadaEmArea) {
+    // Verificar se tem limite por animal
+    if (limite?.quantidade_por_animal) {
+      detalhes.push(`Limite por animal: ${limite.quantidade_por_animal} ${limite.unidade || "unidades"}`);
+      // Para inseminação/ultrassom, o limite depende da quantidade de animais
+      // Usar um valor padrão alto que será ajustado no cálculo real
+      const limiteBase = limite.quantidade_maxima || 100;
+      detalhes.push(`Limite máximo: ${limiteBase} ${limite.unidade || "unidades"}`);
+      return {
+        limiteCalculado: limiteBase,
+        baseCalculo: "POR_ANIMAL",
+        detalhes,
+      };
+    }
+
+    // Limite fixo para regras sem área
+    const limiteFixo = limite?.quantidade_maxima || limite?.limite || 100;
+    detalhes.push(`Limite: ${limiteFixo} ${limite?.unidade || "unidades"}`);
+    return {
+      limiteCalculado: limiteFixo,
+      baseCalculo: "FIXO",
+      detalhes,
+    };
+  }
+
+  // Para regras baseadas em área - Se já temos a área, usar ela; senão buscar
   let area = areaEfetiva;
-  if (area === undefined) {
+  if (area === undefined || area === 0) {
     const areaEfetivaRecord = await prisma.areaEfetiva.findFirst({
       where: { pessoaId, anoReferencia },
       orderBy: { anoReferencia: "desc" },
@@ -206,8 +252,6 @@ async function calcularLimitePorArea(
   }
 
   detalhes.push(`Área efetiva: ${area.toFixed(2)} alqueires`);
-
-  const limite = regra.limiteBeneficio as any;
 
   // Se tem multiplicador por área
   if (limite?.multiplicador_area || limite?.quantidade_maxima_por_alqueire) {
@@ -321,7 +365,8 @@ export async function calcularSaldoDisponivel(
     anoAtual
   );
 
-  let limiteTotal = Number(programa.limiteMaximoFamilia) || 0;
+  const limiteMaximoFamilia = Number(programa.limiteMaximoFamilia) || 0;
+  let limiteTotal = limiteMaximoFamilia;
   let valorPorUnidade = 0;
   let detalhesCalculo: string[] = [];
 
@@ -332,8 +377,16 @@ export async function calcularSaldoDisponivel(
       anoAtual,
       areaEfetiva // Passa a área já encontrada para evitar busca duplicada
     );
+
+    // Usar o limite da regra se calculado, senão manter o limiteMaximoFamilia
     if (calculoLimite.limiteCalculado > 0) {
-      limiteTotal = calculoLimite.limiteCalculado;
+      // Se tem limiteMaximoFamilia definido, usar o menor entre os dois (teto)
+      // Se não tem limiteMaximoFamilia, usar o limite da regra
+      if (limiteMaximoFamilia > 0) {
+        limiteTotal = Math.min(calculoLimite.limiteCalculado, limiteMaximoFamilia);
+      } else {
+        limiteTotal = calculoLimite.limiteCalculado;
+      }
     }
     valorPorUnidade = Number(regraAplicavel.valorBeneficio);
     detalhesCalculo = calculoLimite.detalhes;

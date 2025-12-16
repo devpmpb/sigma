@@ -15,6 +15,9 @@ export interface ResultadoCalculo {
     percentualAplicado?: number;
     limiteAplicado?: any;
     observacoes?: string[];
+    quantidadeAnimais?: number;
+    modalidadesDisponiveis?: string[]; // Modalidades disponíveis quando programa tem múltiplas
+    modalidadeSelecionada?: string;    // Modalidade selecionada pelo usuário
   };
   mensagem: string;
   avisos?: string[];
@@ -27,8 +30,17 @@ export async function calcularBeneficio(
   pessoaId: number,
   programaId: number,
   quantidadeSolicitada?: number,
-  dadosAdicionais?: any
+  dadosAdicionais?: any,
+  modalidade?: string // Nova opção para filtrar por modalidade
 ): Promise<ResultadoCalculo> {
+  console.log("🧮 CALCULO - Iniciando com:", {
+    pessoaId,
+    programaId,
+    quantidadeSolicitada,
+    dadosAdicionais,
+    modalidade,
+  });
+
   const avisos: string[] = [];
   const anoAtual = new Date().getFullYear();
 
@@ -81,7 +93,7 @@ export async function calcularBeneficio(
   // ============================================================================
   // 2. BUSCAR REGRAS DO PROGRAMA
   // ============================================================================
-  const regras = await prisma.regrasNegocio.findMany({
+  let regras = await prisma.regrasNegocio.findMany({
     where: { programaId },
     orderBy: { id: "asc" },
   });
@@ -96,6 +108,57 @@ export async function calcularBeneficio(
       },
       mensagem: "Não foi possível calcular o benefício: programa sem regras",
     };
+  }
+
+  // ============================================================================
+  // 2.1 VERIFICAR SE PROGRAMA TEM MÚLTIPLAS MODALIDADES
+  // ============================================================================
+  const modalidadesDisponiveis = regras
+    .map((r) => (r.parametro as any)?.modalidade)
+    .filter((m) => m !== undefined && m !== null);
+
+  const temModalidades = modalidadesDisponiveis.length > 0;
+  const modalidadesUnicas = [...new Set(modalidadesDisponiveis)];
+
+  // Se o programa tem modalidades mas nenhuma foi selecionada, avisar
+  if (temModalidades && !modalidade) {
+    return {
+      regraAplicadaId: null,
+      valorCalculado: 0,
+      calculoDetalhes: {
+        areaEfetiva: areaEmAlqueires,
+        modalidadesDisponiveis: modalidadesUnicas,
+        observacoes: [
+          "Este programa possui múltiplas modalidades",
+          "Selecione uma modalidade para continuar",
+        ],
+      },
+      mensagem: "Selecione a modalidade do benefício",
+      avisos: modalidadesUnicas.map((m) => `Modalidade disponível: ${m}`),
+    };
+  }
+
+  // Se modalidade foi informada, filtrar regras
+  if (modalidade) {
+    regras = regras.filter((r) => {
+      const param = r.parametro as any;
+      return param?.modalidade === modalidade;
+    });
+
+    if (regras.length === 0) {
+      return {
+        regraAplicadaId: null,
+        valorCalculado: 0,
+        calculoDetalhes: {
+          areaEfetiva: areaEmAlqueires,
+          modalidadeSelecionada: modalidade,
+          observacoes: [`Nenhuma regra encontrada para modalidade: ${modalidade}`],
+        },
+        mensagem: `Modalidade "${modalidade}" não encontrada para este programa`,
+      };
+    }
+
+    avisos.push(`Modalidade selecionada: ${modalidade}`);
   }
 
   // ============================================================================
@@ -245,11 +308,261 @@ export async function calcularBeneficio(
       };
     }
 
-    // REGRAS DE VALOR FIXO (sêmen, ultrassom, etc)
+    // REGRAS DE INSEMINAÇÃO (calcula limite baseado em quantidade de animais)
+    if (regra.tipoRegra.includes("inseminacao")) {
+      console.log("💉 INSEMINACAO - dadosAdicionais recebido:", dadosAdicionais);
+      const quantidadeAnimais = dadosAdicionais?.quantidadeAnimais || 0;
+      console.log("💉 INSEMINACAO - quantidadeAnimais extraída:", quantidadeAnimais);
+
+      const valorBase = Number(regra.valorBeneficio);
+      let valorCalculado = 0;
+
+      // Calcular limite baseado em quantidade de animais
+      const dosePorAnimal = limite?.quantidade_por_animal || 1;
+      const taxaRepeticao = limite?.taxa_repeticao || 0; // % de repetição permitida
+
+      // Limite = (animais × dose/animal) + taxa de repetição
+      let limiteCalculado = 0;
+      if (quantidadeAnimais > 0) {
+        limiteCalculado = Math.ceil(quantidadeAnimais * dosePorAnimal * (1 + taxaRepeticao / 100));
+        avisos.push(`Limite calculado: ${limiteCalculado} doses (${quantidadeAnimais} animais × ${dosePorAnimal} dose/animal${taxaRepeticao > 0 ? ` + ${taxaRepeticao}% repetição` : ""})`);
+      }
+
+      // Verificar limite máximo absoluto se existir
+      const limiteAbsoluto = limite?.quantidade_maxima_absoluta;
+      if (limiteAbsoluto && limiteCalculado > limiteAbsoluto) {
+        limiteCalculado = limiteAbsoluto;
+        avisos.push(`Limite máximo do programa: ${limiteAbsoluto} doses`);
+      }
+
+      if (quantidadeSolicitada && quantidadeSolicitada > 0) {
+        let quantidadeFinal = quantidadeSolicitada;
+
+        // Aplicar limite calculado
+        if (limiteCalculado > 0 && quantidadeFinal > limiteCalculado) {
+          avisos.push(
+            `Quantidade solicitada (${quantidadeSolicitada}) excede o limite de ${limiteCalculado} doses. Limitado a ${limiteCalculado}.`
+          );
+          quantidadeFinal = limiteCalculado;
+        }
+
+        valorCalculado = quantidadeFinal * valorBase;
+      } else if (quantidadeAnimais <= 0) {
+        avisos.push("Informe a quantidade de animais para calcular o limite de doses");
+      } else {
+        avisos.push("Informe a quantidade de doses desejada");
+      }
+
+      return {
+        regraAplicadaId: regra.id,
+        valorCalculado: Number(valorCalculado.toFixed(2)),
+        calculoDetalhes: {
+          areaEfetiva: areaEmAlqueires,
+          quantidadeAnimais: quantidadeAnimais || undefined,
+          regraAtendida: regra.tipoRegra,
+          valorBase,
+          quantidadeSolicitada,
+          limiteAplicado: {
+            limite: limiteCalculado || undefined,
+            unidade: limite?.unidade || "doses",
+            dosePorAnimal,
+            taxaRepeticao,
+          },
+          observacoes: [
+            `Valor por dose: R$ ${valorBase.toFixed(2)}`,
+            quantidadeAnimais > 0 ? `Animais informados: ${quantidadeAnimais}` : "",
+            limiteCalculado > 0 ? `Limite: ${limiteCalculado} doses` : "",
+            limite?.percentual_subsidio ? `Subsídio: ${limite.percentual_subsidio}%` : "",
+          ].filter(Boolean),
+        },
+        mensagem:
+          valorCalculado > 0
+            ? `Benefício calculado: R$ ${valorCalculado.toFixed(2)}`
+            : quantidadeAnimais <= 0
+            ? "Informe a quantidade de animais"
+            : "Informe a quantidade de doses",
+        avisos: avisos.length > 0 ? avisos : undefined,
+      };
+    }
+
+    // REGRAS DE SÊMEN SEXADO (verificar ANTES de "semen" genérico)
+    if (regra.tipoRegra === "semen_sexado") {
+      console.log("🐄 SEMEN_SEXADO - dadosAdicionais recebido:", dadosAdicionais);
+      const quantidadeAnimais = dadosAdicionais?.quantidadeAnimais || 0;
+      console.log("🐄 SEMEN_SEXADO - quantidadeAnimais extraída:", quantidadeAnimais);
+      const vacasMin = parametro.quantidade_vacas_min || 0;
+      const vacasMax = parametro.quantidade_vacas_max || Infinity;
+      const enquadramento = parametro.enquadramento || "UNICO";
+
+      // Se não informou quantidade de animais, pedir
+      if (!quantidadeAnimais || quantidadeAnimais <= 0) {
+        console.log("🐄 SEMEN_SEXADO - sem quantidade de animais, pulando regra");
+        avisos.push(
+          "Informe a quantidade de vacas para determinar o enquadramento"
+        );
+        continue; // Tentar próxima regra
+      }
+
+      // Verificar se enquadra nesta regra
+      const enquadrado =
+        quantidadeAnimais >= vacasMin && quantidadeAnimais <= vacasMax;
+
+      if (enquadrado) {
+        const valorBase = Number(regra.valorBeneficio);
+        let valorCalculado = 0;
+        const limiteQtd = limite?.quantidade_maxima || 5; // Padrão 5 doses
+
+        if (quantidadeSolicitada && quantidadeSolicitada > 0) {
+          let quantidadeFinal = quantidadeSolicitada;
+
+          if (quantidadeFinal > limiteQtd) {
+            avisos.push(
+              `Quantidade solicitada (${quantidadeSolicitada}) excede o limite de ${limiteQtd} doses. Limitado a ${limiteQtd}.`
+            );
+            quantidadeFinal = limiteQtd;
+          }
+
+          valorCalculado = quantidadeFinal * valorBase;
+        } else {
+          avisos.push("Informe a quantidade de doses desejada");
+        }
+
+        return {
+          regraAplicadaId: regra.id,
+          valorCalculado: Number(valorCalculado.toFixed(2)),
+          enquadramento: enquadramento,
+          calculoDetalhes: {
+            areaEfetiva: areaEmAlqueires,
+            quantidadeAnimais: quantidadeAnimais,
+            regraAtendida: "semen_sexado",
+            condicao: `${vacasMin} ≤ vacas ≤ ${vacasMax === Infinity ? "∞" : vacasMax}`,
+            valorBase,
+            quantidadeSolicitada,
+            limiteAplicado: limite,
+            observacoes: [
+              `Quantidade de vacas: ${quantidadeAnimais}`,
+              `Enquadramento: ${enquadramento}`,
+              `Valor por dose: R$ ${valorBase.toFixed(2)}`,
+              `Limite: ${limiteQtd} doses/ano`,
+              quantidadeSolicitada
+                ? `Doses solicitadas: ${quantidadeSolicitada}`
+                : "",
+            ].filter(Boolean),
+          },
+          mensagem:
+            quantidadeSolicitada && valorCalculado > 0
+              ? `Benefício calculado: R$ ${valorCalculado.toFixed(2)}`
+              : `Produtor enquadrado como ${enquadramento}. Informe a quantidade de doses.`,
+          avisos: avisos.length > 0 ? avisos : undefined,
+        };
+      }
+    }
+
+    // REGRAS DE SUÍNOS (matrizes)
+    if (regra.tipoRegra === "semen_suino") {
+      const quantidadeMatrizes = dadosAdicionais?.quantidadeAnimais || 0;
+      const valorBase = Number(regra.valorBeneficio); // R$ 34/matriz
+      let valorCalculado = 0;
+
+      if (!quantidadeMatrizes || quantidadeMatrizes <= 0) {
+        avisos.push(
+          "Informe a quantidade de matrizes (conforme relatório ADAPAR)"
+        );
+        continue;
+      }
+
+      // Quantidade solicitada = número de matrizes a subsidiar
+      const quantidadeFinal = quantidadeSolicitada || quantidadeMatrizes;
+      valorCalculado = quantidadeFinal * valorBase;
+
+      return {
+        regraAplicadaId: regra.id,
+        valorCalculado: Number(valorCalculado.toFixed(2)),
+        calculoDetalhes: {
+          quantidadeAnimais: quantidadeMatrizes,
+          regraAtendida: "semen_suino",
+          valorBase,
+          quantidadeSolicitada: quantidadeFinal,
+          observacoes: [
+            `Matrizes informadas: ${quantidadeMatrizes}`,
+            `Valor por matriz: R$ ${valorBase.toFixed(2)}`,
+            `Matrizes a subsidiar: ${quantidadeFinal}`,
+          ],
+        },
+        mensagem: `Benefício calculado: R$ ${valorCalculado.toFixed(2)} (${quantidadeFinal} matrizes × R$ ${valorBase.toFixed(2)})`,
+        avisos: avisos.length > 0 ? avisos : undefined,
+      };
+    }
+
+    // REGRAS DE ULTRASSOM
+    if (regra.tipoRegra === "ultrassom") {
+      const quantidadeAnimais = dadosAdicionais?.quantidadeAnimais || 0;
+      const valorBase = Number(regra.valorBeneficio); // R$ 5/exame
+      const percentual = limite?.percentual || 50;
+      const examePorAnimal = limite?.quantidade_por_animal || 2;
+      const limiteExames = limite?.quantidade_maxima || 100;
+
+      if (!quantidadeAnimais || quantidadeAnimais <= 0) {
+        avisos.push("Informe a quantidade de animais");
+        continue;
+      }
+
+      // Quantidade solicitada = número de exames
+      let quantidadeExames = quantidadeSolicitada || 0;
+      const maxExamesPorRebanho = quantidadeAnimais * examePorAnimal;
+
+      if (!quantidadeExames) {
+        avisos.push(
+          `Informe a quantidade de exames (máx ${Math.min(maxExamesPorRebanho, limiteExames)} exames)`
+        );
+      }
+
+      if (quantidadeExames > limiteExames) {
+        avisos.push(`Quantidade limitada a ${limiteExames} exames/ano`);
+        quantidadeExames = limiteExames;
+      }
+
+      if (quantidadeExames > maxExamesPorRebanho) {
+        avisos.push(
+          `Máximo ${examePorAnimal} exames por animal (${maxExamesPorRebanho} exames para ${quantidadeAnimais} animais)`
+        );
+        quantidadeExames = maxExamesPorRebanho;
+      }
+
+      // Reembolso de 50% até R$ 5/exame
+      const valorCalculado = quantidadeExames * valorBase;
+
+      return {
+        regraAplicadaId: regra.id,
+        valorCalculado: Number(valorCalculado.toFixed(2)),
+        calculoDetalhes: {
+          quantidadeAnimais,
+          regraAtendida: "ultrassom",
+          valorBase,
+          quantidadeSolicitada: quantidadeExames,
+          percentualAplicado: percentual,
+          observacoes: [
+            `Animais: ${quantidadeAnimais}`,
+            `Exames solicitados: ${quantidadeExames}`,
+            `Reembolso: ${percentual}% até R$ ${valorBase.toFixed(2)}/exame`,
+            `Limite: ${examePorAnimal} exames/animal/ano, máx ${limiteExames}/produtor`,
+          ],
+        },
+        mensagem:
+          quantidadeExames > 0
+            ? `Benefício calculado: R$ ${valorCalculado.toFixed(2)} (${quantidadeExames} exames)`
+            : "Informe a quantidade de exames",
+        avisos: avisos.length > 0 ? avisos : undefined,
+      };
+    }
+
+    // REGRAS DE VALOR FIXO (sêmen genérico, valor_fixo, etc.)
+    // IMPORTANTE: Este bloco deve ficar POR ÚLTIMO para não capturar semen_sexado e semen_suino
     if (
-      regra.tipoRegra.includes("inseminacao") ||
-      regra.tipoRegra.includes("semen") ||
-      regra.tipoRegra === "valor_fixo"
+      regra.tipoRegra === "valor_fixo" ||
+      (regra.tipoRegra.includes("semen") &&
+        regra.tipoRegra !== "semen_sexado" &&
+        regra.tipoRegra !== "semen_suino")
     ) {
       const valorBase = Number(regra.valorBeneficio);
       let valorCalculado = 0;

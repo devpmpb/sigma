@@ -39,10 +39,7 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
     null
   );
 
-  // Estados para labels iniciais (quando editando)
-  const [programaInitialLabel, setProgramaInitialLabel] = useState<string>("");
-  const [programaInitialSubLabel, setProgramaInitialSubLabel] =
-    useState<string>("");
+  // Estados para labels iniciais (quando editando) - apenas para pessoa (AsyncSearchSelect)
   const [pessoaInitialLabel, setPessoaInitialLabel] = useState<string>("");
   const [pessoaInitialSubLabel, setPessoaInitialSubLabel] =
     useState<string>("");
@@ -54,6 +51,17 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
     number | string
   >(""); // Inicia vazio ao invés de 0
   const [dadosCarregados, setDadosCarregados] = useState(false); // Controla se já carregou dados do edit
+  const [quantidadeAnimais, setQuantidadeAnimais] = useState<number | string>(
+    ""
+  );
+
+  // Estado para lista de programas ativos (dropdown)
+  const [programasAtivos, setProgramasAtivos] = useState<Programa[]>([]);
+  const [carregandoProgramas, setCarregandoProgramas] = useState(true);
+
+  // Estado para modalidade (quando programa tem múltiplas opções)
+  const [modalidadeSelecionada, setModalidadeSelecionada] = useState<string>("");
+  const [modalidadesDisponiveis, setModalidadesDisponiveis] = useState<string[]>([]);
 
   // Valor inicial para o formulário
   const initialValues: SolicitacaoBeneficioDTO = {
@@ -64,28 +72,23 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
     status: StatusSolicitacao.PENDENTE,
   };
 
-  // Busca de programas para AsyncSearchSelect
-  const searchProgramas = async (termo: string): Promise<Programa[]> => {
-    if (!termo || termo.length < 2) {
-      return [];
-    }
-    try {
-      // Buscar todos os programas ativos e filtrar no frontend
-      const todosProgramas = await programaService.getAll();
-      const termoLower = termo.toLowerCase();
-
-      return todosProgramas.filter(
-        (p) =>
-          p.ativo &&
-          (p.nome.toLowerCase().includes(termoLower) ||
-            p.descricao?.toLowerCase().includes(termoLower) ||
-            p.leiNumero?.toLowerCase().includes(termoLower))
-      );
-    } catch (error) {
-      console.error("Erro ao buscar programas:", error);
-      return [];
-    }
-  };
+  // Carrega programas ativos ao montar o componente
+  useEffect(() => {
+    const carregarProgramas = async () => {
+      setCarregandoProgramas(true);
+      try {
+        const todosProgramas = await programaService.getAll();
+        const ativos = todosProgramas.filter((p) => p.ativo);
+        console.log("📋 Programas ativos carregados:", ativos.length);
+        setProgramasAtivos(ativos);
+      } catch (error) {
+        console.error("❌ Erro ao carregar programas:", error);
+      } finally {
+        setCarregandoProgramas(false);
+      }
+    };
+    carregarProgramas();
+  }, []);
 
   // Busca de pessoas para AsyncSearchSelect (baseado no programa selecionado)
   const searchPessoas = async (termo: string): Promise<Pessoa[]> => {
@@ -129,13 +132,19 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
     setValue("pessoaId", 0); // Resetar pessoa selecionada
     setPessoaSelecionada(null); // Limpar pessoa selecionada
     setCalculoResultado(null); // Limpar cálculo anterior
+    setQuantidadeAnimais("");
+    // Limpar modalidade ao trocar de programa
+    setModalidadeSelecionada("");
+    setModalidadesDisponiveis([]);
   };
 
   // NOVO: Função para calcular benefício automaticamente
   const calcularBeneficioAutomatico = async (
     pessoaId: number,
     programaId: number,
-    quantidade?: number
+    quantidade?: number,
+    dadosAdicionais?: { quantidadeAnimais?: number },
+    modalidade?: string // Adicionar modalidade como parâmetro
   ) => {
     // Só calcular se tiver pessoa E programa selecionados
     if (!pessoaId || pessoaId === 0 || !programaId || programaId === 0) {
@@ -150,9 +159,21 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
         programaId,
         quantidadeSolicitada:
           quantidade && quantidade > 0 ? quantidade : undefined,
+        dadosAdicionais: dadosAdicionais || {
+          quantidadeAnimais:
+            typeof quantidadeAnimais === "number"
+              ? quantidadeAnimais
+              : undefined,
+        },
+        modalidade: modalidade || modalidadeSelecionada || undefined, // Passar modalidade
       });
       console.log("📥 FRONTEND - Resultado recebido:", resultado);
       setCalculoResultado(resultado);
+
+      // Se o resultado trouxer modalidades disponíveis, atualizar estado
+      if (resultado.calculo?.calculoDetalhes?.modalidadesDisponiveis) {
+        setModalidadesDisponiveis(resultado.calculo.calculoDetalhes.modalidadesDisponiveis);
+      }
     } catch (error: any) {
       console.error("Erro ao calcular benefício:", error);
       setCalculoResultado({
@@ -184,15 +205,9 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
         );
         console.log("📦 Solicitação carregada:", solicitacao);
 
-        // 1. Carregar programa selecionado e seus labels para o AsyncSearchSelect
+        // 1. Carregar programa selecionado
         if (solicitacao.programa) {
           setProgramaSelecionado(solicitacao.programa);
-          setProgramaInitialLabel(solicitacao.programa.nome);
-          setProgramaInitialSubLabel(
-            `${programaService.formatarSecretaria(
-              solicitacao.programa.secretaria
-            )} - ${solicitacao.programa.tipoPrograma}`
-          );
         }
 
         // 2. Carregar pessoa selecionada e seus labels para o AsyncSearchSelect
@@ -244,6 +259,11 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
       errors.programaId = "Programa é obrigatório";
     }
 
+    // Validar modalidade quando programa tem múltiplas opções
+    if (modalidadesDisponiveis.length > 0 && !modalidadeSelecionada) {
+      errors.modalidade = "Selecione uma modalidade de benefício";
+    }
+
     return Object.keys(errors).length > 0 ? errors : null;
   };
 
@@ -271,45 +291,50 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <AsyncSearchSelect<Programa>
-                label="Programa"
-                value={
-                  values.programaId && values.programaId !== 0
-                    ? values.programaId
-                    : null
-                }
-                onChange={(value, programa) => {
-                  handleProgramaChange(value, programa, setValue);
+            <FormField
+              name="programaId"
+              label="Programa"
+              required
+              error={errors.programaId}
+            >
+              <select
+                id="programaId"
+                name="programaId"
+                value={values.programaId || ""}
+                onChange={(e) => {
+                  const programaId = e.target.value ? parseInt(e.target.value) : null;
+                  const programa = programasAtivos.find((p) => p.id === programaId);
+                  handleProgramaChange(programaId, programa, setValue);
                 }}
-                searchFunction={searchProgramas}
-                getOptionLabel={(programa) => programa.nome}
-                getOptionSubLabel={(programa) =>
-                  `${programaService.formatarSecretaria(
-                    programa.secretaria
-                  )} - ${programa.tipoPrograma}`
-                }
-                getId={(programa) => programa.id}
-                placeholder="Digite o nome do programa..."
-                required
-                error={errors.programaId}
-                initialLabel={programaInitialLabel || undefined}
-                initialSubLabel={programaInitialSubLabel || undefined}
-              />
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                disabled={carregandoProgramas}
+              >
+                <option value="">
+                  {carregandoProgramas ? "Carregando programas..." : "Selecione um programa"}
+                </option>
+                {programasAtivos.map((programa) => (
+                  <option key={programa.id} value={programa.id}>
+                    {programa.nome} ({programaService.formatarSecretaria(programa.secretaria)})
+                  </option>
+                ))}
+              </select>
               {programaSelecionado && (
                 <p className="mt-1 text-sm text-gray-600">
                   Secretaria:{" "}
                   {programaService.formatarSecretaria(
                     programaSelecionado.secretaria
                   )}
+                  {programaSelecionado.leiNumero && (
+                    <> | Lei: {programaSelecionado.leiNumero}</>
+                  )}
                 </p>
               )}
-              {!programaSelecionado && (
+              {!programaSelecionado && !carregandoProgramas && (
                 <p className="mt-1 text-sm text-gray-500">
                   Selecione o programa para definir as pessoas disponíveis
                 </p>
               )}
-            </div>
+            </FormField>
 
             <div>
               <AsyncSearchSelect<Pessoa>
@@ -378,6 +403,104 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
               </div>
             )}
 
+            {/* SELEÇÃO DE MODALIDADE - só aparece quando programa tem múltiplas modalidades */}
+            {modalidadesDisponiveis.length > 0 && (
+              <div className="col-span-1 md:col-span-2">
+                <FormField
+                  name="modalidade"
+                  label="Modalidade do Benefício"
+                  required
+                  helpText="Selecione como deseja receber o benefício"
+                >
+                  <select
+                    id="modalidade"
+                    value={modalidadeSelecionada}
+                    onChange={(e) => {
+                      const novaModalidade = e.target.value;
+                      setModalidadeSelecionada(novaModalidade);
+                      setValue("modalidade", novaModalidade); // Atualizar no FormBase para salvar
+                      // Recalcular com a nova modalidade
+                      if (values.pessoaId && values.programaId && novaModalidade) {
+                        calcularBeneficioAutomatico(
+                          values.pessoaId,
+                          values.programaId,
+                          typeof quantidadeSolicitada === "number"
+                            ? quantidadeSolicitada
+                            : undefined,
+                          undefined,
+                          novaModalidade
+                        );
+                      }
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Selecione uma modalidade</option>
+                    {modalidadesDisponiveis.map((mod) => (
+                      <option key={mod} value={mod}>
+                        {mod.replace(/_/g, " ")}
+                      </option>
+                    ))}
+                  </select>
+                </FormField>
+              </div>
+            )}
+
+            {/* Campo de quantidade de animais - só aparece para programas específicos */}
+            {programaSelecionado &&
+              (programaSelecionado.unidadeLimite === "doses" ||
+                programaSelecionado.unidadeLimite === "matrizes" ||
+                programaSelecionado.unidadeLimite === "exames") && (
+                <FormField
+                  name="quantidadeAnimais"
+                  label={
+                    programaSelecionado.unidadeLimite === "matrizes"
+                      ? "Quantidade de Matrizes (ADAPAR)"
+                      : programaSelecionado.unidadeLimite === "exames"
+                      ? "Quantidade de Animais no Rebanho"
+                      : "Quantidade de Vacas"
+                  }
+                  helpText={
+                    programaSelecionado.unidadeLimite === "matrizes"
+                      ? "Informe conforme relatório ADAPAR"
+                      : "Informe o total de animais para determinar o enquadramento"
+                  }
+                >
+                  <input
+                    type="number"
+                    id="quantidadeAnimais"
+                    value={quantidadeAnimais}
+                    onChange={(e) => {
+                      const valorString = e.target.value;
+                      const valorNumerico = valorString === "" ? "" : parseInt(valorString, 10);
+                      setQuantidadeAnimais(valorNumerico);
+
+                      console.log("🐄 Quantidade animais alterada:", valorNumerico);
+
+                      // Recalcular automaticamente - usar o valor numérico diretamente
+                      if (values.pessoaId && values.programaId) {
+                        const qtdAnimais = typeof valorNumerico === "number" && !isNaN(valorNumerico)
+                          ? valorNumerico
+                          : undefined;
+
+                        console.log("🔄 Recalculando com animais:", qtdAnimais);
+
+                        calcularBeneficioAutomatico(
+                          values.pessoaId,
+                          values.programaId,
+                          typeof quantidadeSolicitada === "number"
+                            ? quantidadeSolicitada
+                            : undefined,
+                          { quantidadeAnimais: qtdAnimais }
+                        );
+                      }
+                    }}
+                    min="0"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Ex: 30"
+                  />
+                </FormField>
+              )}
+
             {/* NOVO: Campo de quantidade solicitada - READONLY se estiver editando */}
             {programaSelecionado && values.pessoaId !== 0 && (
               <FormField
@@ -393,7 +516,7 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
                         calculoResultado.calculo.calculoDetalhes.limiteAplicado
                           .unidade || "unidades"
                       }`
-                    : "Quantidade de toneladas, unidades, etc (opcional para alguns programas)"
+                    : "Toneladas, unidades, doses, etc"
                 }
               >
                 <input
@@ -447,7 +570,7 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
                       ? "border-yellow-400 bg-yellow-50"
                       : "border-gray-300"
                   }`}
-                  placeholder="Ex: 10 (toneladas)"
+                  placeholder="Ex: 10"
                 />
                 {/* Aviso visual quando exceder o limite */}
                 {calculoResultado?.calculo?.calculoDetalhes?.limiteAplicado
@@ -473,6 +596,8 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
                   )}
               </FormField>
             )}
+
+            {/* Campo de quantidade de animais - REMOVIDO (duplicado com o campo acima) */}
 
             {solicitacaoId && solicitacaoId !== "novo" && (
               <FormField
