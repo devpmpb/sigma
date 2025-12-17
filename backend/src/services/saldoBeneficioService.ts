@@ -498,3 +498,205 @@ export async function consultarSaldoRapido(
     mensagem: saldo.mensagem,
   };
 }
+
+// ============================================================================
+// FEATURE 4: DISTRIBUIÇÃO PROPORCIONAL ENTRE ARRENDATÁRIOS
+// ============================================================================
+
+export interface LimiteProporcional {
+  pessoaId: number;
+  pessoaNome: string;
+  programaId: number;
+  programaNome: string;
+  // Limites
+  limiteOriginal: number;
+  limiteProporcional: number;
+  percentualTotal: number;
+  unidade: string;
+  // Detalhes por propriedade
+  propriedadesArrendadas: {
+    propriedadeId: number;
+    proprietarioNome: string;
+    areaArrendada: number;
+    areaTotalPropriedade: number;
+    percentualPropriedade: number;
+    limiteContribuido: number;
+  }[];
+  // Mensagem
+  mensagem: string;
+}
+
+/**
+ * Calcula o limite proporcional de um arrendatário baseado nas áreas que arrenda
+ *
+ * Exemplo:
+ * - Propriedade de 100 alqueires
+ * - Arrendatário A arrenda 60 alqueires (60%)
+ * - Arrendatário B arrenda 40 alqueires (40%)
+ * - Limite do programa: 10 toneladas/propriedade
+ * - Arrendatário A pode pedir: até 6 toneladas
+ * - Arrendatário B pode pedir: até 4 toneladas
+ */
+export async function calcularLimiteProporcional(
+  pessoaId: number,
+  programaId: number
+): Promise<LimiteProporcional | null> {
+  // 1. Buscar dados da pessoa
+  const pessoa = await prisma.pessoa.findUnique({
+    where: { id: pessoaId },
+    select: { id: true, nome: true },
+  });
+
+  if (!pessoa) {
+    return null;
+  }
+
+  // 2. Buscar programa
+  const programa = await prisma.programa.findUnique({
+    where: { id: programaId },
+    include: { regras: true },
+  });
+
+  if (!programa) {
+    return null;
+  }
+
+  // 3. Buscar arrendamentos ativos onde a pessoa é arrendatária
+  const arrendamentos = await prisma.arrendamento.findMany({
+    where: {
+      arrendatarioId: pessoaId,
+      status: "ativo",
+    },
+    include: {
+      propriedade: {
+        select: {
+          id: true,
+          areaTotal: true,
+        },
+      },
+      proprietario: {
+        select: {
+          id: true,
+          nome: true,
+        },
+      },
+    },
+  });
+
+  // Se não é arrendatário de nenhuma propriedade, não aplica cálculo proporcional
+  if (arrendamentos.length === 0) {
+    return {
+      pessoaId,
+      pessoaNome: pessoa.nome,
+      programaId,
+      programaNome: programa.nome,
+      limiteOriginal: Number(programa.limiteMaximoFamilia) || 0,
+      limiteProporcional: Number(programa.limiteMaximoFamilia) || 0,
+      percentualTotal: 100,
+      unidade: programa.unidadeLimite || "",
+      propriedadesArrendadas: [],
+      mensagem: "Produtor não é arrendatário - limite integral aplicado",
+    };
+  }
+
+  // 4. Calcular limite original do programa
+  const limiteOriginal = Number(programa.limiteMaximoFamilia) || 0;
+
+  // 5. Para cada propriedade arrendada, calcular o percentual e o limite proporcional
+  const propriedadesDetalhes: LimiteProporcional["propriedadesArrendadas"] = [];
+  let limiteProporcionalTotal = 0;
+
+  for (const arrendamento of arrendamentos) {
+    const areaArrendada = Number(arrendamento.areaArrendada);
+    const areaTotalPropriedade = Number(arrendamento.propriedade.areaTotal);
+
+    // Calcular percentual que o arrendatário tem da propriedade
+    const percentualPropriedade =
+      areaTotalPropriedade > 0
+        ? (areaArrendada / areaTotalPropriedade) * 100
+        : 0;
+
+    // O limite que este arrendamento contribui é proporcional à área arrendada
+    // Se o programa dá 10 ton/propriedade e o arrendatário tem 60% da propriedade
+    // então ele pode pegar 6 ton desta propriedade
+    const limiteContribuido = (limiteOriginal * percentualPropriedade) / 100;
+
+    propriedadesDetalhes.push({
+      propriedadeId: arrendamento.propriedade.id,
+      proprietarioNome: arrendamento.proprietario.nome,
+      areaArrendada,
+      areaTotalPropriedade,
+      percentualPropriedade: Math.round(percentualPropriedade * 100) / 100,
+      limiteContribuido: Math.round(limiteContribuido * 100) / 100,
+    });
+
+    limiteProporcionalTotal += limiteContribuido;
+  }
+
+  // 6. Calcular percentual total (soma dos percentuais de cada propriedade)
+  // Nota: pode ser maior que 100% se arrenda de múltiplas propriedades
+  const percentualTotal = propriedadesDetalhes.reduce(
+    (sum, p) => sum + p.percentualPropriedade,
+    0
+  );
+
+  // 7. Limitar ao máximo do programa (não pode exceder o limite original mesmo somando múltiplas propriedades)
+  const limiteFinal = Math.min(limiteProporcionalTotal, limiteOriginal);
+
+  return {
+    pessoaId,
+    pessoaNome: pessoa.nome,
+    programaId,
+    programaNome: programa.nome,
+    limiteOriginal,
+    limiteProporcional: Math.round(limiteFinal * 100) / 100,
+    percentualTotal: Math.round(percentualTotal * 100) / 100,
+    unidade: programa.unidadeLimite || "",
+    propriedadesArrendadas: propriedadesDetalhes,
+    mensagem:
+      propriedadesDetalhes.length > 0
+        ? `Limite proporcional baseado em ${propriedadesDetalhes.length} arrendamento(s)`
+        : "Limite integral aplicado",
+  };
+}
+
+/**
+ * Versão combinada: calcula saldo considerando proporção de arrendamento
+ * Se a pessoa é arrendatária, o limite é proporcional à área arrendada
+ */
+export async function calcularSaldoComProporcao(
+  pessoaId: number,
+  programaId: number
+): Promise<SaldoDisponivel & { proporcional?: LimiteProporcional }> {
+  // Primeiro calcular o saldo normal
+  const saldoNormal = await calcularSaldoDisponivel(pessoaId, programaId);
+
+  // Depois verificar se tem proporção de arrendamento
+  const proporcional = await calcularLimiteProporcional(pessoaId, programaId);
+
+  // Se não tem arrendamentos ou a proporção é 100%, retornar saldo normal
+  if (!proporcional || proporcional.propriedadesArrendadas.length === 0) {
+    return saldoNormal;
+  }
+
+  // Ajustar o limite total com base na proporção
+  const limiteAjustado = proporcional.limiteProporcional;
+  const saldoAjustado = Math.max(0, limiteAjustado - saldoNormal.jaUtilizado);
+  const valorMaximoAjustado = saldoAjustado * saldoNormal.valorPorUnidade;
+
+  // Atualizar mensagem
+  let mensagemAjustada = saldoNormal.mensagem;
+  if (limiteAjustado < saldoNormal.limiteTotal) {
+    mensagemAjustada = `Limite proporcional: ${limiteAjustado.toFixed(2)} ${saldoNormal.unidade} (${proporcional.percentualTotal.toFixed(1)}% do limite total)`;
+  }
+
+  return {
+    ...saldoNormal,
+    limiteTotal: limiteAjustado,
+    saldoDisponivel: saldoAjustado,
+    valorMaximoRestante: valorMaximoAjustado,
+    podeNovaSolicitacao: saldoAjustado > 0,
+    mensagem: mensagemAjustada,
+    proporcional,
+  };
+}

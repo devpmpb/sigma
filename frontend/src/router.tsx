@@ -20,6 +20,7 @@ import Relatorios from "./pages/Relatorios";
 import Dashboards from "./pages/Dashboards";
 import Configuracoes from "./pages/Configuracoes";
 import AlterarSenha from "./pages/AlterarSenha";
+import DashboardPublico from "./pages/dashboard/DashboardPublico";
 
 // Importar configurações de rotas dos módulos
 import { obrasRouteConfig } from "./config/menus/obras/routes";
@@ -164,6 +165,13 @@ const acessoNegadoRoute = createRoute({
   component: AcessoNegado,
 });
 
+// Dashboard público (sem autenticação - para prefeito/secretário)
+const dashboardPublicoRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/painel",
+  component: DashboardPublico,
+});
+
 // Not found route
 const notFoundRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -234,6 +242,7 @@ const comunRoutes = createRoutesFromConfig(comunRouteConfig, layoutRoute);
 const routeTree = rootRoute.addChildren([
   loginRoute,
   acessoNegadoRoute,
+  dashboardPublicoRoute,
   notFoundRoute,
   layoutRoute.addChildren([
     indexRoute,
@@ -285,6 +294,7 @@ export const routes = {
   root: rootRoute,
   login: loginRoute,
   acessoNegado: acessoNegadoRoute,
+  dashboardPublico: dashboardPublicoRoute,
   notFound: notFoundRoute,
   layout: layoutRoute,
   index: indexRoute,
