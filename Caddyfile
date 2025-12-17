@@ -1,0 +1,72 @@
+# =============================================================================
+# SIGMA - Configuração do Caddy (Servidor Web com SSL automático)
+# =============================================================================
+# Documentação: https://caddyserver.com/docs/caddyfile
+
+# PRODUÇÃO - sigma.patobragado.pr.gov.br
+sigma.patobragado.pr.gov.br {
+    # SSL automático via Let's Encrypt (gratuito!)
+
+    # Servir arquivos estáticos do frontend (React build)
+    root * /var/www/sigma/frontend/dist
+
+    # API - Proxy reverso para o backend Node.js
+    handle /api/* {
+        reverse_proxy localhost:3001
+    }
+
+    # Dashboard público também vai para o frontend
+    handle /painel* {
+        try_files {path} /index.html
+    }
+
+    # Todas as outras rotas vão para o index.html (SPA)
+    handle {
+        try_files {path} /index.html
+        file_server
+    }
+
+    # Headers de segurança
+    header {
+        X-Content-Type-Options nosniff
+        X-Frame-Options DENY
+        X-XSS-Protection "1; mode=block"
+        Referrer-Policy strict-origin-when-cross-origin
+    }
+
+    # Compressão
+    encode gzip zstd
+
+    # Logs
+    log {
+        output file /var/log/caddy/sigma-access.log
+        format json
+    }
+}
+
+# =============================================================================
+# TESTE (opcional) - sigma-teste.patobragado.pr.gov.br
+# =============================================================================
+# sigma-teste.patobragado.pr.gov.br {
+#     root * /var/www/sigma-teste/frontend/dist
+#
+#     handle /api/* {
+#         reverse_proxy localhost:3002
+#     }
+#
+#     handle {
+#         try_files {path} /index.html
+#         file_server
+#     }
+#
+#     encode gzip zstd
+# }
+
+# =============================================================================
+# CONFIGURAÇÃO PARA WINDOWS (caminhos diferentes)
+# =============================================================================
+# Se estiver no Windows, ajuste os caminhos:
+# root * C:\sigma\frontend\dist
+# log {
+#     output file C:\sigma\logs\caddy-access.log
+# }
