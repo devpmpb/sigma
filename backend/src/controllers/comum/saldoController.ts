@@ -6,6 +6,8 @@ import {
   calcularSaldoDisponivel,
   verificarDisponibilidade,
   consultarSaldoRapido,
+  calcularLimiteProporcional,
+  calcularSaldoComProporcao,
 } from "../../services/saldoBeneficioService";
 
 export const saldoController = {
@@ -135,6 +137,68 @@ export const saldoController = {
       console.error("Erro ao buscar saldos:", error);
       return res.status(500).json({
         erro: error.message || "Erro ao buscar saldos",
+      });
+    }
+  },
+
+  /**
+   * GET /api/comum/saldo/:pessoaId/:programaId/proporcional
+   * Retorna saldo considerando proporção de arrendamento
+   */
+  async getSaldoProporcional(req: Request, res: Response) {
+    try {
+      const { pessoaId, programaId } = req.params;
+
+      if (!pessoaId || !programaId) {
+        return res.status(400).json({
+          erro: "Pessoa e Programa são obrigatórios",
+        });
+      }
+
+      const saldo = await calcularSaldoComProporcao(
+        parseInt(pessoaId),
+        parseInt(programaId)
+      );
+
+      return res.json(saldo);
+    } catch (error: any) {
+      console.error("Erro ao calcular saldo proporcional:", error);
+      return res.status(500).json({
+        erro: error.message || "Erro ao calcular saldo proporcional",
+      });
+    }
+  },
+
+  /**
+   * GET /api/comum/saldo/:pessoaId/:programaId/limite-proporcional
+   * Retorna apenas o cálculo de limite proporcional (para debug/visualização)
+   */
+  async getLimiteProporcional(req: Request, res: Response) {
+    try {
+      const { pessoaId, programaId } = req.params;
+
+      if (!pessoaId || !programaId) {
+        return res.status(400).json({
+          erro: "Pessoa e Programa são obrigatórios",
+        });
+      }
+
+      const limite = await calcularLimiteProporcional(
+        parseInt(pessoaId),
+        parseInt(programaId)
+      );
+
+      if (!limite) {
+        return res.status(404).json({
+          erro: "Pessoa ou programa não encontrado",
+        });
+      }
+
+      return res.json(limite);
+    } catch (error: any) {
+      console.error("Erro ao calcular limite proporcional:", error);
+      return res.status(500).json({
+        erro: error.message || "Erro ao calcular limite proporcional",
       });
     }
   },

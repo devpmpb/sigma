@@ -19,6 +19,8 @@ import tipoServicoRoutes from "./obras/tipoServicoRoutes";
 import areaRuralRoutes from "./comum/areaRuralRoutes";
 import relatorioBeneficioRoutes from "./comum/relatorioBeneficioRoutes";
 import relatorioArrendamentoRoutes from "./agricultura/relatorioArrendamentoRoutes";
+import dashboardRoutes from "./comum/dashboardRoutes";
+import dashboardPublicoRoutes from "./comum/dashboardPublicoRoutes";
 
 // Importar middleware de autenticação
 import {
@@ -33,6 +35,9 @@ const router = Router();
 
 // AUTENTICAÇÃO (rotas públicas)
 router.use("/auth", authRoutes);
+
+// DASHBOARD PÚBLICO (sem autenticação - para prefeito/secretário)
+router.use("/dashboard-publico", dashboardPublicoRoutes);
 
 // MIDDLEWARE DE AUTENTICAÇÃO para todas as rotas abaixo
 router.use(authenticateToken);
@@ -140,9 +145,12 @@ router.use(
 );
 
 router.use(
-  "/api/comum/saldo",
+  "/comum/saldo",
   requireModuleAccess(ModuloSistema.COMUM),
   saldoRoutes
 );
+
+// DASHBOARD EXECUTIVO (requer autenticação, sem restrição de módulo específico)
+router.use("/dashboard", dashboardRoutes);
 
 export default router;

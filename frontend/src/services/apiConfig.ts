@@ -1,8 +1,22 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
 
+// Detectar baseURL dinamicamente para suporte a rede local (PWA)
+const getBaseUrl = (): string => {
+  // Em produção ou desenvolvimento, usar o hostname atual
+  const hostname = window.location.hostname;
+  const backendPort = 3001;
+
+  // Se estiver acessando por IP ou domínio diferente de localhost
+  if (hostname !== 'localhost' && hostname !== '127.0.0.1') {
+    return `http://${hostname}:${backendPort}/api`;
+  }
+
+  return `http://localhost:${backendPort}/api`;
+};
+
 // Configuração padrão do axios
 const apiConfig: AxiosRequestConfig = {
-  baseURL: "http://localhost:3001/api",
+  baseURL: getBaseUrl(),
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",
@@ -83,7 +97,7 @@ apiClient.interceptors.response.use(
           throw new Error("No refresh token available");
         }
 
-        const response = await axios.post(`${apiConfig.baseURL}/auth/refresh`, {
+        const response = await axios.post(`${getBaseUrl()}/auth/refresh`, {
           refreshToken,
         });
 

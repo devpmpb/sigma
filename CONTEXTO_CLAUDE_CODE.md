@@ -81,164 +81,139 @@ Via seed em `backend/prisma/seeds/programasAtuais.ts`:
 
 ---
 
-## ⏳ FEATURES PENDENTES (próximos passos)
+## ✅ FEATURES CONCLUÍDAS
 
-### Feature 3: Múltiplas Modalidades de Benefício
+### Feature 1: Validação Anti-Burla de Limites ✅
+Implementado em `backend/src/services/saldoBeneficioService.ts`:
+- Solicitações `pendente` e `em_analise` agora contam no saldo
+- Backend bloqueia criação se quantidade + já solicitado > limite
+- Frontend mostra aviso quando vai exceder
 
-**Contexto:** Alguns programas permitem escolher COMO receber o benefício.
+### Feature 2: Múltiplas Modalidades de Benefício ✅
+Implementado campo `modalidade` na solicitação:
+- `APLICACAO_SUBSIDIADA` - Município fornece + aplica
+- `RETIRADA_SEMEN` - Produtor capacitado retira
+- `REEMBOLSO` - Produtor compra e pede reembolso
 
-**Programa para testar:** "Inseminação Artificial - Bovinos Leite" (Lei 1182/2011)
-
-**Modalidades deste programa:**
-1. `APLICACAO_SUBSIDIADA` - Município fornece sêmen + aplicação 70% subsidiada
-2. `RETIRADA_SEMEN` - Produtor capacitado retira sêmen e aplica por conta
-3. `REEMBOLSO` - Produtor compra e pede reembolso depois
-
-**O que implementar:**
-
-1. **Backend - Adicionar campo na tabela:**
-```prisma
-model SolicitacaoBeneficio {
-  // ... campos existentes
-  modalidade  String?  // REEMBOLSO, FORNECIMENTO, RETIRADA
-}
-```
-
-2. **Backend - No calculoBeneficioService:**
-- Verificar se o programa tem múltiplas modalidades (olhar `parametro.modalidade` nas regras)
-- Filtrar regras pela modalidade selecionada
-
-3. **Frontend - No SolicitacaoBeneficioForm:**
-- Adicionar estado `modalidadeSelecionada`
-- Mostrar campo de seleção APENAS se programa tiver regras com modalidades diferentes
-- Passar modalidade no cálculo para filtrar regra correta
-
-**Como identificar programas com modalidades:**
-```typescript
-// Verificar se programa tem regras com modalidades diferentes
-const temModalidades = programaSelecionado?.regras?.some(r => r.parametro?.modalidade);
-```
-
-**Modalidades possíveis (enum sugerido):**
-```typescript
-enum ModalidadeBeneficio {
-  REEMBOLSO = "REEMBOLSO",
-  FORNECIMENTO_MUNICIPIO = "FORNECIMENTO_MUNICIPIO", 
-  RETIRADA_SECRETARIA = "RETIRADA_SECRETARIA"
-}
-```
+Frontend mostra seletor apenas quando programa tem múltiplas modalidades.
 
 ---
 
-### Feature 4: Distribuição Proporcional entre Arrendatários
+## ⏳ FEATURES PENDENTES (próximos passos)
 
-**Contexto:** Quando uma propriedade tem múltiplos arrendatários, cada um deve receber proporcionalmente à área que arrenda.
+### Feature 3: PWA Dashboard Executivo (com Offline)
+
+**Contexto:** Dashboard para prefeito/secretário visualizar dados de benefícios concedidos, com suporte offline completo desde o início.
+
+**Arquitetura PWA Única:**
+O SIGMA terá uma única PWA que atende múltiplos perfis:
+1. **Prefeito/Secretário** - Visualização de dashboard e relatórios
+2. **Produtores** (futuro) - Envio de solicitações de benefício offline
+3. **Operadores de Máquinas** (futuro) - Lançamento de hora-máquina offline
+
+**Implementação:**
+
+1. **Infraestrutura PWA:**
+```
+frontend/
+├── public/
+│   ├── manifest.json           # Configuração do PWA
+│   ├── icons/                  # Ícones 192x192 e 512x512
+│   └── sw.js                   # Service Worker
+├── src/
+│   ├── pwa/
+│   │   ├── serviceWorker.ts    # Registro e gerenciamento do SW
+│   │   ├── offlineStorage.ts   # IndexedDB para cache local
+│   │   └── syncManager.ts      # Sincronização quando online
+│   └── pages/
+│       └── dashboard/
+│           └── DashboardExecutivo.tsx
+```
+
+2. **Service Worker (Cache Strategy):**
+- **Cache First** para assets estáticos (JS, CSS, imagens)
+- **Network First** para API calls (com fallback para cache)
+- **Background Sync** para operações offline (futuro)
+
+3. **IndexedDB (Armazenamento Offline):**
+```typescript
+interface OfflineDB {
+  // Cache de dados para visualização
+  dashboardData: {
+    timestamp: Date;
+    estatisticas: EstatisticasGerais;
+    porPrograma: EstatisticaPrograma[];
+    porPeriodo: EstatisticaPeriodo[];
+  };
+
+  // Fila de operações pendentes (futuro)
+  pendingOperations: {
+    id: string;
+    type: 'solicitacao' | 'hora_maquina';
+    data: any;
+    createdAt: Date;
+  }[];
+}
+```
+
+4. **Dashboard Executivo (Fase 1):**
+```typescript
+// Páginas a criar
+pages/dashboard/DashboardExecutivo.tsx   // Cards e gráficos
+pages/dashboard/RelatorioProdutores.tsx  // Lista de beneficiados
+pages/dashboard/RelatorioPrograma.tsx    // Detalhes por programa
+
+// Endpoints necessários (backend)
+GET /api/dashboard/estatisticas-gerais
+GET /api/dashboard/por-programa
+GET /api/dashboard/por-periodo
+GET /api/dashboard/top-produtores
+```
+
+5. **Gráficos (usando recharts):**
+- PieChart: Distribuição por programa
+- BarChart: Investimento mensal
+- LineChart: Evolução temporal
+- Cards: Total investido, produtores atendidos, média/produtor
+
+**Fases de Implementação:**
+- **Fase 1 (Atual):** Dashboard visualização + Infraestrutura PWA/offline
+- **Fase 2 (Futuro):** Solicitação de benefício offline (produtor)
+- **Fase 3 (Futuro):** Lançamento hora-máquina offline (operador)
+
+---
+
+### Feature 4: Distribuição Proporcional entre Arrendatários ✅
+
+**Status:** IMPLEMENTADA
+
+**Funcionalidade:** Quando um arrendatário solicita benefício, o limite é proporcional à área que arrenda da propriedade.
 
 **Exemplo:**
 - Propriedade de 100 alqueires
-- Arrendatário A: 60 alqueires (60%)
-- Arrendatário B: 40 alqueires (40%)
-- Limite do programa: 10 toneladas/propriedade
-- Arrendatário A pode pedir: até 6 toneladas
-- Arrendatário B pode pedir: até 4 toneladas
+- Arrendatário A arrenda 60 alqueires (60%)
+- Limite do programa: 10 toneladas
+- Arrendatário A pode pedir: até 6 toneladas (60% de 10)
 
-**O que implementar:**
+**Implementação:**
 
-1. **Backend - Nova função em saldoBeneficioService:**
-```typescript
-async function calcularLimiteProporcional(
-  pessoaId: number,
-  programaId: number
-): Promise<{ limiteOriginal: number; limiteProporcional: number; percentual: number }>
-```
+1. **Backend:**
+   - `saldoBeneficioService.ts`: Funções `calcularLimiteProporcional()` e `calcularSaldoComProporcao()`
+   - `saldoController.ts`: Endpoints `/proporcional` e `/limite-proporcional`
+   - `saldoRoutes.ts`: Rotas registradas
 
-2. **Lógica:**
-- Buscar arrendamentos ativos da pessoa
-- Para cada propriedade arrendada, calcular % da área total
-- Aplicar % ao limite do programa
-- Somar limites proporcionais de todas propriedades
-
-3. **Frontend:**
-- Mostrar no SaldoCard: "Limite proporcional: X (Y% de Z)"
-
-**Tabelas envolvidas:** `Arrendamento`, `Propriedade`, `AreaEfetiva`
-
----
-
-### Feature 5: Validação Anti-Burla de Limites
-
-**Contexto:** Impedir que produtor faça múltiplas solicitações pequenas para burlar o limite do período.
-
-**Exemplo de burla:**
-- Limite: 10 toneladas/ano
-- Produtor pede 5 ton em janeiro → aprovado
-- Produtor pede 5 ton em fevereiro → aprovado
-- Produtor pede 5 ton em março → deveria BLOQUEAR (já tem 10 aprovadas)
-
-**Já está parcialmente implementado!** O `saldoBeneficioService.verificarDisponibilidade()` já faz isso.
-
-**O que verificar/melhorar:**
-
-1. **Garantir que solicitações `pendente` e `em_analise` também contam no saldo:**
-```typescript
-// No calcularSaldoDisponivel, verificar se considera pendentes
-status: { in: ["aprovada", "paga", "pendente", "em_analise"] }
-```
-
-2. **Adicionar validação no frontend** antes de enviar:
-- Mostrar aviso se quantidade + já solicitado > limite
-- Bloquear botão salvar se exceder
-
-3. **Testar cenários:**
-- Criar solicitação pendente de 8 unidades
-- Tentar criar outra de 5 unidades (limite 10)
-- Deve bloquear com mensagem clara
-
----
-
-### Feature 6: Relatórios para o Prefeito
-
-**Contexto:** Dashboard com visão executiva dos benefícios concedidos.
-
-**Já existe estrutura:** `backend/src/controllers/comum/relatorioController.ts` e `relatorioBeneficioService.ts`
-
-**Relatórios necessários:**
-
-1. **Por Programa:**
-- Total de solicitações por programa
-- Valor total investido por programa
-- Gráfico de pizza/barras
-
-2. **Por Período:**
-- Investimento mensal/anual
-- Comparativo com ano anterior
-- Gráfico de linha temporal
-
-3. **Por Produtor:**
-- Top 10 produtores beneficiados
-- Lista com filtros (programa, período, valor)
-
-4. **Resumo Executivo:**
-- Cards: Total investido, Produtores atendidos, Média por produtor
-- Filtro por período (mês, ano, personalizado)
-
-**Frontend - Criar página:**
-`frontend/src/pages/relatorios/DashboardPrefeito.tsx`
-
-**Bibliotecas sugeridas (já disponíveis):**
-- recharts - Para gráficos
-- Já tem no projeto, usar `import { LineChart, BarChart, PieChart } from "recharts"`
+2. **Frontend:**
+   - `saldoService.ts`: Métodos `getSaldoProporcional()` e `getLimiteProporcional()`
+   - `SaldoCard.tsx`: Exibe badge "Proporcional", mostra limite original vs proporcional, detalhes expandíveis dos arrendamentos
 
 ---
 
 ## 🎯 ORDEM DE IMPLEMENTAÇÃO SUGERIDA
 
-1. **Feature 5 (Anti-Burla)** - Mais fácil, só ajustar validação existente
-2. **Feature 3 (Modalidades)** - Média complexidade, afeta formulário
-3. **Feature 6 (Relatórios)** - Independente, pode fazer em paralelo
-4. **Feature 4 (Proporcional)** - Mais complexa, deixar por último
-5. **Cadastrar restante dos programas** - Enviar PDFs das leis para cadastrar
-6. **Importar dados das planilhas da Claudete** - Programas não cadastrados no GIM, dados de 2024
+1. **Feature 3 (PWA Dashboard)** - Concluída
+2. **Feature 4 (Proporcional)** - Concluída
+3. **Cadastrar restante dos programas** - Enviar PDFs das leis para cadastrar
+4. **Importar dados das planilhas da Claudete** - Programas não cadastrados no GIM, dados de 2024
 
 ---
 

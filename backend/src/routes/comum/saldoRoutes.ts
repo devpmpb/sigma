@@ -23,6 +23,19 @@ router.get(
   requirePermission(ModuloSistema.COMUM, AcaoPermissao.VIEW),
   saldoController.getSaldoRapido
 );
+
+// Feature 4: Distribuição proporcional entre arrendatários
+router.get(
+  "/:pessoaId/:programaId/proporcional",
+  requirePermission(ModuloSistema.COMUM, AcaoPermissao.VIEW),
+  saldoController.getSaldoProporcional
+);
+router.get(
+  "/:pessoaId/:programaId/limite-proporcional",
+  requirePermission(ModuloSistema.COMUM, AcaoPermissao.VIEW),
+  saldoController.getLimiteProporcional
+);
+
 router.post(
   "/verificar",
   requirePermission(ModuloSistema.COMUM, AcaoPermissao.VIEW),

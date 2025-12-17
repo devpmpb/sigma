@@ -65,12 +65,37 @@ export interface SaldosPorPessoa {
   }>;
 }
 
+// Feature 4: Distribuição proporcional entre arrendatários
+export interface LimiteProporcional {
+  pessoaId: number;
+  pessoaNome: string;
+  programaId: number;
+  programaNome: string;
+  limiteOriginal: number;
+  limiteProporcional: number;
+  percentualTotal: number;
+  unidade: string;
+  propriedadesArrendadas: Array<{
+    propriedadeId: number;
+    proprietarioNome: string;
+    areaArrendada: number;
+    areaTotalPropriedade: number;
+    percentualPropriedade: number;
+    limiteContribuido: number;
+  }>;
+  mensagem: string;
+}
+
+export interface SaldoProporcional extends SaldoDisponivel {
+  proporcional?: LimiteProporcional;
+}
+
 // ============================================================================
 // SERVIÇO
 // ============================================================================
 
 class SaldoService {
-  private baseUrl = "/api/comum/saldo";
+  private baseUrl = "/comum/saldo";
 
   /**
    * Consulta saldo completo com histórico
@@ -119,6 +144,33 @@ class SaldoService {
    */
   async getSaldosPorPessoa(pessoaId: number): Promise<SaldosPorPessoa> {
     const response = await apiClient.get(`${this.baseUrl}/pessoa/${pessoaId}`);
+    return response.data;
+  }
+
+  /**
+   * Consulta saldo considerando proporção de arrendamento
+   * (Feature 4: Distribuição proporcional entre arrendatários)
+   */
+  async getSaldoProporcional(
+    pessoaId: number,
+    programaId: number
+  ): Promise<SaldoProporcional> {
+    const response = await apiClient.get(
+      `${this.baseUrl}/${pessoaId}/${programaId}/proporcional`
+    );
+    return response.data;
+  }
+
+  /**
+   * Consulta apenas o limite proporcional (para debug/visualização)
+   */
+  async getLimiteProporcional(
+    pessoaId: number,
+    programaId: number
+  ): Promise<LimiteProporcional> {
+    const response = await apiClient.get(
+      `${this.baseUrl}/${pessoaId}/${programaId}/limite-proporcional`
+    );
     return response.data;
   }
 
