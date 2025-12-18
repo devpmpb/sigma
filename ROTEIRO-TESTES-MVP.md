@@ -109,9 +109,9 @@ Este documento descreve os testes que devem ser realizados antes de liberar o si
 6. Verificar na lista
 
 ### Resultado esperado:
-- [ ] Arrendamento cadastrado
-- [ ] Área arrendada correta
-- [ ] Datas corretas
+- [ok] Arrendamento cadastrado
+- [ok] Área arrendada correta
+- [ok] Datas corretas
 
 ---
 
