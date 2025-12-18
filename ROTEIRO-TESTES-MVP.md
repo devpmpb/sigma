@@ -15,9 +15,9 @@ Este documento descreve os testes que devem ser realizados antes de liberar o si
 6. Tentar acessar /dashboards sem login → Deve redirecionar para login
 
 ### Resultado esperado:
-- [ ] Login funciona
-- [ ] Logout funciona
-- [ ] Rotas protegidas redirecionam
+- [ok] Login funciona
+- [ok] Logout funciona
+- [ok] Rotas protegidas redirecionam
 
 ---
 
@@ -38,9 +38,9 @@ Este documento descreve os testes que devem ser realizados antes de liberar o si
 8. Salvar e verificar alteração
 
 ### Resultado esperado:
-- [ ] Cadastro funciona
-- [ ] Edição funciona
-- [ ] Lista atualiza
+- [ok] Cadastro funciona
+- [ok] Edição funciona
+- [ok] Lista atualiza
 
 ---
 
@@ -60,9 +60,9 @@ Este documento descreve os testes que devem ser realizados antes de liberar o si
 5. Verificar na lista
 
 ### Resultado esperado:
-- [ ] Cadastro funciona
-- [ ] Busca de proprietário funciona
-- [ ] Lista atualiza
+- [ok] Cadastro funciona
+- [ok] Busca de proprietário funciona
+- [ok] Lista atualiza
 
 ---
 
@@ -85,9 +85,9 @@ Este documento descreve os testes que devem ser realizados antes de liberar o si
 7. Verificar se a propriedade agora mostra Maria como proprietária
 
 ### Resultado esperado:
-- [ ] Transferência registrada
-- [ ] Propriedade atualiza proprietário
-- [ ] Histórico de transferências visível
+- [ok] Transferência registrada
+- [ok] Propriedade atualiza proprietário
+- [ok] Histórico de transferências visível
 
 ---
 

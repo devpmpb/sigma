@@ -29,25 +29,11 @@ export enum AtividadeProdutiva {
   OUTROS = "OUTROS",
 }
 
-// Interface para a entidade Propriedade ATUALIZADA
+// Interface para a entidade Propriedade
 export interface Propriedade {
   id: number;
   nome: string;
   tipoPropriedade: TipoPropriedade;
-
-  // NOVOS CAMPOS
-  logradouroId?: number; // ID do logradouro da tabela Logradouro
-  logradouro?: {
-    // Dados do logradouro (quando incluído)
-    id: number;
-    tipo: string;
-    descricao: string;
-    cep?: string;
-    bairro?: {
-      id: number;
-      nome: string;
-    };
-  };
   numero?: string; // Número do lote/chácara
 
   // Área total com unidade
@@ -58,14 +44,39 @@ export interface Propriedade {
   itr?: string;
   incra?: string;
   atividadeProdutiva?: AtividadeProdutiva;
-  
-  // Novos campos obrigatórios
+
+  // Situação e residência
   situacao: SituacaoPropriedade;
   isproprietarioResidente: boolean;
 
-  // Campos existentes mantidos
+  // Campos de localização
   localizacao?: string;
   matricula?: string;
+
+  // Relacionamento com Endereço
+  enderecoId?: number;
+  endereco?: {
+    id: number;
+    logradouro?: {
+      id: number;
+      tipo: string;
+      descricao: string;
+      cep?: string;
+    };
+    numero?: string;
+    complemento?: string;
+    bairro?: {
+      id: number;
+      nome: string;
+    };
+    areaRural?: {
+      id: number;
+      nome: string;
+    };
+    referenciaRural?: string;
+  };
+
+  // Proprietário
   proprietarioId: number;
   proprietario?: {
     id: number;
@@ -83,37 +94,34 @@ export interface Propriedade {
   createdAt: string;
   updatedAt: string;
   // Campos opcionais para relacionamentos
-  enderecos?: any[];
   arrendamentos?: any[];
 }
 
-// Interface para os dados de criação/atualização ATUALIZADA
+// Interface para os dados de criação/atualização
 export interface PropriedadeDTO {
   nome: string;
   tipoPropriedade: TipoPropriedade;
-
-  // NOVOS CAMPOS
-  logradouroId?: number; // ID do logradouro
   numero?: string;
 
-  // Área total
+  // Área total (unidadeArea será calculada automaticamente baseada no tipo)
   areaTotal: number | string;
-  // unidadeArea será calculada automaticamente baseada no tipo
 
   // Campos rurais (opcionais)
   itr?: string;
   incra?: string;
   atividadeProdutiva?: AtividadeProdutiva;
 
-  // Novos campos obrigatórios
+  // Situação e residência
   situacao: SituacaoPropriedade;
   isproprietarioResidente: boolean;
 
-  // Campos existentes
+  // Localização
   localizacao?: string;
   matricula?: string;
+
+  // Proprietários
   proprietarioId: number;
-  nuProprietarioId?: number
+  nuProprietarioId?: number;
 }
 
 /**
@@ -297,16 +305,51 @@ class PropriedadeService extends BaseApiService<Propriedade, PropriedadeDTO> {
   };
 
   /**
-   * NOVO: Formata atividade produtiva para exibição
+   * Formata atividade produtiva para exibição
    */
   formatarAtividadeProdutiva = (atividade?: AtividadeProdutiva): string => {
     if (!atividade) return "-";
-    
+
     const atividades = this.getAtividadesProdutivas();
-    const found = atividades.find(a => a.value === atividade);
+    const found = atividades.find((a) => a.value === atividade);
     return found?.label || atividade;
   };
 
+  /**
+   * Formata o endereço da propriedade para exibição
+   */
+  formatarEndereco = (propriedade: Propriedade): string => {
+    if (!propriedade.endereco) return "Endereço não informado";
+
+    const endereco = propriedade.endereco;
+    const partes: string[] = [];
+
+    if (endereco.logradouro) {
+      // Endereço urbano
+      partes.push(`${endereco.logradouro.tipo} ${endereco.logradouro.descricao}`);
+
+      if (endereco.numero) {
+        partes.push(`nº ${endereco.numero}`);
+      }
+
+      if (endereco.complemento) {
+        partes.push(endereco.complemento);
+      }
+
+      if (endereco.bairro) {
+        partes.push(`- ${endereco.bairro.nome}`);
+      }
+    } else if (endereco.areaRural) {
+      // Endereço rural
+      partes.push(endereco.areaRural.nome);
+
+      if (endereco.referenciaRural) {
+        partes.push(`- ${endereco.referenciaRural}`);
+      }
+    }
+
+    return partes.length > 0 ? partes.join(" ") : "Endereço não informado";
+  };
 }
 
 

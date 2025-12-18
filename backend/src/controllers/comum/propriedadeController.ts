@@ -131,9 +131,6 @@ export const propriedadeController = {
       const transformedData = {
         nome: proprietyData.nome,
         tipoPropriedade: proprietyData.tipoPropriedade,
-        logradouroId: proprietyData.logradouroId
-          ? Number(proprietyData.logradouroId)
-          : null,
         numero: proprietyData.numero || null,
         areaTotal: Number(proprietyData.areaTotal),
         unidadeArea:
@@ -176,12 +173,11 @@ export const propriedadeController = {
                 tipoPessoa: true,
               },
             },
-            logradouro: {
-              select: {
-                id: true,
-                tipo: true,
-                descricao: true,
-                cep: true,
+            endereco: {
+              include: {
+                logradouro: true,
+                bairro: true,
+                areaRural: true,
               },
             },
             nuProprietario: {
@@ -249,9 +245,6 @@ export const propriedadeController = {
       const transformedData = {
         nome: proprietyData.nome,
         tipoPropriedade: proprietyData.tipoPropriedade,
-        logradouroId: proprietyData.logradouroId
-          ? Number(proprietyData.logradouroId)
-          : null,
         numero: proprietyData.numero || null,
         areaTotal: Number(proprietyData.areaTotal),
         unidadeArea:
@@ -295,12 +288,11 @@ export const propriedadeController = {
                 tipoPessoa: true,
               },
             },
-            logradouro: {
-              select: {
-                id: true,
-                tipo: true,
-                descricao: true,
-                cep: true,
+            endereco: {
+              include: {
+                logradouro: true,
+                bairro: true,
+                areaRural: true,
               },
             },
             nuProprietario: {
@@ -740,12 +732,11 @@ export const propriedadeController = {
               tipoPessoa: true,
             },
           },
-          logradouro: {
-            select: {
-              id: true,
-              tipo: true,
-              descricao: true,
-              cep: true,
+          endereco: {
+            include: {
+              logradouro: true,
+              bairro: true,
+              areaRural: true,
             },
           },
         },
@@ -764,7 +755,7 @@ export const propriedadeController = {
     }
   },
 
-  // NOVA: Buscar propriedades com proprietários residentes
+  // Buscar propriedades com proprietários residentes
   findComProprietariosResidentes: async (req: Request, res: Response) => {
     try {
       const propriedades = await prisma.propriedade.findMany({
@@ -778,12 +769,11 @@ export const propriedadeController = {
               tipoPessoa: true,
             },
           },
-          logradouro: {
-            select: {
-              id: true,
-              tipo: true,
-              descricao: true,
-              cep: true,
+          endereco: {
+            include: {
+              logradouro: true,
+              bairro: true,
+              areaRural: true,
             },
           },
         },
@@ -818,12 +808,11 @@ export const propriedadeController = {
               tipoPessoa: true,
             },
           },
-          logradouro: {
-            select: {
-              id: true,
-              tipo: true,
-              descricao: true,
-              cep: true,
+          endereco: {
+            include: {
+              logradouro: true,
+              bairro: true,
+              areaRural: true,
             },
           },
           arrendamentos: {
@@ -839,13 +828,6 @@ export const propriedadeController = {
                   },
                 },
               },
-            },
-          },
-          enderecos: {
-            include: {
-              logradouro: true,
-              bairro: true,
-              areaRural: true,
             },
           },
         },

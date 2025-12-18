@@ -12,11 +12,12 @@ import propriedadeService, {
 import pessoaService, {
   Pessoa,
 } from "../../../../services/comum/pessoaService";
-import logradouroService, {
-  Logradouro,
-} from "../../../../services/comum/logradouroService";
+import enderecoService, {
+  Endereco,
+} from "../../../../services/comum/enderecoService";
 import propriedadeCondominoService from "../../../../services/comum/propriedadeCondominoService";
 import { useParams } from "@tanstack/react-router";
+import { MapPin } from "lucide-react";
 
 interface PropriedadeFormProps {
   id?: string | number;
@@ -39,8 +40,8 @@ const PropriedadeForm: React.FC<PropriedadeFormProps> = ({ id, onSave }) => {
   const params = useParams({ strict: false });
   const propriedadeId = id || params.id;
 
-  const [logradouros, setLogradouros] = useState<Logradouro[]>([]);
-  const [loadingLogradouros, setLoadingLogradouros] = useState(false);
+  // Estado para endereço da propriedade (apenas visualização)
+  const [enderecoAtual, setEnderecoAtual] = useState<Endereco | null>(null);
 
   // Estados para condôminos
   const [condominos, setCondominos] = useState<CondominoFormData[]>([]);
@@ -67,7 +68,6 @@ const PropriedadeForm: React.FC<PropriedadeFormProps> = ({ id, onSave }) => {
   const initialValues: PropriedadeDTO = {
     nome: "",
     tipoPropriedade: TipoPropriedade.RURAL,
-    logradouroId: undefined,
     numero: "",
     areaTotal: "",
     itr: "",
@@ -80,23 +80,6 @@ const PropriedadeForm: React.FC<PropriedadeFormProps> = ({ id, onSave }) => {
     proprietarioId: 0,
     nuProprietarioId: undefined,
   };
-
-  // Carregar logradouros para seleção
-  useEffect(() => {
-    const fetchLogradouros = async () => {
-      setLoadingLogradouros(true);
-      try {
-        const data = await logradouroService.getAll();
-        setLogradouros(data);
-      } catch (error) {
-        console.error("Erro ao carregar logradouros:", error);
-      } finally {
-        setLoadingLogradouros(false);
-      }
-    };
-
-    fetchLogradouros();
-  }, []);
 
   // Carregar condôminos existentes quando estiver editando
   useEffect(() => {
@@ -392,46 +375,11 @@ const PropriedadeForm: React.FC<PropriedadeFormProps> = ({ id, onSave }) => {
             )}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Logradouro */}
-            <FormField
-              name="logradouroId"
-              label="Logradouro"
-              error={errors.logradouroId}
-              touched={touched.logradouroId}
-            >
-              <select
-                id="logradouroId"
-                name="logradouroId"
-                value={values.logradouroId || ""}
-                onChange={(e) =>
-                  setValue(
-                    "logradouroId",
-                    e.target.value ? Number(e.target.value) : undefined
-                  )
-                }
-                onBlur={() => setFieldTouched("logradouroId")}
-                disabled={loadingLogradouros}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">
-                  {loadingLogradouros
-                    ? "Carregando..."
-                    : "Selecione o logradouro"}
-                </option>
-                {logradouros.map((logradouro) => (
-                  <option key={logradouro.id} value={logradouro.id}>
-                    {logradouro.tipo} {logradouro.descricao}
-                    {logradouro.bairro && ` - ${logradouro.bairro.nome}`}
-                  </option>
-                ))}
-              </select>
-            </FormField>
-
-            {/* Número */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Número/Identificação */}
             <FormField
               name="numero"
-              label="Número (Lote/Chácara)"
+              label="Número/Identificação (Lote/Chácara)"
               error={errors.numero}
               touched={touched.numero}
             >
@@ -442,7 +390,7 @@ const PropriedadeForm: React.FC<PropriedadeFormProps> = ({ id, onSave }) => {
                 value={values.numero || ""}
                 onChange={handleChange}
                 onBlur={() => setFieldTouched("numero")}
-                placeholder="Ex: 123, Lote 5"
+                placeholder="Ex: 123, Lote 5, Chácara 10"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </FormField>
