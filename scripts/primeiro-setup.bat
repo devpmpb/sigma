@@ -68,7 +68,7 @@ echo 2. Configure o Caddy para HTTPS
 echo 3. Aponte o DNS sigma.patobragado.pr.gov.br para este servidor
 echo.
 echo Usuario padrao: admin@sigma.com
-echo Senha padrao: admin123 (TROQUE IMEDIATAMENTE!)
+echo Senha padrao: 123456 (TROQUE IMEDIATAMENTE!)
 echo.
 
 pause

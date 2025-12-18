@@ -168,7 +168,7 @@ npx prisma db seed
 
 **Usuário criado:**
 - Email: `admin@sigma.com`
-- Senha: `admin123`
+- Senha: `123456`
 
 ⚠️ **TROQUE A SENHA IMEDIATAMENTE após primeiro login!**
 
@@ -277,7 +277,7 @@ Abra no navegador:
 
 **Login:**
 - Email: admin@sigma.com
-- Senha: admin123
+- Senha: 123456
 
 ---
 
