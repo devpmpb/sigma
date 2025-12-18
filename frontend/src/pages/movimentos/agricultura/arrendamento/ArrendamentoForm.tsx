@@ -129,7 +129,7 @@ const ArrendamentoForm: React.FC<ArrendamentoFormProps> = ({ id, onSave }) => {
       validate={validate}
       returnUrl="/movimentos/agricultura/arrendamentos"
     >
-      {({ values, errors, touched, handleChange, setFieldValue, setFieldTouched }) => (
+      {({ values, errors, touched, handleChange, setValue, setFieldTouched }) => (
         <div className="space-y-6">
           {/* Seção de Propriedade e Partes */}
           <FormSection
@@ -154,7 +154,7 @@ const ArrendamentoForm: React.FC<ArrendamentoFormProps> = ({ id, onSave }) => {
                     const prop = propriedades.find(p => p.id === propId);
                     setPropriedadeSelecionada(prop || null);
                     if (prop?.proprietarioId) {
-                      setFieldValue("proprietarioId", prop.proprietarioId);
+                      setValue("proprietarioId", prop.proprietarioId);
                     }
                   }}
                   onBlur={() => setFieldTouched("propriedadeId", true)}
@@ -177,19 +177,24 @@ const ArrendamentoForm: React.FC<ArrendamentoFormProps> = ({ id, onSave }) => {
                 error={errors.proprietarioId}
                 touched={touched.proprietarioId}
                 required
+                helpText="Proprietário é definido automaticamente pela propriedade selecionada"
               >
                 <select
                   id="proprietarioId"
                   name="proprietarioId"
-                  value={values.proprietarioId}
-                  onChange={handleChange}
+                  value={String(values.proprietarioId || 0)}
+                  onChange={(e) => setValue("proprietarioId", Number(e.target.value))}
                   onBlur={() => setFieldTouched("proprietarioId", true)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  disabled={loadingPessoas || !!propriedadeSelecionada?.proprietarioId}
+                  disabled={true}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-100 cursor-not-allowed"
                 >
-                  <option value={0}>Selecione o proprietário</option>
+                  <option value="0">
+                    {loadingPessoas
+                      ? "Carregando..."
+                      : "Proprietário será preenchido automaticamente"}
+                  </option>
                   {pessoasFisicas.map((pessoa) => (
-                    <option key={pessoa.id} value={pessoa.id}>
+                    <option key={pessoa.id} value={String(pessoa.id)}>
                       {pessoa.nome} - {pessoa.cpfCnpj}
                     </option>
                   ))}
