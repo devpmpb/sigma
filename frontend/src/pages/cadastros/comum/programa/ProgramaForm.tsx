@@ -122,7 +122,7 @@ const ProgramaForm: React.FC<ProgramaFormProps> = ({ id, onSave }) => {
         initialValues={initialValues}
         validate={validate}
         returnUrl="/cadastros/comum/programas"
-        onSave={onSave}
+        //onSave={onSave}
       >
         {({ values, errors, touched, handleChange, setValue }) => (
           <>

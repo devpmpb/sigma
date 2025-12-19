@@ -122,6 +122,58 @@ export const programaController = {
     }
   },
 
+  buscarPorTermo: async (req: Request, res: Response) => {
+    try {
+      const { termo } = req.query;
+
+      if (!termo) {
+        return res.status(400).json({ erro: "Termo de busca é obrigatório" });
+      }
+
+      const programas = await prisma.programa.findMany({
+        where: {
+          OR: [
+            {
+              nome: {
+                contains: termo as string,
+                mode: "insensitive",
+              },
+            },
+            {
+              descricao: {
+                contains: termo as string,
+                mode: "insensitive",
+              },
+            },
+            {
+              leiNumero: {
+                contains: termo as string,
+                mode: "insensitive",
+              },
+            },
+          ],
+        },
+        include: {
+          _count: {
+            select: {
+              solicitacoes: true,
+              regras: true,
+            },
+          },
+        },
+        orderBy: { nome: "asc" },
+      });
+
+      return res.status(200).json(programas);
+    } catch (error) {
+      console.log("Chegou no BUSCAR POR TERMO");
+      console.error("Erro ao buscar programas por termo:", error);
+      return res.status(500).json({
+        erro: "Erro ao buscar programas",
+      });
+    }
+  },
+
   // Sobrescrever método status para validar regras antes de ativar
   async status(req: Request, res: Response) {
     try {
@@ -266,6 +318,7 @@ export const programaController = {
 
       res.json(programas);
     } catch (error) {
+      console.log("Chegou no BUSCAR POR TIPO");
       console.error("Erro ao buscar programas por tipo:", error);
       res.status(500).json({ erro: "Erro interno do servidor" });
     }
@@ -304,6 +357,7 @@ export const programaController = {
 
       res.json(programas);
     } catch (error) {
+      console.log("Chegou no BUSCAR POR ECRETARIA");
       console.error("Erro ao buscar programas por secretaria:", error);
       res.status(500).json({ erro: "Erro interno do servidor" });
     }
@@ -335,6 +389,7 @@ export const programaController = {
 
       res.json(programa);
     } catch (error) {
+      console.log("Chegou no BUSCAR  ID POR REGRAS");
       console.error("Erro ao buscar programa com regras:", error);
       res.status(500).json({ erro: "Erro interno do servidor" });
     }

@@ -96,6 +96,7 @@ export default function useApiService<
    * @param termo - Termo para busca
    */
   const searchByTerm = useCallback(
+    
     async (termo: string) => {
       if (!termo.trim()) {
         setSearchTerm("");

@@ -390,7 +390,6 @@ export const pessoaController = {
   buscarPorTermo: async (req: Request, res: Response) => {
     try {
       const { termo } = req.query;
-
       if (!termo) {
         return res.status(400).json({ erro: "Termo de busca é obrigatório" });
       }
