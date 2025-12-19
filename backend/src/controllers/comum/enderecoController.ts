@@ -130,32 +130,4 @@ export const enderecoController = {
       });
     }
   },
-
-  // Buscar endereços por propriedade
-  findByPropriedade: async (req: Request, res: Response) => {
-    try {
-      const { propriedadeId } = req.params;
-
-      const enderecos = await prisma.endereco.findMany({
-        where: {
-          propriedadeId: Number(propriedadeId),
-        },
-        include: {
-          logradouro: true,
-          bairro: true,
-          areaRural: true,
-          pessoa: true,
-        },
-      });
-
-      return res.status(200).json(enderecos);
-    } catch (error) {
-      console.error("Erro ao buscar endereços por propriedade:", error);
-      return res.status(500).json({
-        erro: "Erro ao buscar endereços por propriedade",
-      });
-    }
-  },
-
-  // Outros métodos específicos podem ser adicionados aqui
 };

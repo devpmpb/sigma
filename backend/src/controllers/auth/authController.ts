@@ -169,7 +169,7 @@ export const authController = {
       });
 
       // Se falhou por qualquer motivo, retornar erro genérico
-      if (!loginBemSucedido) {
+      if (!loginBemSucedido || !usuario) {
         return res.status(401).json({
           error: "Credenciais inválidas",
         });

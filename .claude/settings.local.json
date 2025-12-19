@@ -9,7 +9,8 @@
       "Bash(npx prisma db seed:*)",
       "Bash(npx prisma generate:*)",
       "Bash(psql:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []

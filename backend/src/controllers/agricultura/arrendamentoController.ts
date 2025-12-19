@@ -59,29 +59,21 @@ const includeRelations = {
     },
   },
   proprietario: {
-    include: {
-      pessoa: {
-        select: {
-          id: true,
-          nome: true,
-          cpfCnpj: true,
-          telefone: true,
-          email: true,
-        },
-      },
+    select: {
+      id: true,
+      nome: true,
+      cpfCnpj: true,
+      telefone: true,
+      email: true,
     },
   },
   arrendatario: {
-    include: {
-      pessoa: {
-        select: {
-          id: true,
-          nome: true,
-          cpfCnpj: true,
-          telefone: true,
-          email: true,
-        },
-      },
+    select: {
+      id: true,
+      nome: true,
+      cpfCnpj: true,
+      telefone: true,
+      email: true,
     },
   },
 };
@@ -98,33 +90,6 @@ const genericController = createGenericController({
 // Controlador com métodos específicos para Arrendamento
 export const arrendamentoController = {
   ...genericController,
-
-  create: async (req: Request, res: Response) => {
-    try {
-      const data = req.body;
-      const convertedData = convertArrendamentoDateFields(data);
-
-      // Validação
-      const validation = validateArrendamentoCreate(convertedData);
-      if (!validation.isValid) {
-        return res.status(400).json({
-          error: "Dados inválidos",
-          message: validation.errors,
-        });
-      }
-
-      // Criar arrendamento
-      const arrendamento = await prisma.arrendamento.create({
-        data: convertedData,
-        include: includeRelations,
-      });
-
-      return res.status(201).json(arrendamento);
-    } catch (error) {
-      console.error("Erro ao criar arrendamento:", error);
-      return res.status(500).json({ error: "Erro interno do servidor" });
-    }
-  },
 
   update: async (req: Request, res: Response) => {
     try {
@@ -148,7 +113,7 @@ export const arrendamentoController = {
       });
 
       return res.status(200).json(arrendamento);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao atualizar arrendamento:", error);
       if (error.code === "P2025") {
         return res.status(404).json({ error: "Arrendamento não encontrado" });
@@ -160,8 +125,14 @@ export const arrendamentoController = {
   // Sobrescrever findAll para incluir relacionamentos
   findAll: async (req: Request, res: Response) => {
     try {
-      const { status, proprietarioId, arrendatarioId, propriedadeId, page, pageSize } =
-        req.query;
+      const {
+        status,
+        proprietarioId,
+        arrendatarioId,
+        propriedadeId,
+        page,
+        pageSize,
+      } = req.query;
 
       const whereClause: any = {};
 
@@ -184,7 +155,9 @@ export const arrendamentoController = {
 
       // Parâmetros de paginação
       const pageNum = page ? parseInt(page as string, 10) : undefined;
-      const pageSizeNum = pageSize ? parseInt(pageSize as string, 10) : undefined;
+      const pageSizeNum = pageSize
+        ? parseInt(pageSize as string, 10)
+        : undefined;
 
       const includeConfig = {
         propriedade: true,
@@ -556,7 +529,7 @@ export const arrendamentoController = {
                   email: true,
                 },
               },
-              enderecos: {
+              endereco: {
                 include: {
                   logradouro: {
                     select: {
@@ -573,7 +546,6 @@ export const arrendamentoController = {
                   areaRural: {
                     select: {
                       nome: true,
-                      localizacao: true,
                     },
                   },
                 },
@@ -581,41 +553,33 @@ export const arrendamentoController = {
             },
           },
           proprietario: {
-            include: {
-              pessoa: {
-                select: {
-                  id: true,
-                  nome: true,
-                  cpfCnpj: true,
-                  telefone: true,
-                  email: true,
-                  enderecos: {
-                    where: { principal: true },
-                    include: {
-                      logradouro: true,
-                      bairro: true,
-                    },
-                  },
+            select: {
+              id: true,
+              nome: true,
+              cpfCnpj: true,
+              telefone: true,
+              email: true,
+              enderecos: {
+                where: { principal: true },
+                include: {
+                  logradouro: true,
+                  bairro: true,
                 },
               },
             },
           },
           arrendatario: {
-            include: {
-              pessoa: {
-                select: {
-                  id: true,
-                  nome: true,
-                  cpfCnpj: true,
-                  telefone: true,
-                  email: true,
-                  enderecos: {
-                    where: { principal: true },
-                    include: {
-                      logradouro: true,
-                      bairro: true,
-                    },
-                  },
+            select: {
+              id: true,
+              nome: true,
+              cpfCnpj: true,
+              telefone: true,
+              email: true,
+              enderecos: {
+                where: { principal: true },
+                include: {
+                  logradouro: true,
+                  bairro: true,
                 },
               },
             },
@@ -795,7 +759,7 @@ export const arrendamentoController = {
       });
 
       return res.status(200).json(arrendamento);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao atualizar status:", error);
       if (error.code === "P2025") {
         return res.status(404).json({ erro: "Arrendamento não encontrado" });
@@ -848,7 +812,7 @@ export const arrendamentoController = {
       });
 
       return res.status(200).json(arrendamento);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao finalizar arrendamento:", error);
       if (error.code === "P2025") {
         return res.status(404).json({ erro: "Arrendamento não encontrado" });

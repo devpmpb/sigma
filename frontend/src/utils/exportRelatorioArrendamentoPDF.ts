@@ -10,10 +10,12 @@ import type {
 } from "../services/agricultura/relatorioArrendamentoService";
 
 const formatArea = (area: number) => {
-  return new Intl.NumberFormat("pt-BR", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(area) + " ha";
+  return (
+    new Intl.NumberFormat("pt-BR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(area) + " ha"
+  );
 };
 
 const formatDate = (dateString?: string) => {
@@ -56,7 +58,13 @@ export const exportRelatorioGeralPDF = (
     doc.setFont("helvetica", "normal");
     yPosition += 5;
     if (filtros.dataInicio) {
-      doc.text(`Período: ${formatDate(filtros.dataInicio)} até ${formatDate(filtros.dataFim) || "Atual"}`, 14, yPosition);
+      doc.text(
+        `Período: ${formatDate(filtros.dataInicio)} até ${
+          formatDate(filtros.dataFim) || "Atual"
+        }`,
+        14,
+        yPosition
+      );
       yPosition += 5;
     }
     if (filtros.status) {
@@ -75,22 +83,35 @@ export const exportRelatorioGeralPDF = (
   doc.setFont("helvetica", "normal");
   doc.text(`Total de Arrendamentos: ${data.estatisticas.total}`, 14, yPosition);
   yPosition += 5;
-  doc.text(`Área Total: ${formatArea(data.estatisticas.areaTotal)}`, 14, yPosition);
+  doc.text(
+    `Área Total: ${formatArea(data.estatisticas.areaTotal)}`,
+    14,
+    yPosition
+  );
   yPosition += 5;
-  doc.text(`Propriedades Únicas: ${data.estatisticas.propriedadesUnicas}`, 14, yPosition);
+  doc.text(
+    `Propriedades Únicas: ${data.estatisticas.propriedadesUnicas}`,
+    14,
+    yPosition
+  );
   yPosition += 5;
-  doc.text(`Arrendatários Únicos: ${data.estatisticas.arrendatariosUnicos}`, 14, yPosition);
+  doc.text(
+    `Arrendatários Únicos: ${data.estatisticas.arrendatariosUnicos}`,
+    14,
+    yPosition
+  );
   yPosition += 10;
 
   autoTable(doc, {
     startY: yPosition,
     head: [["Propriedade", "Arrendatário", "Área", "Status"]],
-    body: data.arrendamentos.slice(0, 50).map((item: any) => [
-      item.propriedade?.inscricaoCadastral || "N/A",
-      item.arrendatario?.nome || "N/A",
-      formatArea(item.areaArrendada),
-      item.status,
-    ]),
+    body: data.arrendamentos
+      .slice(0, 50)
+      .map((item: any) => [
+        item.arrendatario?.nome || "N/A",
+        formatArea(item.areaArrendada),
+        item.status,
+      ]),
     theme: "grid",
     headStyles: {
       fillColor: [34, 197, 94],
@@ -107,7 +128,11 @@ export const exportRelatorioGeralPDF = (
     const finalY = (doc as any).lastAutoTable.finalY + 10;
     doc.setFontSize(9);
     doc.setTextColor(128);
-    doc.text(`Nota: Mostrando 50 de ${data.arrendamentos.length} registros`, 14, finalY);
+    doc.text(
+      `Nota: Mostrando 50 de ${data.arrendamentos.length} registros`,
+      14,
+      finalY
+    );
   }
 
   const pageCount = (doc as any).internal.getNumberOfPages();
@@ -123,7 +148,10 @@ export const exportRelatorioGeralPDF = (
     );
   }
 
-  const nomeArquivo = `relatorio-arrendamentos-geral-${hoje.replace(/\//g, "-")}.pdf`;
+  const nomeArquivo = `relatorio-arrendamentos-geral-${hoje.replace(
+    /\//g,
+    "-"
+  )}.pdf`;
   doc.save(nomeArquivo);
 };
 
@@ -154,9 +182,17 @@ export const exportRelatorioPorPropriedadePDF = (
 
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
-  doc.text(`Total de Propriedades: ${data.totais.totalPropriedades}`, 14, yPosition);
+  doc.text(
+    `Total de Propriedades: ${data.totais.totalPropriedades}`,
+    14,
+    yPosition
+  );
   yPosition += 5;
-  doc.text(`Total de Arrendamentos: ${data.totais.totalArrendamentos}`, 14, yPosition);
+  doc.text(
+    `Total de Arrendamentos: ${data.totais.totalArrendamentos}`,
+    14,
+    yPosition
+  );
   yPosition += 10;
 
   data.propriedades.slice(0, 10).forEach((prop, index) => {
@@ -167,12 +203,18 @@ export const exportRelatorioPorPropriedadePDF = (
 
     doc.setFontSize(10);
     doc.setFont("helvetica", "bold");
-    doc.text(`${prop.propriedade.inscricaoCadastral} - ${prop.propriedade.proprietario}`, 14, yPosition);
+    doc.text(`${prop.propriedade.proprietario}`, 14, yPosition);
     yPosition += 5;
 
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
-    doc.text(`Área Total: ${formatArea(prop.propriedade.area)} | Arrendada: ${formatArea(prop.areaArrendadaTotal)}`, 14, yPosition);
+    doc.text(
+      `Área Total: ${formatArea(
+        prop.propriedade.area
+      )} | Arrendada: ${formatArea(prop.areaArrendadaTotal)}`,
+      14,
+      yPosition
+    );
     yPosition += 8;
 
     autoTable(doc, {
@@ -211,7 +253,10 @@ export const exportRelatorioPorPropriedadePDF = (
     );
   }
 
-  const nomeArquivo = `relatorio-arrendamentos-propriedades-${hoje.replace(/\//g, "-")}.pdf`;
+  const nomeArquivo = `relatorio-arrendamentos-propriedades-${hoje.replace(
+    /\//g,
+    "-"
+  )}.pdf`;
   doc.save(nomeArquivo);
 };
 
@@ -242,9 +287,17 @@ export const exportRelatorioPorArrendatarioPDF = (
 
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
-  doc.text(`Total de Arrendatários: ${data.totais.totalArrendatarios}`, 14, yPosition);
+  doc.text(
+    `Total de Arrendatários: ${data.totais.totalArrendatarios}`,
+    14,
+    yPosition
+  );
   yPosition += 5;
-  doc.text(`Total de Arrendamentos: ${data.totais.totalArrendamentos}`, 14, yPosition);
+  doc.text(
+    `Total de Arrendamentos: ${data.totais.totalArrendamentos}`,
+    14,
+    yPosition
+  );
   yPosition += 5;
   doc.text(`Área Total: ${formatArea(data.totais.areaTotal)}`, 14, yPosition);
   yPosition += 10;
@@ -283,7 +336,10 @@ export const exportRelatorioPorArrendatarioPDF = (
     );
   }
 
-  const nomeArquivo = `relatorio-arrendamentos-arrendatarios-${hoje.replace(/\//g, "-")}.pdf`;
+  const nomeArquivo = `relatorio-arrendamentos-arrendatarios-${hoje.replace(
+    /\//g,
+    "-"
+  )}.pdf`;
   doc.save(nomeArquivo);
 };
 
@@ -314,14 +370,26 @@ export const exportRelatorioPorAtividadePDF = (
 
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
-  doc.text(`Total de Arrendamentos: ${data.totais.totalArrendamentos}`, 14, yPosition);
+  doc.text(
+    `Total de Arrendamentos: ${data.totais.totalArrendamentos}`,
+    14,
+    yPosition
+  );
   yPosition += 5;
   doc.text(`Área Total: ${formatArea(data.totais.areaTotal)}`, 14, yPosition);
   yPosition += 10;
 
   autoTable(doc, {
     startY: yPosition,
-    head: [["Atividade", "Quantidade", "Área Total", "Arrendatários", "Propriedades"]],
+    head: [
+      [
+        "Atividade",
+        "Quantidade",
+        "Área Total",
+        "Arrendatários",
+        "Propriedades",
+      ],
+    ],
     body: data.atividades.map((item) => [
       item.atividade || "Não especificada",
       item.quantidadeArrendamentos.toString(),
@@ -361,7 +429,10 @@ export const exportRelatorioPorAtividadePDF = (
     );
   }
 
-  const nomeArquivo = `relatorio-arrendamentos-atividades-${hoje.replace(/\//g, "-")}.pdf`;
+  const nomeArquivo = `relatorio-arrendamentos-atividades-${hoje.replace(
+    /\//g,
+    "-"
+  )}.pdf`;
   doc.save(nomeArquivo);
 };
 
@@ -407,7 +478,11 @@ export const exportRelatorioVencendoPDF = (
   yPosition += 5;
   doc.text(`Urgentes (≤7 dias): ${data.estatisticas.urgentes}`, 14, yPosition);
   yPosition += 5;
-  doc.text(`Área Total: ${formatArea(data.estatisticas.areaTotal)}`, 14, yPosition);
+  doc.text(
+    `Área Total: ${formatArea(data.estatisticas.areaTotal)}`,
+    14,
+    yPosition
+  );
   yPosition += 10;
 
   autoTable(doc, {
@@ -416,9 +491,10 @@ export const exportRelatorioVencendoPDF = (
     body: data.arrendamentos.map((item: any) => {
       const dataFim = new Date(item.dataFim);
       const agora = new Date();
-      const diasRestantes = Math.ceil((dataFim.getTime() - agora.getTime()) / (1000 * 60 * 60 * 24));
+      const diasRestantes = Math.ceil(
+        (dataFim.getTime() - agora.getTime()) / (1000 * 60 * 60 * 24)
+      );
       return [
-        item.propriedade?.inscricaoCadastral || "N/A",
         item.arrendatario?.nome || "N/A",
         formatArea(item.areaArrendada),
         formatDate(item.dataFim),
@@ -453,6 +529,9 @@ export const exportRelatorioVencendoPDF = (
     );
   }
 
-  const nomeArquivo = `relatorio-arrendamentos-vencendo-${hoje.replace(/\//g, "-")}.pdf`;
+  const nomeArquivo = `relatorio-arrendamentos-vencendo-${hoje.replace(
+    /\//g,
+    "-"
+  )}.pdf`;
   doc.save(nomeArquivo);
 };

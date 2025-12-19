@@ -21,7 +21,6 @@ export interface RelatorioPorPropriedade {
   propriedades: {
     propriedade: {
       id: number;
-      inscricaoCadastral: string;
       area: number;
       proprietario: string;
       logradouro: string;
@@ -114,7 +113,9 @@ class RelatorioArrendamentoService extends BaseApiService {
     dataInicio?: string;
     dataFim?: string;
   }): Promise<RelatorioPorPropriedade> {
-    const response = await apiClient.get(`${this.baseUrl}/por-propriedade`, { params });
+    const response = await apiClient.get(`${this.baseUrl}/por-propriedade`, {
+      params,
+    });
     return response.data;
   }
 
@@ -122,7 +123,9 @@ class RelatorioArrendamentoService extends BaseApiService {
     dataInicio?: string;
     dataFim?: string;
   }): Promise<RelatorioPorArrendatario> {
-    const response = await apiClient.get(`${this.baseUrl}/por-arrendatario`, { params });
+    const response = await apiClient.get(`${this.baseUrl}/por-arrendatario`, {
+      params,
+    });
     return response.data;
   }
 
@@ -130,14 +133,16 @@ class RelatorioArrendamentoService extends BaseApiService {
     dataInicio?: string;
     dataFim?: string;
   }): Promise<RelatorioPorAtividade> {
-    const response = await apiClient.get(`${this.baseUrl}/por-atividade`, { params });
+    const response = await apiClient.get(`${this.baseUrl}/por-atividade`, {
+      params,
+    });
     return response.data;
   }
 
-  async vencendo(params: {
-    dias?: number;
-  }): Promise<RelatorioVencendo> {
-    const response = await apiClient.get(`${this.baseUrl}/vencendo`, { params });
+  async vencendo(params: { dias?: number }): Promise<RelatorioVencendo> {
+    const response = await apiClient.get(`${this.baseUrl}/vencendo`, {
+      params,
+    });
     return response.data;
   }
 }

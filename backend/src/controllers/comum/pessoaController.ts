@@ -313,7 +313,6 @@ export const pessoaController = {
               logradouro: true,
               bairro: true,
               areaRural: true,
-              propriedade: true,
             },
           },
           propriedades: true,
