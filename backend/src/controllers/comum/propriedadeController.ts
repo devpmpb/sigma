@@ -86,27 +86,6 @@ const genericController = createGenericController({
   validateCreate: validate,
   validateUpdate: validate,
 
-  // NOVA FUNÇÃO: Transformar dados antes de salvar
-  transformDataBeforeSave: (data: any) => {
-    // Determinar unidade de área baseada no tipo
-    const unidadeArea =
-      data.tipoPropriedade === TipoPropriedade.RURAL
-        ? "alqueires"
-        : "metros_quadrados";
-
-    // Limpar campos rurais se não for rural
-    if (data.tipoPropriedade !== TipoPropriedade.RURAL) {
-      data.itr = null;
-      data.incra = null;
-    }
-
-    return {
-      ...data,
-      unidadeArea,
-      isproprietarioResidente: Boolean(data.isproprietarioResidente),
-      areaTotal: Number(data.areaTotal),
-    };
-  },
 });
 
 // Controlador com métodos específicos para Propriedade ATUALIZADO
@@ -594,7 +573,7 @@ export const propriedadeController = {
               email: true,
             },
           },
-          enderecos: {
+          endereco: {
             include: {
               logradouro: true,
               bairro: true,
@@ -606,23 +585,16 @@ export const propriedadeController = {
               arrendatario: {
                 select: {
                   id: true,
-                  pessoa: {
-                    select: {
-                      nome: true,
-                      cpfCnpj: true,
-                    },
-                  },
+
+                  nome: true,
+                  cpfCnpj: true,
                 },
               },
               proprietario: {
                 select: {
                   id: true,
-                  pessoa: {
-                    select: {
-                      nome: true,
-                      cpfCnpj: true,
-                    },
-                  },
+                  nome: true,
+                  cpfCnpj: true,
                 },
               },
             },
@@ -818,14 +790,10 @@ export const propriedadeController = {
           arrendamentos: {
             include: {
               arrendatario: {
-                include: {
-                  pessoa: {
-                    select: {
-                      id: true,
-                      nome: true,
-                      cpfCnpj: true,
-                    },
-                  },
+                select: {
+                  id: true,
+                  nome: true,
+                  cpfCnpj: true,
                 },
               },
             },

@@ -69,6 +69,7 @@ export default class BaseApiService<T, R = Partial<T>> {
    * @returns Uma promessa com um array de entidades do tipo T
    */
   buscarPorTermo = async (termo: string): Promise<T[]> => {
+    console.log("sdjdslkjdsalkjaskljdaskldklasklasjdlkjdklsjad");
     const response: AxiosResponse<T[]> = await apiClient.get(
       `${this.baseUrl}/busca`,
       {
@@ -96,8 +97,8 @@ export default class BaseApiService<T, R = Partial<T>> {
    * @returns Uma promessa com a entidade criada do tipo T
    */
   create = async (data: R): Promise<T> => {
-      const response: AxiosResponse<T> = await apiClient.post(this.baseUrl, data);
-      return response.data;
+    const response: AxiosResponse<T> = await apiClient.post(this.baseUrl, data);
+    return response.data;
   };
 
   /**

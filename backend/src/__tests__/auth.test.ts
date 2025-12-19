@@ -95,6 +95,13 @@ describe("Sistema de Autenticação com ENUMs", () => {
       const userPermissions = [
         { modulo: ModuloSistema.OBRAS, acao: AcaoPermissao.VIEW },
         { modulo: ModuloSistema.OBRAS, acao: AcaoPermissao.CREATE },
+        { modulo: ModuloSistema.OBRAS, acao: AcaoPermissao.DELETE },
+        { modulo: ModuloSistema.AGRICULTURA, acao: AcaoPermissao.VIEW },
+        { modulo: ModuloSistema.AGRICULTURA, acao: AcaoPermissao.CREATE },
+        { modulo: ModuloSistema.AGRICULTURA, acao: AcaoPermissao.DELETE },
+        { modulo: ModuloSistema.ADMIN, acao: AcaoPermissao.VIEW },
+        { modulo: ModuloSistema.ADMIN, acao: AcaoPermissao.CREATE },
+        { modulo: ModuloSistema.ADMIN, acao: AcaoPermissao.DELETE },
       ];
 
       const hasPermission = userPermissions.some(

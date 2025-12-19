@@ -288,7 +288,7 @@ function evaluateCondition(valor: number, parametro: ParametroRegra): boolean {
 
 // Função para obter template de regra
 function getRuleTemplate(tipo: TipoRegra) {
-  const templates = {
+  const templates: Record<string, any> = {
     [TipoRegra.AREA_EFETIVA]: {
       parametro: {
         condicao: "menor_que",

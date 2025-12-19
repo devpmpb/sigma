@@ -38,6 +38,12 @@ router.get(
   programaController.findAll
 );
 
+router.get(
+  "/busca",
+  requirePermission(ModuloSistema.COMUM, AcaoPermissao.VIEW),
+  programaController.buscarPorTermo
+);
+
 // Buscar programa por ID
 router.get(
   "/:id",

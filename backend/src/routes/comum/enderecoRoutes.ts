@@ -10,7 +10,6 @@ const router = Router();
 router.get("/", requirePermission(ModuloSistema.COMUM, AcaoPermissao.VIEW), enderecoController.findAll);
 router.get("/:id", requirePermission(ModuloSistema.COMUM, AcaoPermissao.VIEW), enderecoController.findById);
 router.get("/pessoa/:pessoaId", requirePermission(ModuloSistema.COMUM, AcaoPermissao.VIEW), enderecoController.findByPessoa);
-router.get("/propriedade/:propriedadeId", requirePermission(ModuloSistema.COMUM, AcaoPermissao.VIEW), enderecoController.findByPropriedade);
 router.post("/", requirePermission(ModuloSistema.COMUM, AcaoPermissao.CREATE), enderecoController.create);
 router.put("/:id", requirePermission(ModuloSistema.COMUM, AcaoPermissao.EDIT), enderecoController.update);
 router.patch("/:id/principal", requirePermission(ModuloSistema.COMUM, AcaoPermissao.EDIT), enderecoController.setPrincipal);

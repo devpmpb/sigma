@@ -77,9 +77,8 @@ export const relatorioArrendamentoController = {
           total: arrendamentos.length,
           areaTotal,
           porStatus: Object.values(porStatus),
-          propriedadesUnicas: new Set(
-            arrendamentos.map((a) => a.propriedadeId)
-          ).size,
+          propriedadesUnicas: new Set(arrendamentos.map((a) => a.propriedadeId))
+            .size,
           arrendatariosUnicos: new Set(
             arrendamentos.map((a) => a.arrendatarioId)
           ).size,
@@ -116,7 +115,7 @@ export const relatorioArrendamentoController = {
           propriedade: {
             include: {
               proprietario: true,
-              logradouro: true,
+              endereco: true,
             },
           },
           arrendatario: true,
@@ -130,10 +129,8 @@ export const relatorioArrendamentoController = {
           acc[propId] = {
             propriedade: {
               id: arr.propriedade.id,
-              inscricaoCadastral: arr.propriedade.inscricaoCadastral,
-              area: arr.propriedade.area,
+              area: arr.propriedade.areaTotal,
               proprietario: arr.propriedade.proprietario.nome,
-              logradouro: arr.propriedade.logradouro?.descricao || "",
             },
             arrendamentos: [],
             areaArrendadaTotal: 0,
@@ -228,7 +225,6 @@ export const relatorioArrendamentoController = {
         }
 
         acc[arrendatarioId].arrendamentos.push({
-          propriedade: arr.propriedade.inscricaoCadastral,
           proprietario: arr.propriedade.proprietario.nome,
           areaArrendada: Number(arr.areaArrendada),
           dataInicio: arr.dataInicio,
@@ -340,10 +336,7 @@ export const relatorioArrendamentoController = {
         },
       });
     } catch (error) {
-      console.error(
-        "Erro ao gerar relatório por atividade produtiva:",
-        error
-      );
+      console.error("Erro ao gerar relatório por atividade produtiva:", error);
       return res
         .status(500)
         .json({ erro: "Erro ao gerar relatório por atividade produtiva" });

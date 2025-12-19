@@ -3,6 +3,7 @@ import { Request, Response } from "express";
 import prisma from "../../utils/prisma";
 import { TipoPerfil } from "@prisma/client";
 import { createGenericController } from "../GenericController";
+import { Prisma } from "@prisma/client";
 
 // Interface para dados do programa - ATUALIZADA
 export interface ProgramaData {
@@ -19,74 +20,69 @@ const genericController = createGenericController({
   modelName: "programa",
   displayName: "Programa",
   orderBy: { nome: "asc" },
-  includeRelations: {
-    _count: {
-      select: {
-        solicitacoes: true,
-        regras: true
-      }
-    }
-  },
   validateCreate: (data: ProgramaData) => {
     const errors = [];
-    
+
     if (!data.nome || data.nome.trim() === "") {
       errors.push("Nome é obrigatório");
     }
-    
+
     if (!data.tipoPrograma || data.tipoPrograma.trim() === "") {
       errors.push("Tipo de programa é obrigatório");
     }
-    
+
     // NOVA VALIDAÇÃO ADICIONADA
     if (!data.secretaria) {
       errors.push("Secretaria é obrigatória");
     }
-    
+
     if (!Object.values(TipoPerfil).includes(data.secretaria)) {
       errors.push("Secretaria deve ser OBRAS ou AGRICULTURA");
     }
-    
+
     if (data.leiNumero && data.leiNumero.trim()) {
       const leiPattern = /^(LEI\s+)?N[°º]?\s*\d+/i;
       if (!leiPattern.test(data.leiNumero)) {
         errors.push("Formato da lei inválido. Ex: LEI Nº 1234/2023");
       }
     }
-    
+
     return {
       isValid: errors.length === 0,
-      errors: errors.length > 0 ? errors : undefined
+      errors: errors.length > 0 ? errors : undefined,
     };
   },
   validateUpdate: (data: ProgramaData) => {
     const errors = [];
-    
+
     if (data.nome !== undefined && data.nome.trim() === "") {
       errors.push("Nome não pode ser vazio");
     }
-    
+
     if (data.tipoPrograma !== undefined && data.tipoPrograma.trim() === "") {
       errors.push("Tipo de programa não pode ser vazio");
     }
-    
+
     // NOVA VALIDAÇÃO ADICIONADA
-    if (data.secretaria !== undefined && !Object.values(TipoPerfil).includes(data.secretaria)) {
+    if (
+      data.secretaria !== undefined &&
+      !Object.values(TipoPerfil).includes(data.secretaria)
+    ) {
       errors.push("Secretaria deve ser OBRAS ou AGRICULTURA");
     }
-    
+
     if (data.leiNumero && data.leiNumero.trim()) {
       const leiPattern = /^(LEI\s+)?N[°º]?\s*\d+/i;
       if (!leiPattern.test(data.leiNumero)) {
         errors.push("Formato da lei inválido. Ex: LEI Nº 1234/2023");
       }
     }
-    
+
     return {
       isValid: errors.length === 0,
-      errors: errors.length > 0 ? errors : undefined
+      errors: errors.length > 0 ? errors : undefined,
     };
-  }
+  },
 });
 
 // Métodos específicos - ATUALIZADOS
@@ -110,18 +106,70 @@ export const programaController = {
           _count: {
             select: {
               solicitacoes: true,
-              regras: true
-            }
-          }
+              regras: true,
+            },
+          },
         },
-        orderBy: { nome: "asc" }
+        orderBy: { nome: "asc" },
       });
 
       return res.status(200).json(programas);
     } catch (error) {
       console.error("Erro ao listar programas:", error);
       return res.status(500).json({
-        erro: "Erro ao listar programas"
+        erro: "Erro ao listar programas",
+      });
+    }
+  },
+
+  buscarPorTermo: async (req: Request, res: Response) => {
+    try {
+      const { termo } = req.query;
+
+      if (!termo) {
+        return res.status(400).json({ erro: "Termo de busca é obrigatório" });
+      }
+
+      const programas = await prisma.programa.findMany({
+        where: {
+          OR: [
+            {
+              nome: {
+                contains: termo as string,
+                mode: "insensitive",
+              },
+            },
+            {
+              descricao: {
+                contains: termo as string,
+                mode: "insensitive",
+              },
+            },
+            {
+              leiNumero: {
+                contains: termo as string,
+                mode: "insensitive",
+              },
+            },
+          ],
+        },
+        include: {
+          _count: {
+            select: {
+              solicitacoes: true,
+              regras: true,
+            },
+          },
+        },
+        orderBy: { nome: "asc" },
+      });
+
+      return res.status(200).json(programas);
+    } catch (error) {
+      console.log("Chegou no BUSCAR POR TERMO");
+      console.error("Erro ao buscar programas por termo:", error);
+      return res.status(500).json({
+        erro: "Erro ao buscar programas",
       });
     }
   },
@@ -137,10 +185,10 @@ export const programaController = {
         include: {
           _count: {
             select: {
-              regras: true
-            }
-          }
-        }
+              regras: true,
+            },
+          },
+        },
       });
 
       if (!programa) {
@@ -156,9 +204,10 @@ export const programaController = {
             erro: "Não é possível ativar um programa sem regras de negócio",
             detalhes: [
               "Configure ao menos uma regra de negócio antes de ativar o programa.",
-              "As regras definem os critérios de elegibilidade e valores dos benefícios."
+              "As regras definem os critérios de elegibilidade e valores dos benefícios.",
             ],
-            sugestao: "Acesse 'Gerenciar Regras' no formulário do programa para configurar as regras."
+            sugestao:
+              "Acesse 'Gerenciar Regras' no formulário do programa para configurar as regras.",
           });
         }
       }
@@ -166,12 +215,12 @@ export const programaController = {
       // Atualizar status
       const programaAtualizado = await prisma.programa.update({
         where: { id: parseInt(id) },
-        data: { ativo: !programa.ativo }
+        data: { ativo: !programa.ativo },
       });
 
       return res.status(200).json({
-        mensagem: `Programa ${programaAtualizado.ativo ? 'ativado' : 'desativado'} com sucesso`,
-        programa: programaAtualizado
+        mensagem: `Programa ${programaAtualizado.ativo ? "ativado" : "desativado"} com sucesso`,
+        programa: programaAtualizado,
       });
     } catch (error) {
       console.error("Erro ao alterar status do programa:", error);
@@ -192,10 +241,10 @@ export const programaController = {
           _count: {
             select: {
               solicitacoes: true,
-              regras: true
-            }
-          }
-        }
+              regras: true,
+            },
+          },
+        },
       });
 
       if (!programa) {
@@ -210,23 +259,27 @@ export const programaController = {
           erro: "Não é possível excluir este programa",
           detalhes: [
             `Existem ${quantidadeSolicitacoes} solicitação(ões) de benefício vinculadas a este programa.`,
-            "A exclusão causaria perda de dados importantes."
+            "A exclusão causaria perda de dados importantes.",
           ],
-          sugestao: "Desative o programa ao invés de excluí-lo. Programas inativos não aparecem para novas solicitações, mas preservam o histórico.",
-          quantidadeSolicitacoes
+          sugestao:
+            "Desative o programa ao invés de excluí-lo. Programas inativos não aparecem para novas solicitações, mas preservam o histórico.",
+          quantidadeSolicitacoes,
         });
       }
 
       // Se chegou aqui, pode excluir (mas vai excluir as regras em cascata)
       await prisma.programa.delete({
-        where: { id: parseInt(id) }
+        where: { id: parseInt(id) },
       });
 
       return res.status(200).json({
         mensagem: "Programa excluído com sucesso",
-        avisos: programa._count.regras > 0
-          ? [`${programa._count.regras} regra(s) de negócio também foram excluídas`]
-          : undefined
+        avisos:
+          programa._count.regras > 0
+            ? [
+                `${programa._count.regras} regra(s) de negócio também foram excluídas`,
+              ]
+            : undefined,
       });
     } catch (error) {
       console.error("Erro ao excluir programa:", error);
@@ -234,7 +287,7 @@ export const programaController = {
       // Verificar se é erro de integridade referencial
       if ((error as any).code === "P2003") {
         return res.status(400).json({
-          erro: "Não é possível excluir este programa pois está sendo utilizado em outros registros"
+          erro: "Não é possível excluir este programa pois está sendo utilizado em outros registros",
         });
       }
 
@@ -248,23 +301,24 @@ export const programaController = {
       const { tipo } = req.params;
 
       const programas = await prisma.programa.findMany({
-        where: { 
+        where: {
           tipoPrograma: tipo.toUpperCase() as any,
-          ativo: true 
+          ativo: true,
         },
         include: {
           _count: {
             select: {
               solicitacoes: true,
-              regras: true
-            }
-          }
+              regras: true,
+            },
+          },
         },
-        orderBy: { nome: "asc" }
+        orderBy: { nome: "asc" },
       });
 
       res.json(programas);
     } catch (error) {
+      console.log("Chegou no BUSCAR POR TIPO");
       console.error("Erro ao buscar programas por tipo:", error);
       res.status(500).json({ erro: "Erro interno do servidor" });
     }
@@ -274,31 +328,36 @@ export const programaController = {
   async getBySecretaria(req: Request, res: Response) {
     try {
       const { secretaria } = req.params;
-      
-      if (!Object.values(TipoPerfil).includes(secretaria.toUpperCase() as TipoPerfil)) {
-        return res.status(400).json({ 
-          erro: "Secretaria inválida. Use OBRAS ou AGRICULTURA" 
+
+      if (
+        !Object.values(TipoPerfil).includes(
+          secretaria.toUpperCase() as TipoPerfil
+        )
+      ) {
+        return res.status(400).json({
+          erro: "Secretaria inválida. Use OBRAS ou AGRICULTURA",
         });
       }
 
       const programas = await prisma.programa.findMany({
-        where: { 
+        where: {
           secretaria: secretaria.toUpperCase() as TipoPerfil,
-          ativo: true 
+          ativo: true,
         },
         include: {
           _count: {
             select: {
               solicitacoes: true,
-              regras: true
-            }
-          }
+              regras: true,
+            },
+          },
         },
-        orderBy: { nome: "asc" }
+        orderBy: { nome: "asc" },
       });
 
       res.json(programas);
     } catch (error) {
+      console.log("Chegou no BUSCAR POR ECRETARIA");
       console.error("Erro ao buscar programas por secretaria:", error);
       res.status(500).json({ erro: "Erro interno do servidor" });
     }
@@ -313,15 +372,15 @@ export const programaController = {
         where: { id: parseInt(id) },
         include: {
           regras: {
-            orderBy: { tipoRegra: "asc" }
+            orderBy: { tipoRegra: "asc" },
           },
           _count: {
             select: {
               solicitacoes: true,
-              regras: true
-            }
-          }
-        }
+              regras: true,
+            },
+          },
+        },
       });
 
       if (!programa) {
@@ -330,6 +389,7 @@ export const programaController = {
 
       res.json(programa);
     } catch (error) {
+      console.log("Chegou no BUSCAR  ID POR REGRAS");
       console.error("Erro ao buscar programa com regras:", error);
       res.status(500).json({ erro: "Erro interno do servidor" });
     }
@@ -342,63 +402,85 @@ export const programaController = {
       const { novoNome } = req.body;
 
       if (!novoNome || novoNome.trim() === "") {
-        return res.status(400).json({ erro: "Nome do novo programa é obrigatório" });
+        return res
+          .status(400)
+          .json({ erro: "Nome do novo programa é obrigatório" });
       }
 
-      // Verificar se programa existe
-      const programaOriginal = await prisma.programa.findUnique({
-        where: { id: parseInt(id) },
-        include: { regras: true }
-      });
-
-      if (!programaOriginal) {
-        return res.status(404).json({ erro: "Programa não encontrado" });
-      }
-
-      // Verificar se nome já existe
-      const nomeExiste = await prisma.programa.findFirst({
-        where: { nome: novoNome.trim() }
-      });
-
-      if (nomeExiste) {
-        return res.status(400).json({ erro: "Já existe um programa com este nome" });
-      }
-
-      // Criar novo programa
-      const novoPrograma = await prisma.programa.create({
-        data: {
-          nome: novoNome.trim(),
-          descricao: programaOriginal.descricao,
-          leiNumero: null, // Lei não deve ser duplicada
-          tipoPrograma: programaOriginal.tipoPrograma,
-          secretaria: programaOriginal.secretaria, // NOVO CAMPO INCLUÍDO
-          ativo: false // Novo programa inicia inativo
-        }
-      });
-
-      // Duplicar regras se existirem
-      if (programaOriginal.regras.length > 0) {
-        const regrasParaDuplicar = programaOriginal.regras.map(regra => ({
-          programaId: novoPrograma.id,
-          tipoRegra: regra.tipoRegra,
-          parametro: regra.parametro,
-          valorBeneficio: regra.valorBeneficio,
-          limiteBeneficio: regra.limiteBeneficio
-        }));
-
-        await prisma.regrasNegocio.createMany({
-          data: regrasParaDuplicar
+      // Iniciando a transação
+      const resultado = await prisma.$transaction(async (tx) => {
+        // 1. Verificar se o programa original existe (usando tx)
+        const programaOriginal = await tx.programa.findUnique({
+          where: { id: parseInt(id) },
+          include: { regras: true },
         });
-      }
 
-      res.json({
+        if (!programaOriginal) {
+          throw new Error("NOT_FOUND");
+        }
+
+        // 2. Verificar se o nome já existe
+        const nomeExiste = await tx.programa.findFirst({
+          where: { nome: novoNome.trim() },
+        });
+
+        if (nomeExiste) {
+          throw new Error("NAME_EXISTS");
+        }
+
+        // 3. Criar novo programa
+        const novoPrograma = await tx.programa.create({
+          data: {
+            nome: novoNome.trim(),
+            descricao: programaOriginal.descricao,
+            leiNumero: null,
+            tipoPrograma: programaOriginal.tipoPrograma,
+            secretaria: programaOriginal.secretaria,
+            ativo: false,
+          },
+        });
+
+        // 4. Duplicar regras (se existirem)
+        if (programaOriginal.regras.length > 0) {
+          const regrasParaDuplicar = programaOriginal.regras.map((regra) => ({
+            programaId: novoPrograma.id,
+            tipoRegra: regra.tipoRegra,
+            parametro: regra.parametro as Prisma.InputJsonValue,
+            valorBeneficio: regra.valorBeneficio,
+            limiteBeneficio: regra.limiteBeneficio as Prisma.InputJsonValue,
+          }));
+
+          await tx.regrasNegocio.createMany({
+            data: regrasParaDuplicar,
+          });
+        }
+
+        return novoPrograma;
+      });
+
+      return res.json({
         sucesso: true,
         mensagem: "Programa duplicado com sucesso",
-        programa: novoPrograma
+        programa: resultado,
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao duplicar programa:", error);
-      res.status(500).json({ erro: "Erro interno do servidor" });
+
+      // Tratamento de erros específicos lançados dentro da transação
+      if (error.message === "NOT_FOUND") {
+        return res
+          .status(404)
+          .json({ erro: "Programa original não encontrado" });
+      }
+      if (error.message === "NAME_EXISTS") {
+        return res
+          .status(400)
+          .json({ erro: "Já existe um programa com este nome" });
+      }
+
+      return res
+        .status(500)
+        .json({ erro: "Erro interno do servidor ao duplicar" });
     }
   },
 
@@ -409,36 +491,36 @@ export const programaController = {
         programasAtivos,
         porTipo,
         porSecretaria,
-        comMaisRegras
+        comMaisRegras,
       ] = await Promise.all([
         prisma.programa.count(),
         prisma.programa.count({ where: { ativo: true } }),
         prisma.programa.groupBy({
-          by: ['tipoPrograma'],
-          _count: { id: true }
+          by: ["tipoPrograma"],
+          _count: { id: true },
         }),
         // NOVA CONSULTA ADICIONADA
         prisma.programa.groupBy({
-          by: ['secretaria'],
+          by: ["secretaria"],
           _count: { id: true },
-          where: { ativo: true }
+          where: { ativo: true },
         }),
         prisma.programa.findMany({
           include: {
-            _count: { select: { regras: true } }
+            _count: { select: { regras: true } },
           },
           orderBy: {
-            regras: { _count: 'desc' }
+            regras: { _count: "desc" },
           },
-          take: 5
-        })
+          take: 5,
+        }),
       ]);
 
-      const comMaisRegrasFormatado = comMaisRegras.map(programa => ({
+      const comMaisRegrasFormatado = comMaisRegras.map((programa) => ({
         id: programa.id,
         nome: programa.nome,
         secretaria: programa.secretaria, // NOVO CAMPO INCLUÍDO
-        quantidadeRegras: programa._count.regras
+        quantidadeRegras: programa._count.regras,
       }));
 
       res.json({
@@ -446,11 +528,11 @@ export const programaController = {
         programasAtivos,
         porTipo,
         porSecretaria, // NOVO CAMPO ADICIONADO
-        comMaisRegras: comMaisRegrasFormatado
+        comMaisRegras: comMaisRegrasFormatado,
       });
     } catch (error) {
       console.error("Erro ao buscar estatísticas:", error);
       res.status(500).json({ erro: "Erro interno do servidor" });
     }
-  }
+  },
 };

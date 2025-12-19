@@ -75,7 +75,7 @@ const VeiculoForm: React.FC<VeiculoFormProps> = ({ id, onSave }) => {
       id={id}
       initialValues={initialValues}
       validate={validate}
-      onSave={onSave}
+      //onSave={onSave}
       returnUrl="/cadastros/comum/veiculos"
     >
       {({ values, errors, touched, handleChange, setValue }) => (
@@ -93,7 +93,8 @@ const VeiculoForm: React.FC<VeiculoFormProps> = ({ id, onSave }) => {
                 name="tipoVeiculoId"
                 value={values.tipoVeiculoId}
                 onChange={(e) => {
-                  const value = e.target.value === "" ? 0 : Number(e.target.value);
+                  const value =
+                    e.target.value === "" ? 0 : Number(e.target.value);
                   setValue("tipoVeiculoId", value); // Converte para number
                 }}
                 disabled={loadingTipos}
@@ -147,19 +148,21 @@ const VeiculoForm: React.FC<VeiculoFormProps> = ({ id, onSave }) => {
                 value={values.placa}
                 onChange={(e) => {
                   // Formatar placa em tempo real
-                  let valor = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "");
-                  
+                  let valor = e.target.value
+                    .toUpperCase()
+                    .replace(/[^A-Z0-9]/g, "");
+
                   // Aplicar máscara conforme digitação
                   if (valor.length >= 3 && valor.length <= 7) {
                     // Formato com hífen: AAA-0000 ou AAA-0A00
                     valor = valor.replace(/^([A-Z]{3})([0-9A-Z].*)$/, "$1-$2");
                   }
-                  
+
                   // Limitar tamanho
                   if (valor.length > 8) {
                     valor = valor.substring(0, 8);
                   }
-                  
+
                   setValue("placa", valor);
                 }}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -172,11 +175,7 @@ const VeiculoForm: React.FC<VeiculoFormProps> = ({ id, onSave }) => {
           {/* Status (apenas para edição) */}
           {id && id !== "novo" && (
             <div>
-              <FormField
-                name="ativo"
-                label="Ativo"
-                type="checkbox"
-              >
+              <FormField name="ativo" label="Ativo" type="checkbox">
                 <input
                   type="checkbox"
                   id="ativo"

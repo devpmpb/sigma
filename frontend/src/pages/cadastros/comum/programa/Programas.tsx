@@ -40,7 +40,9 @@ const Programas: React.FC = () => {
         };
 
         return (
-          <span className={`px-2 py-1 rounded-full text-xs font-medium ${corClass[cor]}`}>
+          <span
+            className={`px-2 py-1 rounded-full text-xs font-medium ${corClass[cor]}`}
+          >
             {programaService.formatarSecretaria(programa.secretaria)}
           </span>
         );
@@ -105,29 +107,35 @@ const Programas: React.FC = () => {
   const quickFilters = [
     {
       label: "Agricultura",
-      filter: (items: Programa[]) => items.filter(p => p.secretaria === TipoPerfil.AGRICULTURA)
+      filter: (items: Programa[]) =>
+        items.filter((p) => p.secretaria === TipoPerfil.AGRICULTURA),
     },
     {
-      label: "Obras", 
-      filter: (items: Programa[]) => items.filter(p => p.secretaria === TipoPerfil.OBRAS)
+      label: "Obras",
+      filter: (items: Programa[]) =>
+        items.filter((p) => p.secretaria === TipoPerfil.OBRAS),
     },
     {
       label: "Com Regras",
-      filter: (items: Programa[]) => items.filter(p => (p._count?.regras || 0) > 0)
+      filter: (items: Programa[]) =>
+        items.filter((p) => (p._count?.regras || 0) > 0),
     },
     {
       label: "Sem Regras",
-      filter: (items: Programa[]) => items.filter(p => (p._count?.regras || 0) === 0)
-    }
+      filter: (items: Programa[]) =>
+        items.filter((p) => (p._count?.regras || 0) === 0),
+    },
   ];
 
   // Função para calcular métricas (simplificada)
   const calculateMetrics = (items: Programa[]) => {
     const total = items.length;
-    const ativos = items.filter(p => p.ativo).length;
-    const agricultura = items.filter(p => p.secretaria === TipoPerfil.AGRICULTURA).length;
-    const obras = items.filter(p => p.secretaria === TipoPerfil.OBRAS).length;
-    const comRegras = items.filter(p => (p._count?.regras || 0) > 0).length;
+    const ativos = items.filter((p) => p.ativo).length;
+    const agricultura = items.filter(
+      (p) => p.secretaria === TipoPerfil.AGRICULTURA
+    ).length;
+    const obras = items.filter((p) => p.secretaria === TipoPerfil.OBRAS).length;
+    const comRegras = items.filter((p) => (p._count?.regras || 0) > 0).length;
     const semRegras = total - comRegras;
 
     return {
@@ -207,7 +215,9 @@ const Programas: React.FC = () => {
       // NOVAS PROPS ADICIONADAS
       quickFilters={quickFilters}
       showMetrics={true}
-      calculateMetrics={calculateMetrics}
+      //calculateMetrics={calculateMetrics}
+      //enablePagination={true}
+      //initialPageSize={50}
     />
   );
 };

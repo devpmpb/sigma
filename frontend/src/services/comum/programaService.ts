@@ -1,5 +1,6 @@
 // frontend/src/services/comum/programaService.ts - ARQUIVO ATUALIZADO
 import BaseApiService from "../baseApiService";
+import apiClient from "../apiConfig";
 
 export enum TipoPrograma {
   SUBSIDIO = "SUBSIDIO",
@@ -80,7 +81,7 @@ export interface EstatisticasPrograma {
   comMaisRegras: Array<{
     id: number;
     nome: string;
-    secretaria: TipoPerfil; // NOVO CAMPO ADICIONADO
+    secretaria: TipoPerfil;
     quantidadeRegras: number;
   }>;
 }
@@ -90,11 +91,15 @@ class ProgramaService extends BaseApiService<Programa, ProgramaDTO> {
     super("/programas", "comum");
   }
 
-  /**
-   * NOVO MÉTODO: Busca programas por secretaria
-   */
+  buscarPorTermo = async (termo: string): Promise<Programa[]> => {
+    const response = await apiClient.get(`${this.baseUrl}/busca`, {
+      params: { termo },
+    });
+    return response.data;
+  };
+
   async getBySecretaria(secretaria: string): Promise<Programa[]> {
-    const response = await this.api.get(
+    const response = await apiClient.get(
       `${this.baseUrl}/secretaria/${secretaria}`
     );
     return response.data;
@@ -104,54 +109,35 @@ class ProgramaService extends BaseApiService<Programa, ProgramaDTO> {
     return this.getBySecretaria("agricultura");
   }
 
-  /**
-   * NOVO MÉTODO: Busca programas de obras (qualquer pessoa)
-   */
   async getProgramasObras(): Promise<Programa[]> {
     return this.getBySecretaria("obras");
   }
 
-  /**
-   * Busca programa com suas regras
-   */
   async getByIdWithRules(id: number | string): Promise<ProgramaComRegras> {
-    const response = await this.api.get(`${this.baseUrl}/${id}/regras`);
+    const response = await apiClient.get(`${this.baseUrl}/${id}/regras`);
     return response.data;
   }
 
-  /**
-   * Busca programas por tipo
-   */
   async getByTipo(tipo: string): Promise<Programa[]> {
-    const response = await this.api.get(`${this.baseUrl}/tipo/${tipo}`);
+    const response = await apiClient.get(`${this.baseUrl}/tipo/${tipo}`);
     return response.data;
   }
 
-  /**
-   * Duplica um programa
-   */
   async duplicarPrograma(
     id: number | string,
     dados: DuplicarProgramaDTO
   ): Promise<Programa> {
-    const response = await this.api.post(
+    const response = await apiClient.post(
       `${this.baseUrl}/${id}/duplicar`,
       dados
     );
     return response.data.programa;
   }
-
-  /**
-   * Busca estatísticas dos programas
-   */
   async getEstatisticas(): Promise<EstatisticasPrograma> {
-    const response = await this.api.get(`${this.baseUrl}/stats`);
+    const response = await apiClient.get(`${this.baseUrl}/stats`);
     return response.data;
   }
 
-  /**
-   * NOVO MÉTODO: Busca secretarias disponíveis
-   */
   getSecretarias() {
     return [
       { value: TipoPerfil.OBRAS, label: "Secretaria de Obras" },
@@ -159,9 +145,6 @@ class ProgramaService extends BaseApiService<Programa, ProgramaDTO> {
     ];
   }
 
-  /**
-   * Busca tipos de programa disponíveis
-   */
   getTiposPrograma() {
     return [
       { value: TipoPrograma.SUBSIDIO, label: "Subsídio" },
@@ -172,9 +155,6 @@ class ProgramaService extends BaseApiService<Programa, ProgramaDTO> {
     ];
   }
 
-  /**
-   * NOVO MÉTODO: Formata secretaria para exibição
-   */
   formatarSecretaria(secretaria: TipoPerfil): string {
     const secretariaMap = {
       [TipoPerfil.OBRAS]: "Obras",
@@ -185,9 +165,6 @@ class ProgramaService extends BaseApiService<Programa, ProgramaDTO> {
     return secretariaMap[secretaria] || secretaria;
   }
 
-  /**
-   * NOVO MÉTODO: Retorna cor da secretaria para badges
-   */
   getSecretariaColor(secretaria: TipoPerfil): "green" | "blue" | "purple" {
     const colorMap = {
       [TipoPerfil.OBRAS]: "blue" as const,
@@ -198,23 +175,6 @@ class ProgramaService extends BaseApiService<Programa, ProgramaDTO> {
     return colorMap[secretaria] || "blue";
   }
 
-  /**
-   * Busca por termo (sobrescreve método da classe base)
-   */
-  async buscarPorTermo(termo: string): Promise<Programa[]> {
-    if (!termo.trim()) {
-      return this.getAll();
-    }
-
-    const response = await this.api.get(`${this.baseUrl}`, {
-      params: { search: termo },
-    });
-    return response.data;
-  }
-
-  /**
-   * Valida dados do programa antes de enviar - ATUALIZADO
-   */
   private validateProgramaData(data: ProgramaDTO): string[] {
     const errors: string[] = [];
 
