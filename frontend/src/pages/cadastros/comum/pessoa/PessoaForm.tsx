@@ -1,5 +1,5 @@
 // frontend/src/pages/cadastros/comum/pessoa/PessoaForm.tsx
-import React, { useEffect, useState, useMemo, useRef } from "react";
+import React, { useMemo, useRef } from "react";
 import { useParams } from "@tanstack/react-router";
 import pessoaService, {
   Pessoa,
@@ -44,8 +44,9 @@ interface PessoaFormData extends PessoaDTO {
   coordenadas?: string;
 }
 
-const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
-  const pessoaId = id || useParams({ strict: false }).id;
+const PessoaForm: React.FC<PessoaFormProps> = ({ id }) => {
+  const params = useParams({ strict: false }) as { id?: string };
+  const pessoaId = id || params.id;
 
   // 🚀 NOVO: Carregar dados auxiliares com React Query (cache compartilhado!)
   const { data: logradourosData, isLoading: loadingLogradouros } = useFormData(
@@ -242,8 +243,8 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
     },
     getAll: pessoaService.getAll,
     delete: pessoaService.delete,
-    search: pessoaService.search,
-    toggleStatus: pessoaService.toggleStatus,
+    //search: pessoaService.search,
+    //toggleStatus: pessoaService.toggleStatus,
 
     create: async (data: PessoaFormData): Promise<Pessoa> => {
       // Preparar dados da pessoa (remover campos de endereço)
@@ -340,7 +341,7 @@ const PessoaForm: React.FC<PessoaFormProps> = ({ id, onSave }) => {
   return (
     <FormBase<Pessoa, PessoaFormData>
       title="Pessoa"
-      service={pessoaServiceWithEndereco}
+      service={pessoaServiceWithEndereco as any}
       id={pessoaId}
       initialValues={initialValues}
       validate={validate}

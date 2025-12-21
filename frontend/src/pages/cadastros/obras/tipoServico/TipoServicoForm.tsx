@@ -13,11 +13,12 @@ import { Plus, Trash2 } from "lucide-react";
 interface TipoServicoFormProps {
   id?: string | number;
   onSave: () => void;
-  module?: "obras";
 }
 
 const TipoServicoForm: React.FC<TipoServicoFormProps> = ({ id, onSave }) => {
-  const [faixas, setFaixas] = useState<Omit<FaixaPrecoServico, "id" | "tipoServicoId">[]>([
+  const [faixas, setFaixas] = useState<
+    Omit<FaixaPrecoServico, "id" | "tipoServicoId">[]
+  >([
     { quantidadeMin: 1, quantidadeMax: 3, multiplicadorVR: 0.1, ativo: true },
   ]);
 
@@ -37,7 +38,7 @@ const TipoServicoForm: React.FC<TipoServicoFormProps> = ({ id, onSave }) => {
       errors.nome = "Nome é obrigatório";
     }
 
-    if (!values.unidade || values.unidade.trim === "") {
+    if (!values.unidade || values.unidade.trim() === "") {
       errors.unidade = "Unidade é obrigatória";
     }
 
@@ -99,13 +100,13 @@ const TipoServicoForm: React.FC<TipoServicoFormProps> = ({ id, onSave }) => {
     setFaixas(novasFaixas);
   };
 
-  // Preparar dados para submissão
+  /* Preparar dados para submissão
   const prepareSubmit = (values: TipoServicoInput) => {
     return {
       ...values,
       faixasPreco: faixas,
     };
-  };
+  };*/
 
   // Carregar dados ao editar
   const onLoad = (data: TipoServico) => {
@@ -128,11 +129,12 @@ const TipoServicoForm: React.FC<TipoServicoFormProps> = ({ id, onSave }) => {
       initialValues={initialValues}
       validate={validate}
       onSave={onSave}
-      prepareSubmit={prepareSubmit}
-      onLoad={onLoad}
+      returnUrl="/cadastros/obras/tipos-servico"
+      //prepareSubmit={prepareSubmit}
+      //onLoad={onLoad}
       title={id ? "Editar Tipo de Serviço" : "Novo Tipo de Serviço"}
     >
-      {({ values, errors, handleChange }) => (
+      {({ values, errors, touched, handleChange }) => (
         <div className="space-y-6">
           {/* Seção: Informações Básicas */}
           <FormSection title="Informações Básicas">
@@ -140,12 +142,22 @@ const TipoServicoForm: React.FC<TipoServicoFormProps> = ({ id, onSave }) => {
               <FormField
                 label="Nome do Tipo de Serviço"
                 name="nome"
-                value={values.nome}
-                onChange={handleChange}
+                //value={values.nome}
+                //onChange={handleChange}
                 error={errors.nome}
-                placeholder="Ex: Carga de terra, Caminhão truck"
+                touched={touched.nome}
+                helpText="Ex: Carga de terra, Caminhão truck"
                 required
-              />
+              >
+                <input
+                    type="text"
+                    id="nome"
+                    name="nome"
+                    value={values.nome}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+              </FormField>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -301,7 +313,9 @@ const TipoServicoForm: React.FC<TipoServicoFormProps> = ({ id, onSave }) => {
                   {/* Preview do cálculo */}
                   <div className="mt-3 p-2 bg-blue-50 rounded border border-blue-200">
                     <p className="text-xs text-blue-800">
-                      <strong>Exemplo de cálculo:</strong> {values.unidade === "hora" ? "1 hora" : "1 carga"} × R$ 180,00 (VR) × {faixa.multiplicadorVR} = R${" "}
+                      <strong>Exemplo de cálculo:</strong>{" "}
+                      {values.unidade === "hora" ? "1 hora" : "1 carga"} × R$
+                      180,00 (VR) × {faixa.multiplicadorVR} = R${" "}
                       {(180 * faixa.multiplicadorVR).toFixed(2)}
                     </p>
                   </div>

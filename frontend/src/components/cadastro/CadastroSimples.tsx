@@ -64,7 +64,7 @@ interface CadastroSimplesProps<T, R> {
  */
 function CadastroSimples<
   T extends { id: number; ativo: boolean; createdAt: string },
-  R
+  R extends Record<string, any>
 >({
   titulo,
   setor,
@@ -375,7 +375,7 @@ function CadastroSimples<
                   </td>
                 </tr>
               ) : (
-                itens.map((item) => (
+                itens.map((item: T) => (
                   <tr key={item.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {item.id}

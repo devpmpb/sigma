@@ -8,7 +8,7 @@ import {
   cacheDashboardData,
   getCachedDashboardData,
   isOnline,
-  type EstatisticasGerais,
+  //type EstatisticasGerais,
   type EstatisticaPrograma,
   type EstatisticaPeriodo,
   type TopProdutor,

@@ -7,15 +7,15 @@ import arrendamentoService, {
   ArrendamentoDTO,
   Arrendamento,
   StatusArrendamento,
-  AtividadeProdutiva,
-  atividadeProdutivaLabels
+  //AtividadeProdutiva,
+  atividadeProdutivaLabels,
 } from "../../../../services/agricultura/arrendamentoService";
 import propriedadeService, {
   Propriedade,
 } from "../../../../services/comum/propriedadeService";
 import pessoaService, {
   Pessoa,
-  TipoPessoa,
+  //TipoPessoa,
 } from "../../../../services/comum/pessoaService";
 import { useParams } from "@tanstack/react-router";
 
@@ -24,10 +24,10 @@ interface ArrendamentoFormProps {
   onSave: () => void;
 }
 
-const ArrendamentoForm: React.FC<ArrendamentoFormProps> = ({ id, onSave }) => {
-  const params = useParams({ strict: false });
+const ArrendamentoForm: React.FC<ArrendamentoFormProps> = ({ id }) => {
+  const params = useParams({ strict: false }) as any;
   const arrendamentoId = id || params.id;
-  
+
   const [propriedades, setPropriedades] = useState<Propriedade[]>([]);
   const [pessoasFisicas, setPessoasFisicas] = useState<Pessoa[]>([]);
   const [loadingPropriedades, setLoadingPropriedades] = useState(false);
@@ -46,7 +46,7 @@ const ArrendamentoForm: React.FC<ArrendamentoFormProps> = ({ id, onSave }) => {
     status: StatusArrendamento.ATIVO,
     documentoUrl: "",
     residente: false,
-    atividadeProdutiva: undefined
+    atividadeProdutiva: undefined,
   };
 
   // Carregar propriedades
@@ -97,11 +97,14 @@ const ArrendamentoForm: React.FC<ArrendamentoFormProps> = ({ id, onSave }) => {
       errors.arrendatarioId = "Arrendatário é obrigatório";
     }
 
-    if (values.proprietarioId === values.arrendatarioId && values.proprietarioId !== 0) {
+    if (
+      values.proprietarioId === values.arrendatarioId &&
+      values.proprietarioId !== 0
+    ) {
       errors.arrendatarioId = "Arrendatário deve ser diferente do proprietário";
     }
 
-    if (!values.areaArrendada || values.areaArrendada <= 0) {
+    if (!values.areaArrendada || Number(values.areaArrendada) <= 0) {
       errors.areaArrendada = "Área arrendada deve ser maior que zero";
     }
 
@@ -129,7 +132,14 @@ const ArrendamentoForm: React.FC<ArrendamentoFormProps> = ({ id, onSave }) => {
       validate={validate}
       returnUrl="/movimentos/agricultura/arrendamentos"
     >
-      {({ values, errors, touched, handleChange, setValue, setFieldTouched }) => (
+      {({
+        values,
+        errors,
+        touched,
+        handleChange,
+        setValue,
+        setFieldTouched,
+      }) => (
         <div className="space-y-6">
           {/* Seção de Propriedade e Partes */}
           <FormSection
@@ -151,7 +161,7 @@ const ArrendamentoForm: React.FC<ArrendamentoFormProps> = ({ id, onSave }) => {
                   onChange={(e) => {
                     handleChange(e);
                     const propId = parseInt(e.target.value);
-                    const prop = propriedades.find(p => p.id === propId);
+                    const prop = propriedades.find((p) => p.id === propId);
                     setPropriedadeSelecionada(prop || null);
                     if (prop?.proprietarioId) {
                       setValue("proprietarioId", prop.proprietarioId);
@@ -183,7 +193,9 @@ const ArrendamentoForm: React.FC<ArrendamentoFormProps> = ({ id, onSave }) => {
                   id="proprietarioId"
                   name="proprietarioId"
                   value={String(values.proprietarioId || 0)}
-                  onChange={(e) => setValue("proprietarioId", Number(e.target.value))}
+                  onChange={(e) =>
+                    setValue("proprietarioId", Number(e.target.value))
+                  }
                   onBlur={() => setFieldTouched("proprietarioId", true)}
                   disabled={true}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-100 cursor-not-allowed"
@@ -220,7 +232,7 @@ const ArrendamentoForm: React.FC<ArrendamentoFormProps> = ({ id, onSave }) => {
               >
                 <option value={0}>Selecione o arrendatário</option>
                 {pessoasFisicas
-                  .filter(p => p.id !== values.proprietarioId)
+                  .filter((p) => p.id !== values.proprietarioId)
                   .map((pessoa) => (
                     <option key={pessoa.id} value={pessoa.id}>
                       {pessoa.nome} - {pessoa.cpfCnpj}
@@ -267,9 +279,10 @@ const ArrendamentoForm: React.FC<ArrendamentoFormProps> = ({ id, onSave }) => {
                 error={errors.areaArrendada}
                 touched={touched.areaArrendada}
                 required
-                helpText={propriedadeSelecionada ? 
-                  `Total disponível: ${propriedadeSelecionada.areaTotal} ${propriedadeSelecionada.unidadeArea}` : 
-                  "Selecione uma propriedade primeiro"
+                helpText={
+                  propriedadeSelecionada
+                    ? `Total disponível: ${propriedadeSelecionada.areaTotal} ${propriedadeSelecionada.unidadeArea}`
+                    : "Selecione uma propriedade primeiro"
                 }
               >
                 <input
@@ -303,11 +316,13 @@ const ArrendamentoForm: React.FC<ArrendamentoFormProps> = ({ id, onSave }) => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="">Selecione uma atividade</option>
-                  {Object.entries(atividadeProdutivaLabels).map(([value, label]) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  ))}
+                  {Object.entries(atividadeProdutivaLabels).map(
+                    ([value, label]) => (
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
+                    )
+                  )}
                 </select>
               </FormField>
             </div>
@@ -366,8 +381,12 @@ const ArrendamentoForm: React.FC<ArrendamentoFormProps> = ({ id, onSave }) => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value={StatusArrendamento.ATIVO}>Ativo</option>
-                  <option value={StatusArrendamento.ENCERRADO}>Encerrado</option>
-                  <option value={StatusArrendamento.CANCELADO}>Cancelado</option>
+                  <option value={StatusArrendamento.VENCIDO}>
+                    Encerrado
+                  </option>
+                  <option value={StatusArrendamento.CANCELADO}>
+                    Cancelado
+                  </option>
                 </select>
               </FormField>
             </div>

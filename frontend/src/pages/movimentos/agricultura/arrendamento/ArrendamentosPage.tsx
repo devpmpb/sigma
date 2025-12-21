@@ -1,6 +1,5 @@
 // frontend/src/pages/movimentos/agricultura/arrendamentos/ArrendamentosPage.tsx
 import React from "react";
-import { useNavigate } from "@tanstack/react-router";
 import { CadastroBase } from "../../../../components/cadastro";
 import arrendamentoService, {
   Arrendamento,
@@ -15,8 +14,6 @@ import { Column } from "../../../../components/comum/DataTable";
  * USA CadastroBase ESTENDIDO ao invés de criar novo template
  */
 const ArrendamentosPage: React.FC = () => {
-  const navigate = useNavigate();
-
   // Definição das colunas da tabela (mesmo código de antes)
   const columns: Column<Arrendamento>[] = [
     {
@@ -35,7 +32,7 @@ const ArrendamentosPage: React.FC = () => {
           )}
         </div>
       ),
-      sortable: true,
+      //sortable: true,
     },
     {
       title: "Proprietário",
@@ -53,7 +50,7 @@ const ArrendamentosPage: React.FC = () => {
           )}
         </div>
       ),
-      sortable: true,
+      //sortable: true,
     },
     {
       title: "Arrendatário",
@@ -71,7 +68,7 @@ const ArrendamentosPage: React.FC = () => {
           )}
         </div>
       ),
-      sortable: true,
+      //sortable: true,
     },
     {
       title: "Área",
@@ -83,7 +80,7 @@ const ArrendamentosPage: React.FC = () => {
           </span>
         </div>
       ),
-      sortable: true,
+      //sortable: true,
       width: "120px",
     },
     {
@@ -104,7 +101,7 @@ const ArrendamentosPage: React.FC = () => {
           )}
         </div>
       ),
-      sortable: false,
+      //sortable: false,
       width: "150px",
     },
     {
@@ -148,7 +145,7 @@ const ArrendamentosPage: React.FC = () => {
           )}
         </div>
       ),
-      sortable: false,
+      //sortable: false,
       width: "100px",
     },
   ];
@@ -212,7 +209,12 @@ const ArrendamentosPage: React.FC = () => {
   const actionButtons = (
     <div className="flex space-x-2">
       <button
-        onClick={() => window.open("/movimentos/agricultura/relatoriosArrendamento", "_blank")}
+        onClick={() =>
+          window.open(
+            "/movimentos/agricultura/relatoriosArrendamento",
+            "_blank"
+          )
+        }
         className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm"
       >
         📊 Relatórios

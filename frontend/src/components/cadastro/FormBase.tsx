@@ -59,7 +59,10 @@ interface FormBaseProps<T, R> {
 /**
  * Base component for forms
  */
-function FormBase<T extends Record<string, any>, R>({
+function FormBase<
+  T extends Record<string, any>,
+  R extends Record<string, any>
+>({
   title,
   service,
   id,
@@ -98,9 +101,8 @@ function FormBase<T extends Record<string, any>, R>({
         // ✅ CORREÇÃO - Passar o objeto salvo para o onSave
         if (onSave) {
           onSave(savedItem);
-        } else {
-          navigate({ to: returnUrl });
         }
+        navigate({ to: returnUrl });
 
         return true;
       } catch (err: any) {
@@ -122,7 +124,6 @@ function FormBase<T extends Record<string, any>, R>({
           setError("Erro ao salvar. Tente novamente.");
         }
 
-        return false;
       } finally {
         setLoading(false);
       }

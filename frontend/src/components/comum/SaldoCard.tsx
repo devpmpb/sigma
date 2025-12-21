@@ -5,7 +5,7 @@
 import React, { useState, useEffect } from "react";
 import saldoService, {
   SaldoProporcional,
-  LimiteProporcional,
+  //LimiteProporcional,
 } from "../../services/comum/saldoService";
 
 interface SaldoCardProps {

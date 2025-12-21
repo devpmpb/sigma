@@ -9,6 +9,26 @@ import React, {
 import { User } from "../types";
 import authService from "../services/auth/authService";
 
+const mapBackendUserToFrontendUser = (backendUser: any): User => {
+  return {
+    id: backendUser.id.toString(),
+    name: backendUser.nome,
+    email: backendUser.email,
+    role: backendUser.perfil.nome.toLowerCase(),
+    sector:
+      backendUser.perfil.nome === "ADMIN"
+        ? "admin"
+        : (backendUser.perfil.nome.toLowerCase() as
+            | "obras"
+            | "agricultura"
+            | "admin"),
+    permissions: backendUser.permissions.map((p: any) => ({
+      module: p.modulo.toLowerCase(),
+      action: p.acao.toLowerCase(),
+    })),
+  };
+};
+
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
@@ -32,7 +52,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   useEffect(() => {
     const checkAuth = async () => {
       setIsLoading(true);
-      
+
       try {
         // Verificar se há dados salvos no localStorage
         const savedUser = authService.getUser();
@@ -41,9 +61,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         if (savedUser && hasToken) {
           // Verificar se o token ainda é válido
           const validatedUser = await authService.verifyToken();
-          
+
           if (validatedUser) {
-            setUser(validatedUser);
+            setUser(mapBackendUserToFrontendUser(validatedUser));
           } else {
             // Token inválido, limpar dados
             authService.clearAuthData();
@@ -70,26 +90,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       setIsLoading(true);
 
       const response = await authService.login({ email, password });
-      
+
       // Transformar os dados do backend para o formato do frontend
       // Backend retorna ENUMs em UPPERCASE, frontend espera lowercase
-      const userData: User = {
-        id: response.user.id.toString(),
-        name: response.user.nome,
-        email: response.user.email,
-        role: response.user.perfil.nome.toLowerCase(), // ADMIN -> admin
-        sector: response.user.perfil.nome === "ADMIN" ? "admin" : response.user.perfil.nome.toLowerCase(),
-        permissions: response.user.permissions.map(p => ({
-          module: p.modulo.toLowerCase() as "obras" | "agricultura" | "comum" | "admin",
-          action: p.acao.toLowerCase() as "view" | "create" | "edit" | "delete"
-        }))
-      };
-
-      setUser(userData);
+      setUser(mapBackendUserToFrontendUser(response.user));
       return true;
     } catch (error: any) {
       console.error("Erro no login:", error);
-      
+
       // Tratar diferentes tipos de erro
       if (error.response?.status === 401) {
         throw new Error("Email ou senha incorretos");
@@ -116,7 +124,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       setUser(null);
       setIsLoading(false);
       // Redirecionar para login
-      window.location.href = '/login';
+      window.location.href = "/login";
     }
   };
 
@@ -126,22 +134,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const refreshUser = async () => {
     try {
       const updatedUser = await authService.verifyToken();
-      
+
       if (updatedUser) {
         // Transformar dados do backend para formato do frontend
-        const userData: User = {
-          id: updatedUser.id.toString(),
-          name: updatedUser.nome,
-          email: updatedUser.email,
-          role: updatedUser.perfil.nome.toLowerCase(), // ADMIN -> admin
-          sector: updatedUser.perfil.nome === "ADMIN" ? "admin" : updatedUser.perfil.nome.toLowerCase(),
-          permissions: updatedUser.permissions.map(p => ({
-            module: p.modulo.toLowerCase() as "obras" | "agricultura" | "comum" | "admin",
-            action: p.acao.toLowerCase() as "view" | "create" | "edit" | "delete"
-          }))
-        };
-        
-        setUser(userData);
+
+        setUser(mapBackendUserToFrontendUser(updatedUser));
       } else {
         setUser(null);
       }

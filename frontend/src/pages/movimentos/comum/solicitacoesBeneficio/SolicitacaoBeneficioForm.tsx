@@ -28,16 +28,15 @@ interface SolicitacaoBeneficioFormProps {
  */
 const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
   id,
-  onSave,
 }) => {
   const params = useParams({ strict: false }) as any;
   const solicitacaoId = id || params.id;
 
   const [programaSelecionado, setProgramaSelecionado] =
     useState<Programa | null>(null);
-  const [pessoaSelecionada, setPessoaSelecionada] = useState<Pessoa | null>(
+  /*const [pessoaSelecionada, setPessoaSelecionada] = useState<Pessoa | null>(
     null
-  );
+  );*/
 
   // Estados para labels iniciais (quando editando) - apenas para pessoa (AsyncSearchSelect)
   const [pessoaInitialLabel, setPessoaInitialLabel] = useState<string>("");
@@ -60,8 +59,11 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
   const [carregandoProgramas, setCarregandoProgramas] = useState(true);
 
   // Estado para modalidade (quando programa tem múltiplas opções)
-  const [modalidadeSelecionada, setModalidadeSelecionada] = useState<string>("");
-  const [modalidadesDisponiveis, setModalidadesDisponiveis] = useState<string[]>([]);
+  const [modalidadeSelecionada, setModalidadeSelecionada] =
+    useState<string>("");
+  const [modalidadesDisponiveis, setModalidadesDisponiveis] = useState<
+    string[]
+  >([]);
 
   // Valor inicial para o formulário
   const initialValues: SolicitacaoBeneficioDTO = {
@@ -130,7 +132,7 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
     setProgramaSelecionado(programa || null);
     setValue("programaId", programaId || 0);
     setValue("pessoaId", 0); // Resetar pessoa selecionada
-    setPessoaSelecionada(null); // Limpar pessoa selecionada
+    //setPessoaSelecionada(null); // Limpar pessoa selecionada
     setCalculoResultado(null); // Limpar cálculo anterior
     setQuantidadeAnimais("");
     // Limpar modalidade ao trocar de programa
@@ -172,7 +174,9 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
 
       // Se o resultado trouxer modalidades disponíveis, atualizar estado
       if (resultado.calculo?.calculoDetalhes?.modalidadesDisponiveis) {
-        setModalidadesDisponiveis(resultado.calculo.calculoDetalhes.modalidadesDisponiveis);
+        setModalidadesDisponiveis(
+          resultado.calculo.calculoDetalhes.modalidadesDisponiveis
+        );
       }
     } catch (error: any) {
       console.error("Erro ao calcular benefício:", error);
@@ -206,13 +210,16 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
         console.log("📦 Solicitação carregada:", solicitacao);
 
         // 1. Carregar programa selecionado
-        if (solicitacao.programa) {
-          setProgramaSelecionado(solicitacao.programa);
+        if (solicitacao.programaId) {
+          const programa = programasAtivos.find(
+            (p) => p.id === solicitacao.programaId
+          );
+          setProgramaSelecionado(programa || null);
         }
 
         // 2. Carregar pessoa selecionada e seus labels para o AsyncSearchSelect
         if (solicitacao.pessoa) {
-          setPessoaSelecionada(solicitacao.pessoa);
+          //setPessoaSelecionada(solicitacao.pessoa);
           setPessoaInitialLabel(solicitacao.pessoa.nome);
           setPessoaInitialSubLabel(solicitacao.pessoa.cpfCnpj);
         }
@@ -302,19 +309,26 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
                 name="programaId"
                 value={values.programaId || ""}
                 onChange={(e) => {
-                  const programaId = e.target.value ? parseInt(e.target.value) : null;
-                  const programa = programasAtivos.find((p) => p.id === programaId);
+                  const programaId = e.target.value
+                    ? parseInt(e.target.value)
+                    : null;
+                  const programa = programasAtivos.find(
+                    (p) => p.id === programaId
+                  );
                   handleProgramaChange(programaId, programa, setValue);
                 }}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 disabled={carregandoProgramas}
               >
                 <option value="">
-                  {carregandoProgramas ? "Carregando programas..." : "Selecione um programa"}
+                  {carregandoProgramas
+                    ? "Carregando programas..."
+                    : "Selecione um programa"}
                 </option>
                 {programasAtivos.map((programa) => (
                   <option key={programa.id} value={programa.id}>
-                    {programa.nome} ({programaService.formatarSecretaria(programa.secretaria)})
+                    {programa.nome} (
+                    {programaService.formatarSecretaria(programa.secretaria)})
                   </option>
                 ))}
               </select>
@@ -348,9 +362,9 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
                     ? values.pessoaId
                     : null
                 }
-                onChange={(value, pessoa) => {
+                onChange={(value) => {
                   setValue("pessoaId", value || 0);
-                  setPessoaSelecionada(pessoa || null);
+                  //setPessoaSelecionada(pessoa || null);
                   // Calcular automaticamente quando pessoa for selecionada
                   if (
                     value &&
@@ -420,7 +434,11 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
                       setModalidadeSelecionada(novaModalidade);
                       setValue("modalidade", novaModalidade); // Atualizar no FormBase para salvar
                       // Recalcular com a nova modalidade
-                      if (values.pessoaId && values.programaId && novaModalidade) {
+                      if (
+                        values.pessoaId &&
+                        values.programaId &&
+                        novaModalidade
+                      ) {
                         calcularBeneficioAutomatico(
                           values.pessoaId,
                           values.programaId,
@@ -471,16 +489,22 @@ const SolicitacaoBeneficioForm: React.FC<SolicitacaoBeneficioFormProps> = ({
                     value={quantidadeAnimais}
                     onChange={(e) => {
                       const valorString = e.target.value;
-                      const valorNumerico = valorString === "" ? "" : parseInt(valorString, 10);
+                      const valorNumerico =
+                        valorString === "" ? "" : parseInt(valorString, 10);
                       setQuantidadeAnimais(valorNumerico);
 
-                      console.log("🐄 Quantidade animais alterada:", valorNumerico);
+                      console.log(
+                        "🐄 Quantidade animais alterada:",
+                        valorNumerico
+                      );
 
                       // Recalcular automaticamente - usar o valor numérico diretamente
                       if (values.pessoaId && values.programaId) {
-                        const qtdAnimais = typeof valorNumerico === "number" && !isNaN(valorNumerico)
-                          ? valorNumerico
-                          : undefined;
+                        const qtdAnimais =
+                          typeof valorNumerico === "number" &&
+                          !isNaN(valorNumerico)
+                            ? valorNumerico
+                            : undefined;
 
                         console.log("🔄 Recalculando com animais:", qtdAnimais);
 

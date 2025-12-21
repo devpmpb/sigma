@@ -15,7 +15,7 @@ interface VeiculoFormProps {
   module?: "comum";
 }
 
-const VeiculoForm: React.FC<VeiculoFormProps> = ({ id, onSave }) => {
+const VeiculoForm: React.FC<VeiculoFormProps> = ({ id }) => {
   const [tiposVeiculo, setTiposVeiculo] = useState<TipoVeiculo[]>([]);
   const [loadingTipos, setLoadingTipos] = useState(false);
 

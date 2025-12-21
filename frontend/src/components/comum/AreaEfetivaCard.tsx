@@ -1,7 +1,7 @@
 // frontend/src/components/comum/AreaEfetivaCard.tsx
 
 import React, { useState, useEffect, useCallback } from "react";
-import { Calculator, RefreshCw, Save, Edit2, X } from "lucide-react";
+import { Calculator, RefreshCw, Save } from "lucide-react";
 import areaEfetivaService, {
   AreaEfetiva,
   AreaEfetivaDTO,

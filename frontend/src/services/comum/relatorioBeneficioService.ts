@@ -1,6 +1,10 @@
 // frontend/src/services/comum/relatorioBeneficioService.ts
 import BaseApiService from "../baseApiService";
 import apiClient from "../apiConfig";
+import {
+  SolicitacaoBeneficio,
+  SolicitacaoBeneficioDTO,
+} from "./solicitacaoBeneficioService";
 
 export interface RelatorioPorPrograma {
   resumo: {
@@ -71,7 +75,10 @@ export interface RelatorioPorSecretaria {
   };
 }
 
-class RelatorioBeneficioService extends BaseApiService {
+class RelatorioBeneficioService extends BaseApiService<
+  SolicitacaoBeneficio,
+  SolicitacaoBeneficioDTO
+> {
   constructor() {
     super("/relatorios/beneficios", "comum");
   }
@@ -82,7 +89,9 @@ class RelatorioBeneficioService extends BaseApiService {
     programaId?: number;
     status?: string;
   }): Promise<RelatorioPorPrograma> {
-    const response = await apiClient.get(`${this.baseUrl}/por-programa`, { params });
+    const response = await apiClient.get(`${this.baseUrl}/por-programa`, {
+      params,
+    });
     return response.data;
   }
 
@@ -90,9 +99,12 @@ class RelatorioBeneficioService extends BaseApiService {
     dataInicio?: string;
     dataFim?: string;
   }): Promise<RelatorioProdutores> {
-    const response = await apiClient.get(`${this.baseUrl}/produtores-beneficiados`, {
-      params,
-    });
+    const response = await apiClient.get(
+      `${this.baseUrl}/produtores-beneficiados`,
+      {
+        params,
+      }
+    );
     return response.data;
   }
 
@@ -101,7 +113,10 @@ class RelatorioBeneficioService extends BaseApiService {
     dataFim?: string;
     agrupamento?: "dia" | "mes" | "ano";
   }): Promise<RelatorioInvestimento> {
-    const response = await apiClient.get(`${this.baseUrl}/investimento-periodo`, { params });
+    const response = await apiClient.get(
+      `${this.baseUrl}/investimento-periodo`,
+      { params }
+    );
     return response.data;
   }
 
@@ -109,7 +124,9 @@ class RelatorioBeneficioService extends BaseApiService {
     dataInicio?: string;
     dataFim?: string;
   }): Promise<RelatorioPorSecretaria> {
-    const response = await apiClient.get(`${this.baseUrl}/por-secretaria`, { params });
+    const response = await apiClient.get(`${this.baseUrl}/por-secretaria`, {
+      params,
+    });
     return response.data;
   }
 }

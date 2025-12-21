@@ -1,26 +1,11 @@
 import { useState, useCallback, ChangeEvent, FormEvent } from "react";
 
 interface UseFormOptions<T> {
-  /**
-   * Valores iniciais do formulário
-   */
   initialValues: T;
-
-  /**
-   * Função de validação do formulário
-   * Retorna um objeto com erros ou null se não houver erros
-   */
   validate?: (values: T) => Record<string, string> | null;
-
-  /**
-   * Função chamada ao submeter o formulário
-   */
-  onSubmit?: (values: T) => Promise<void> | void;
+  onSubmit?: (values: T) => Promise<any> | any;
 }
 
-/**
- * Hook para gerenciar formulários
- */
 function useForm<T extends Record<string, any>>({
   initialValues,
   validate,

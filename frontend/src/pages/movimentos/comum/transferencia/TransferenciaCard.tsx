@@ -32,7 +32,10 @@ const TransferenciaCard: React.FC<TransferenciaCardProps> = ({
   const getSituacaoBadge = () => {
     const situacoes: Record<string, { label: string; color: string }> = {
       PROPRIA: { label: "Própria", color: "bg-green-100 text-green-800" },
-      CONDOMINIO: { label: "Condomínio", color: "bg-yellow-100 text-yellow-800" },
+      CONDOMINIO: {
+        label: "Condomínio",
+        color: "bg-yellow-100 text-yellow-800",
+      },
       USUFRUTO: { label: "Usufruto", color: "bg-orange-100 text-orange-800" },
     };
 
@@ -57,7 +60,8 @@ const TransferenciaCard: React.FC<TransferenciaCardProps> = ({
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1">
           <h3 className="text-lg font-semibold text-gray-900">
-            {transferencia.propriedade?.nome || `Propriedade #${transferencia.propriedadeId}`}
+            {transferencia.propriedade?.nome ||
+              `Propriedade #${transferencia.propriedadeId}`}
           </h3>
           {transferencia.propriedade?.matricula && (
             <p className="text-sm text-gray-500">

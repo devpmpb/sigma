@@ -12,6 +12,7 @@ export interface TransferenciaPropriedade {
   nuProprietarioNovoId?: number;
   dataTransferencia: string;
   observacoes?: string;
+
   createdAt: string;
   updatedAt: string;
 
@@ -23,26 +24,28 @@ export interface TransferenciaPropriedade {
     areaTotal: string;
     localizacao?: string;
     matricula?: string;
+    unidadeArea?: string;
   };
   proprietarioAnterior?: {
     id: number;
-    pessoa?: {
-      id: number;
-      nome: string;
-      cpfCnpj: string;
-      telefone?: string;
-      email?: string;
-    };
+    nome: string;
+    cpfCnpj: string;
+    telefone?: string;
+    email?: string;
   };
   proprietarioNovo?: {
     id: number;
-    pessoa?: {
-      id: number;
-      nome: string;
-      cpfCnpj: string;
-      telefone?: string;
-      email?: string;
-    };
+    nome: string;
+    cpfCnpj: string;
+    telefone?: string;
+    email?: string;
+  };
+  nuProprietarioNovo?: {
+    id: number;
+    nome: string;
+    cpfCnpj: string;
+    telefone?: string;
+    email?: string;
   };
 }
 

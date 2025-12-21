@@ -132,10 +132,10 @@ class SolicitacaoBeneficioService extends BaseApiService<
   /**
    * Sobrescrever update para garantir conversão de tipos
    */
-  async update(
+  update = async (
     id: number | string,
     data: Partial<SolicitacaoBeneficioDTO>
-  ): Promise<SolicitacaoBeneficio> {
+  ): Promise<SolicitacaoBeneficio> => {
     // Garantir que IDs sejam números se fornecidos
     const processedData = {
       ...data,
@@ -148,7 +148,7 @@ class SolicitacaoBeneficioService extends BaseApiService<
       processedData
     );
     return response.data;
-  }
+  };
 
   /**
    * Busca solicitações por pessoa
@@ -207,16 +207,12 @@ class SolicitacaoBeneficioService extends BaseApiService<
   /**
    * Busca por termo (sobrescreve método da classe base)
    */
-  async buscarPorTermo(termo: string): Promise<SolicitacaoBeneficio[]> {
-    if (!termo.trim()) {
-      return this.getAll();
-    }
-
-    const response = await apiClient.get(`${this.baseUrl}`, {
-      params: { search: termo },
+  buscarPorTermo = async (termo: string): Promise<SolicitacaoBeneficio[]> => {
+    const response = await apiClient.get(`${this.baseUrl}/busca`, {
+      params: { termo },
     });
     return response.data;
-  }
+  };
 
   /**
    * Opções de status para select

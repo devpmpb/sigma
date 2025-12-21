@@ -16,6 +16,12 @@ router.get(
 );
 
 router.get(
+  "/busca",
+  requirePermission(ModuloSistema.COMUM, AcaoPermissao.VIEW),
+  solicitacaoBeneficioController.buscarPorTermo
+);
+
+router.get(
   "/pessoa/:pessoaId",
   requirePermission(ModuloSistema.COMUM, AcaoPermissao.VIEW),
   solicitacaoBeneficioController.getByPessoa

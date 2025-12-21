@@ -1,7 +1,7 @@
 import {
   Outlet,
   redirect,
-  createRootRoute,
+  createRootRouteWithContext,
   createRoute,
   createRouter,
   RouterProvider as TanStackRouterProvider,
@@ -34,9 +34,13 @@ interface RouterContext {
   permissions: ReturnType<typeof usePermissions>;
 }
 
+/**
+ * Interface flexível para aceitar as configurações dos módulos
+ * sem exigir que elas sejam tipadas com enums específicos.
+ */
 interface RouteConfig {
   path: string;
-  component: React.ComponentType<any>;
+  component: any;
   module?: string;
   action?: string;
 }
@@ -44,7 +48,6 @@ interface RouteConfig {
 // Auth guard for protected routes
 function authGuard({ context }: { context: RouterContext }) {
   if (!context.auth.isAuthenticated) {
-    // Save the current location and redirect to login
     const from = window.location.pathname;
     return redirect({
       to: "/login",
@@ -53,141 +56,119 @@ function authGuard({ context }: { context: RouterContext }) {
       },
     });
   }
-  return;
 }
 
-// Permission guard for module-specific routes
+// Permission guard adaptado para aceitar strings e converter internamente
 function permissionGuard({
   context,
   requiredModule,
   requiredAction = "view",
 }: {
   context: RouterContext;
-  requiredModule?: ModuleType;
-  requiredAction?: ActionType;
+  requiredModule?: string;
+  requiredAction?: string;
 }) {
-  // If no module is required or user has permission, allow access
-  if (
-    !requiredModule ||
-    context.permissions.hasPermission(requiredModule, requiredAction)
-  ) {
+  if (!requiredModule) return;
+
+  const module = requiredModule as ModuleType;
+  const action = (requiredAction || "view") as ActionType;
+
+  if (context.permissions.hasPermission(module, action)) {
     return;
   }
 
-  // Otherwise redirect to access denied page
   return redirect({
     to: "/acesso-negado",
   });
 }
 
-// Função auxiliar para criar rotas a partir da configuração
-function createRoutesFromConfig(configs: RouteConfig[], parentRoute: any) {
-  return configs.map((config) => {
-    const hasParams = config.path.includes("/:");
+/**
+ * Transforma arrays de objetos em instâncias de rotas do TanStack Router.
+ */
+function createRoutesFromConfig(configs: any[], parentRoute: any) {
+  return (configs as RouteConfig[]).map((config) => {
+    let tanStackPath = config.path;
 
-    if (hasParams) {
-      // Converter todos os parâmetros de /:param para /$param
-      let tanStackPath = config.path;
+    if (config.path.includes("/:")) {
       const paramMatches = config.path.match(/:(\w+)/g);
-
       if (paramMatches) {
         paramMatches.forEach((param) => {
-          const paramName = param.substring(1); // remove o ':'
+          const paramName = param.substring(1);
           tanStackPath = tanStackPath.replace(`:${paramName}`, `$${paramName}`);
         });
       }
-
-      return createRoute({
-        getParentRoute: () => parentRoute,
-        path: tanStackPath,
-        component: ({ params }) => {
-          // Agora todos os parâmetros estarão disponíveis em params
-          const Component = config.component;
-          return React.createElement(Component, {
-            ...params,
-            onSave: () => window.location.reload(),
-          });
-        },
-        beforeLoad: async ({ context, location }) => {
-          // Auth guard
-          const authResult = authGuard({ context });
-          if (authResult) return authResult;
-
-          // Permission guard se especificado na config
-          if (config.module) {
-            return permissionGuard({
-              context,
-              requiredModule: config.module,
-              requiredAction: config.action || "view",
-            });
-          }
-        },
-      });
-    } else {
-      // Rota sem parâmetros (código original)
-      return createRoute({
-        getParentRoute: () => parentRoute,
-        path: config.path,
-        component: config.component,
-        beforeLoad: async ({ context }) => {
-          const authResult = authGuard({ context });
-          if (authResult) return authResult;
-
-          if (config.module) {
-            return permissionGuard({
-              context,
-              requiredModule: config.module,
-              requiredAction: config.action || "view",
-            });
-          }
-        },
-      });
     }
+
+    return createRoute({
+      getParentRoute: () => parentRoute,
+      path: tanStackPath,
+      component: (props: any) => {
+        const Component = config.component;
+        return (
+          <Component
+            {...props.params}
+            onSave={() => window.location.reload()}
+          />
+        );
+      },
+      // REMOVIDA A TIPAGEM EXPLÍCITA DO PARÂMETRO PARA EVITAR CONFLITO DE INFERÊNCIA
+      beforeLoad: async ({ context }) => {
+        const ctx = context as RouterContext;
+
+        const authResult = authGuard({ context: ctx });
+        if (authResult) return authResult;
+
+        if (config.module) {
+          return permissionGuard({
+            context: ctx,
+            requiredModule: config.module,
+            requiredAction: config.action,
+          });
+        }
+      },
+    });
   });
 }
 
-// Create root route
-const rootRoute = createRootRoute({
+// 1. Root Route com o contexto tipado
+const rootRoute = createRootRouteWithContext<RouterContext>()({
   component: () => <Outlet />,
 });
 
-// Login route
+// Rotas Base do Sistema
 const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/login",
   component: Login,
 });
 
-// Access denied route
 const acessoNegadoRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/acesso-negado",
   component: AcessoNegado,
 });
 
-// Dashboard público (sem autenticação - para prefeito/secretário)
 const dashboardPublicoRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/painel",
   component: DashboardPublico,
 });
 
-// Not found route
 const notFoundRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/not-found",
   component: NotFound,
 });
 
-// Layout route - parent for authenticated routes
+// Rota de Layout (Protegida)
 const layoutRoute = createRoute({
   getParentRoute: () => rootRoute,
   id: "layout",
   component: Layout,
-  beforeLoad: authGuard,
+  // AQUI TAMBÉM: Usamos o 'as any' ou removemos a tipagem do parâmetro
+  beforeLoad: ({ context }) => authGuard({ context: context as RouterContext }),
 });
 
-// Main pages
 const indexRoute = createRoute({
   getParentRoute: () => layoutRoute,
   path: "/",
@@ -212,25 +193,18 @@ const configuracoesRoute = createRoute({
   component: Configuracoes,
 });
 
-// Change password route
 const alterarSenhaRoute = createRoute({
   getParentRoute: () => layoutRoute,
   path: "/alterar-senha",
   component: AlterarSenha,
 });
 
-// Catch-all route for 404
 const catchAllRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "*",
-  beforeLoad: () => {
-    return redirect({
-      to: "/not-found",
-    });
-  },
+  beforeLoad: () => redirect({ to: "/not-found" }),
 });
 
-// Criar rotas a partir das configurações
 const obrasRoutes = createRoutesFromConfig(obrasRouteConfig, layoutRoute);
 const agriculturaRoutes = createRoutesFromConfig(
   agriculturaRouteConfig,
@@ -238,7 +212,6 @@ const agriculturaRoutes = createRoutesFromConfig(
 );
 const comunRoutes = createRoutesFromConfig(comunRouteConfig, layoutRoute);
 
-// Create the route tree
 const routeTree = rootRoute.addChildren([
   loginRoute,
   acessoNegadoRoute,
@@ -257,7 +230,6 @@ const routeTree = rootRoute.addChildren([
   catchAllRoute,
 ]);
 
-// Create the router instance
 export const router = createRouter({
   routeTree,
   context: {
@@ -265,21 +237,14 @@ export const router = createRouter({
     permissions: undefined!,
   },
   defaultPreload: "intent",
-  // Este é opcional, mas recomendado para aplicações de página única
-  defaultErrorComponent: ({ error }) => {
-    console.error(error);
-    return <div>Erro: {error.message || "Ocorreu um erro desconhecido"}</div>;
-  },
 });
 
-// Register router for type safety
 declare module "@tanstack/react-router" {
   interface Register {
     router: typeof router;
   }
 }
 
-// Create a RouterContext provider component
 export function RouterProvider() {
   const auth = useAuth();
   const permissions = usePermissions();
@@ -289,7 +254,6 @@ export function RouterProvider() {
   );
 }
 
-// Export routes for type safety in links
 export const routes = {
   root: rootRoute,
   login: loginRoute,
@@ -302,5 +266,4 @@ export const routes = {
   dashboards: dashboardsRoute,
   configuracoes: configuracoesRoute,
   alterarSenha: alterarSenhaRoute,
-  // As rotas modulares estarão disponíveis de outra forma
 };

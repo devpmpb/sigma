@@ -23,7 +23,8 @@ interface ProgramaFormProps {
  */
 const ProgramaForm: React.FC<ProgramaFormProps> = ({ id, onSave }) => {
   const navigate = useNavigate();
-  const programaId = id || useParams({ strict: false }).id;
+  const params = useParams({ strict: false }) as { id?: string };
+  const programaId = id || params.id;
   const [quantidadeRegras, setQuantidadeRegras] = useState<number>(0);
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
   const [duplicateName, setDuplicateName] = useState("");
@@ -124,7 +125,7 @@ const ProgramaForm: React.FC<ProgramaFormProps> = ({ id, onSave }) => {
         returnUrl="/cadastros/comum/programas"
         //onSave={onSave}
       >
-        {({ values, errors, touched, handleChange, setValue }) => (
+        {({ values, errors, touched, handleChange }) => (
           <>
             {/* Seção de Regras de Negócio */}
             {programaId && programaId !== "novo" && (

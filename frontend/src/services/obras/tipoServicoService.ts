@@ -25,6 +25,16 @@ export interface TipoServico {
   faixasPreco?: FaixaPrecoServico[];
 }
 
+export interface TipoServicoDTO {
+  id: number;
+  nome: string;
+  unidade: string; // "carga" ou "hora"
+  ativo: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+  faixasPreco?: FaixaPrecoServico[];
+}
+
 export interface TipoServicoInput {
   nome: string;
   unidade: string;

@@ -5,7 +5,7 @@ import relatorioBeneficioService, {
   type RelatorioPorPrograma,
   type RelatorioProdutores,
   type RelatorioInvestimento,
-  type RelatorioPorSecretaria
+  type RelatorioPorSecretaria,
 } from "../../services/comum/relatorioBeneficioService";
 import programaService from "../../services/comum/programaService";
 import {
@@ -15,8 +15,8 @@ import {
   TrendingUp,
   Users,
   DollarSign,
-  Calendar,
-  Building2
+  //Calendar,
+  Building2,
 } from "lucide-react";
 import {
   exportRelatorioPorProgramaPDF,
@@ -25,16 +25,22 @@ import {
   exportRelatorioSecretariaPDF,
 } from "../../utils/exportRelatorioBeneficioPDF";
 
-type TipoRelatorio = "porPrograma" | "produtores" | "investimento" | "porSecretaria";
+type TipoRelatorio =
+  | "porPrograma"
+  | "produtores"
+  | "investimento"
+  | "porSecretaria";
 type AgrupamentoInvestimento = "dia" | "mes" | "ano";
 
 const RelatoriosBeneficio: React.FC = () => {
-  const [tipoRelatorio, setTipoRelatorio] = useState<TipoRelatorio>("porPrograma");
+  const [tipoRelatorio, setTipoRelatorio] =
+    useState<TipoRelatorio>("porPrograma");
   const [dataInicio, setDataInicio] = useState<string>("");
   const [dataFim, setDataFim] = useState<string>("");
   const [programaId, setProgramaId] = useState<string>("");
   const [status, setStatus] = useState<string>("");
-  const [agrupamento, setAgrupamento] = useState<AgrupamentoInvestimento>("mes");
+  const [agrupamento, setAgrupamento] =
+    useState<AgrupamentoInvestimento>("mes");
 
   // Buscar lista de programas para o filtro
   const { data: programas } = useQuery({
@@ -43,8 +49,18 @@ const RelatoriosBeneficio: React.FC = () => {
   });
 
   // Query para relatório por programa
-  const { data: relatorioPorPrograma, isLoading: loadingPorPrograma, error: errorPorPrograma } = useQuery({
-    queryKey: ["relatorio-beneficio-programa", dataInicio, dataFim, programaId, status],
+  const {
+    data: relatorioPorPrograma,
+    isLoading: loadingPorPrograma,
+    error: errorPorPrograma,
+  } = useQuery({
+    queryKey: [
+      "relatorio-beneficio-programa",
+      dataInicio,
+      dataFim,
+      programaId,
+      status,
+    ],
     queryFn: async () => {
       console.log("Buscando relatório por programa...");
       console.log("Params:", { dataInicio, dataFim, programaId, status });
@@ -71,45 +87,55 @@ const RelatoriosBeneficio: React.FC = () => {
   // Query para relatório de produtores
   const { data: relatorioProdutores, isLoading: loadingProdutores } = useQuery({
     queryKey: ["relatorio-beneficio-produtores", dataInicio, dataFim],
-    queryFn: () => relatorioBeneficioService.produtoresBeneficiados({
-      dataInicio: dataInicio || undefined,
-      dataFim: dataFim || undefined,
-    }),
+    queryFn: () =>
+      relatorioBeneficioService.produtoresBeneficiados({
+        dataInicio: dataInicio || undefined,
+        dataFim: dataFim || undefined,
+      }),
     enabled: tipoRelatorio === "produtores",
   });
 
   // Query para relatório de investimento
-  const { data: relatorioInvestimento, isLoading: loadingInvestimento } = useQuery({
-    queryKey: ["relatorio-beneficio-investimento", dataInicio, dataFim, agrupamento],
-    queryFn: () => relatorioBeneficioService.investimentoPorPeriodo({
-      dataInicio: dataInicio || undefined,
-      dataFim: dataFim || undefined,
-      agrupamento,
-    }),
-    enabled: tipoRelatorio === "investimento",
-  });
+  const { data: relatorioInvestimento, isLoading: loadingInvestimento } =
+    useQuery({
+      queryKey: [
+        "relatorio-beneficio-investimento",
+        dataInicio,
+        dataFim,
+        agrupamento,
+      ],
+      queryFn: () =>
+        relatorioBeneficioService.investimentoPorPeriodo({
+          dataInicio: dataInicio || undefined,
+          dataFim: dataFim || undefined,
+          agrupamento,
+        }),
+      enabled: tipoRelatorio === "investimento",
+    });
 
   // Query para relatório por secretaria
-  const { data: relatorioPorSecretaria, isLoading: loadingPorSecretaria } = useQuery({
-    queryKey: ["relatorio-beneficio-secretaria", dataInicio, dataFim],
-    queryFn: () => relatorioBeneficioService.porSecretaria({
-      dataInicio: dataInicio || undefined,
-      dataFim: dataFim || undefined,
-    }),
-    enabled: tipoRelatorio === "porSecretaria",
-  });
+  const { data: relatorioPorSecretaria, isLoading: loadingPorSecretaria } =
+    useQuery({
+      queryKey: ["relatorio-beneficio-secretaria", dataInicio, dataFim],
+      queryFn: () =>
+        relatorioBeneficioService.porSecretaria({
+          dataInicio: dataInicio || undefined,
+          dataFim: dataFim || undefined,
+        }),
+      enabled: tipoRelatorio === "porSecretaria",
+    });
 
-  const isLoading = loadingPorPrograma || loadingProdutores || loadingInvestimento || loadingPorSecretaria;
+  const isLoading =
+    loadingPorPrograma ||
+    loadingProdutores ||
+    loadingInvestimento ||
+    loadingPorSecretaria;
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
       style: "currency",
       currency: "BRL",
     }).format(value);
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("pt-BR");
   };
 
   const exportToPDF = () => {
@@ -151,8 +177,12 @@ const RelatoriosBeneficio: React.FC = () => {
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-blue-600 font-medium">Total de Solicitações</p>
-              <p className="text-2xl font-bold text-blue-900">{data.totais.totalSolicitacoes}</p>
+              <p className="text-sm text-blue-600 font-medium">
+                Total de Solicitações
+              </p>
+              <p className="text-2xl font-bold text-blue-900">
+                {data.totais.totalSolicitacoes}
+              </p>
             </div>
             <FileText className="h-8 w-8 text-blue-400" />
           </div>
@@ -161,7 +191,9 @@ const RelatoriosBeneficio: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-green-600 font-medium">Valor Total</p>
-              <p className="text-2xl font-bold text-green-900">{formatCurrency(data.totais.valorTotal)}</p>
+              <p className="text-2xl font-bold text-green-900">
+                {formatCurrency(data.totais.valorTotal)}
+              </p>
             </div>
             <DollarSign className="h-8 w-8 text-green-400" />
           </div>
@@ -190,24 +222,32 @@ const RelatoriosBeneficio: React.FC = () => {
             {data.resumo.map((item, index) => (
               <tr key={index} className="hover:bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-gray-900">{item.programa}</div>
+                  <div className="text-sm font-medium text-gray-900">
+                    {item.programa}
+                  </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">{item.totalSolicitacoes}</div>
+                  <div className="text-sm text-gray-900">
+                    {item.totalSolicitacoes}
+                  </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">{formatCurrency(item.valorTotal)}</div>
+                  <div className="text-sm text-gray-900">
+                    {formatCurrency(item.valorTotal)}
+                  </div>
                 </td>
                 <td className="px-6 py-4">
                   <div className="flex flex-wrap gap-2">
-                    {Object.entries(item.porStatus).map(([status, quantidade]) => (
-                      <span
-                        key={status}
-                        className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800"
-                      >
-                        {status}: {quantidade}
-                      </span>
-                    ))}
+                    {Object.entries(item.porStatus).map(
+                      ([status, quantidade]) => (
+                        <span
+                          key={status}
+                          className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800"
+                        >
+                          {status}: {quantidade}
+                        </span>
+                      )
+                    )}
                   </div>
                 </td>
               </tr>
@@ -224,8 +264,12 @@ const RelatoriosBeneficio: React.FC = () => {
         <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-purple-600 font-medium">Total de Produtores</p>
-              <p className="text-2xl font-bold text-purple-900">{data.totais.totalProdutores}</p>
+              <p className="text-sm text-purple-600 font-medium">
+                Total de Produtores
+              </p>
+              <p className="text-2xl font-bold text-purple-900">
+                {data.totais.totalProdutores}
+              </p>
             </div>
             <Users className="h-8 w-8 text-purple-400" />
           </div>
@@ -233,8 +277,12 @@ const RelatoriosBeneficio: React.FC = () => {
         <div className="bg-green-50 border border-green-200 rounded-lg p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-green-600 font-medium">Total de Benefícios</p>
-              <p className="text-2xl font-bold text-green-900">{data.totais.totalBeneficios}</p>
+              <p className="text-sm text-green-600 font-medium">
+                Total de Benefícios
+              </p>
+              <p className="text-2xl font-bold text-green-900">
+                {data.totais.totalBeneficios}
+              </p>
             </div>
             <FileText className="h-8 w-8 text-green-400" />
           </div>
@@ -263,16 +311,24 @@ const RelatoriosBeneficio: React.FC = () => {
             {data.produtores.map((item, index) => (
               <tr key={index} className="hover:bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-gray-900">{item.pessoa.nome}</div>
+                  <div className="text-sm font-medium text-gray-900">
+                    {item.pessoa.nome}
+                  </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">{item.pessoa.cpfCnpj}</div>
+                  <div className="text-sm text-gray-900">
+                    {item.pessoa.cpfCnpj}
+                  </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">{item.quantidadeBeneficios}</div>
+                  <div className="text-sm text-gray-900">
+                    {item.quantidadeBeneficios}
+                  </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">{formatCurrency(item.totalRecebido)}</div>
+                  <div className="text-sm text-gray-900">
+                    {formatCurrency(item.totalRecebido)}
+                  </div>
                 </td>
               </tr>
             ))}
@@ -288,8 +344,12 @@ const RelatoriosBeneficio: React.FC = () => {
         <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-indigo-600 font-medium">Quantidade Total</p>
-              <p className="text-2xl font-bold text-indigo-900">{data.totais.quantidadeTotal}</p>
+              <p className="text-sm text-indigo-600 font-medium">
+                Quantidade Total
+              </p>
+              <p className="text-2xl font-bold text-indigo-900">
+                {data.totais.quantidadeTotal}
+              </p>
             </div>
             <TrendingUp className="h-8 w-8 text-indigo-400" />
           </div>
@@ -298,7 +358,9 @@ const RelatoriosBeneficio: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-green-600 font-medium">Valor Total</p>
-              <p className="text-2xl font-bold text-green-900">{formatCurrency(data.totais.valorTotal)}</p>
+              <p className="text-2xl font-bold text-green-900">
+                {formatCurrency(data.totais.valorTotal)}
+              </p>
             </div>
             <DollarSign className="h-8 w-8 text-green-400" />
           </div>
@@ -327,24 +389,32 @@ const RelatoriosBeneficio: React.FC = () => {
             {data.periodos.map((item, index) => (
               <tr key={index} className="hover:bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-gray-900">{item.periodo}</div>
+                  <div className="text-sm font-medium text-gray-900">
+                    {item.periodo}
+                  </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">{item.quantidadeSolicitacoes}</div>
+                  <div className="text-sm text-gray-900">
+                    {item.quantidadeSolicitacoes}
+                  </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">{formatCurrency(item.totalInvestido)}</div>
+                  <div className="text-sm text-gray-900">
+                    {formatCurrency(item.totalInvestido)}
+                  </div>
                 </td>
                 <td className="px-6 py-4">
                   <div className="flex flex-wrap gap-2">
-                    {Object.entries(item.porPrograma).map(([programa, valor]) => (
-                      <span
-                        key={programa}
-                        className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
-                      >
-                        {programa}: {formatCurrency(Number(valor))}
-                      </span>
-                    ))}
+                    {Object.entries(item.porPrograma).map(
+                      ([programa, valor]) => (
+                        <span
+                          key={programa}
+                          className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                        >
+                          {programa}: {formatCurrency(Number(valor))}
+                        </span>
+                      )
+                    )}
                   </div>
                 </td>
               </tr>
@@ -361,8 +431,12 @@ const RelatoriosBeneficio: React.FC = () => {
         <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-orange-600 font-medium">Quantidade Total</p>
-              <p className="text-2xl font-bold text-orange-900">{data.totais.quantidadeTotal}</p>
+              <p className="text-sm text-orange-600 font-medium">
+                Quantidade Total
+              </p>
+              <p className="text-2xl font-bold text-orange-900">
+                {data.totais.quantidadeTotal}
+              </p>
             </div>
             <Building2 className="h-8 w-8 text-orange-400" />
           </div>
@@ -371,7 +445,9 @@ const RelatoriosBeneficio: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-green-600 font-medium">Valor Total</p>
-              <p className="text-2xl font-bold text-green-900">{formatCurrency(data.totais.valorTotal)}</p>
+              <p className="text-2xl font-bold text-green-900">
+                {formatCurrency(data.totais.valorTotal)}
+              </p>
             </div>
             <DollarSign className="h-8 w-8 text-green-400" />
           </div>
@@ -400,13 +476,19 @@ const RelatoriosBeneficio: React.FC = () => {
             {data.secretarias.map((item, index) => (
               <tr key={index} className="hover:bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-gray-900">{item.secretaria}</div>
+                  <div className="text-sm font-medium text-gray-900">
+                    {item.secretaria}
+                  </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">{item.quantidadeSolicitacoes}</div>
+                  <div className="text-sm text-gray-900">
+                    {item.quantidadeSolicitacoes}
+                  </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">{formatCurrency(item.totalInvestido)}</div>
+                  <div className="text-sm text-gray-900">
+                    {formatCurrency(item.totalInvestido)}
+                  </div>
                 </td>
                 <td className="px-6 py-4">
                   <div className="space-y-1">
@@ -434,8 +516,12 @@ const RelatoriosBeneficio: React.FC = () => {
           <div className="text-sm breadcrumbs">
             <ul className="flex">
               <li className="text-gray-500">Início</li>
-              <li className="before:content-['>'] before:mx-2 text-gray-500">Movimentos</li>
-              <li className="before:content-['>'] before:mx-2 text-gray-500">Comum</li>
+              <li className="before:content-['>'] before:mx-2 text-gray-500">
+                Movimentos
+              </li>
+              <li className="before:content-['>'] before:mx-2 text-gray-500">
+                Comum
+              </li>
               <li className="before:content-['>'] before:mx-2 text-gray-700">
                 Relatórios de Benefícios
               </li>
@@ -447,7 +533,9 @@ const RelatoriosBeneficio: React.FC = () => {
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
           <div className="flex items-center gap-2 mb-4">
             <Filter className="h-5 w-5 text-gray-600" />
-            <h2 className="text-lg font-semibold">Filtros e Tipo de Relatório</h2>
+            <h2 className="text-lg font-semibold">
+              Filtros e Tipo de Relatório
+            </h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -458,7 +546,9 @@ const RelatoriosBeneficio: React.FC = () => {
               </label>
               <select
                 value={tipoRelatorio}
-                onChange={(e) => setTipoRelatorio(e.target.value as TipoRelatorio)}
+                onChange={(e) =>
+                  setTipoRelatorio(e.target.value as TipoRelatorio)
+                }
                 className="w-full border border-gray-300 rounded-md px-3 py-2"
               >
                 <option value="porPrograma">Por Programa</option>
@@ -541,7 +631,9 @@ const RelatoriosBeneficio: React.FC = () => {
                 </label>
                 <select
                   value={agrupamento}
-                  onChange={(e) => setAgrupamento(e.target.value as AgrupamentoInvestimento)}
+                  onChange={(e) =>
+                    setAgrupamento(e.target.value as AgrupamentoInvestimento)
+                  }
                   className="w-full border border-gray-300 rounded-md px-3 py-2"
                 >
                   <option value="dia">Dia</option>
@@ -570,20 +662,32 @@ const RelatoriosBeneficio: React.FC = () => {
           </div>
         ) : errorPorPrograma ? (
           <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-            <h3 className="text-lg font-medium text-red-900 mb-2">Erro ao carregar relatório</h3>
+            <h3 className="text-lg font-medium text-red-900 mb-2">
+              Erro ao carregar relatório
+            </h3>
             <p className="text-red-700">{String(errorPorPrograma)}</p>
           </div>
         ) : (
           <>
-            {tipoRelatorio === "porPrograma" && relatorioPorPrograma && renderRelatorioPorPrograma(relatorioPorPrograma)}
-            {tipoRelatorio === "produtores" && relatorioProdutores && renderRelatorioProdutores(relatorioProdutores)}
-            {tipoRelatorio === "investimento" && relatorioInvestimento && renderRelatorioInvestimento(relatorioInvestimento)}
-            {tipoRelatorio === "porSecretaria" && relatorioPorSecretaria && renderRelatorioPorSecretaria(relatorioPorSecretaria)}
+            {tipoRelatorio === "porPrograma" &&
+              relatorioPorPrograma &&
+              renderRelatorioPorPrograma(relatorioPorPrograma)}
+            {tipoRelatorio === "produtores" &&
+              relatorioProdutores &&
+              renderRelatorioProdutores(relatorioProdutores)}
+            {tipoRelatorio === "investimento" &&
+              relatorioInvestimento &&
+              renderRelatorioInvestimento(relatorioInvestimento)}
+            {tipoRelatorio === "porSecretaria" &&
+              relatorioPorSecretaria &&
+              renderRelatorioPorSecretaria(relatorioPorSecretaria)}
 
             {/* Mensagem quando não há dados */}
             {tipoRelatorio === "porPrograma" && !relatorioPorPrograma && (
               <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
-                <p className="text-gray-600">Nenhum dado encontrado para os filtros selecionados</p>
+                <p className="text-gray-600">
+                  Nenhum dado encontrado para os filtros selecionados
+                </p>
               </div>
             )}
           </>

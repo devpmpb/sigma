@@ -52,12 +52,24 @@ const COLORS = [
 
 // Nomes dos meses
 const MESES = [
-  "Jan", "Fev", "Mar", "Abr", "Mai", "Jun",
-  "Jul", "Ago", "Set", "Out", "Nov", "Dez",
+  "Jan",
+  "Fev",
+  "Mar",
+  "Abr",
+  "Mai",
+  "Jun",
+  "Jul",
+  "Ago",
+  "Set",
+  "Out",
+  "Nov",
+  "Dez",
 ];
 
 // Formatador de moeda
-const formatarMoeda = (valor: number) => {
+const formatarMoeda = (valor: any) => {
+  if (typeof valor !== "number") return "R$ 0,00"; // Ou retornar string vazia ""
+
   return new Intl.NumberFormat("pt-BR", {
     style: "currency",
     currency: "BRL",
@@ -73,18 +85,32 @@ interface StatCardProps {
   subtitulo?: string;
 }
 
-function StatCard({ titulo, valor, icone, corIcone, subtitulo }: StatCardProps) {
+function StatCard({
+  titulo,
+  valor,
+  icone,
+  corIcone,
+  subtitulo,
+}: StatCardProps) {
   return (
     <div className="bg-white rounded-lg shadow p-4 sm:p-6">
       <div className="flex items-center justify-between">
         <div className="min-w-0 flex-1">
-          <p className="text-xs sm:text-sm font-medium text-gray-500 truncate">{titulo}</p>
-          <p className="mt-1 text-lg sm:text-2xl font-bold text-gray-900 truncate">{valor}</p>
+          <p className="text-xs sm:text-sm font-medium text-gray-500 truncate">
+            {titulo}
+          </p>
+          <p className="mt-1 text-lg sm:text-2xl font-bold text-gray-900 truncate">
+            {valor}
+          </p>
           {subtitulo && (
-            <p className="mt-1 text-xs sm:text-sm text-gray-500 truncate">{subtitulo}</p>
+            <p className="mt-1 text-xs sm:text-sm text-gray-500 truncate">
+              {subtitulo}
+            </p>
           )}
         </div>
-        <div className={`p-2 sm:p-3 rounded-full ${corIcone} flex-shrink-0`}>{icone}</div>
+        <div className={`p-2 sm:p-3 rounded-full ${corIcone} flex-shrink-0`}>
+          {icone}
+        </div>
       </div>
     </div>
   );
@@ -129,7 +155,9 @@ export default function DashboardPublico() {
     const buscar = async () => {
       if (buscaProdutor.length >= 2) {
         try {
-          const data = await dashboardPublicoService.buscarProdutores(buscaProdutor);
+          const data = await dashboardPublicoService.buscarProdutores(
+            buscaProdutor
+          );
           setProdutores(data);
           setShowProdutores(true);
         } catch (error) {
@@ -240,7 +268,9 @@ export default function DashboardPublico() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-lg sm:text-xl font-bold">SIGMA</h1>
-              <p className="text-xs sm:text-sm text-blue-200">Dashboard Executivo</p>
+              <p className="text-xs sm:text-sm text-blue-200">
+                Dashboard Executivo
+              </p>
             </div>
 
             <div className="flex items-center gap-2">
@@ -248,7 +278,9 @@ export default function DashboardPublico() {
               <button
                 onClick={() => setShowFiltros(!showFiltros)}
                 className={`p-2 rounded-lg transition-colors ${
-                  filtrosAtivos ? "bg-yellow-500" : "bg-blue-600 hover:bg-blue-500"
+                  filtrosAtivos
+                    ? "bg-yellow-500"
+                    : "bg-blue-600 hover:bg-blue-500"
                 }`}
               >
                 <Filter className="h-5 w-5" />
@@ -260,7 +292,9 @@ export default function DashboardPublico() {
                 disabled={loading}
                 className="p-2 bg-blue-600 rounded-lg hover:bg-blue-500 transition-colors"
               >
-                <RefreshCw className={`h-5 w-5 ${loading ? "animate-spin" : ""}`} />
+                <RefreshCw
+                  className={`h-5 w-5 ${loading ? "animate-spin" : ""}`}
+                />
               </button>
             </div>
           </div>
@@ -283,7 +317,9 @@ export default function DashboardPublico() {
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 {anos.map((a) => (
-                  <option key={a} value={a}>{a}</option>
+                  <option key={a} value={a}>
+                    {a}
+                  </option>
                 ))}
               </select>
             </div>
@@ -295,12 +331,16 @@ export default function DashboardPublico() {
               </label>
               <select
                 value={programaId || ""}
-                onChange={(e) => setProgramaId(e.target.value ? Number(e.target.value) : null)}
+                onChange={(e) =>
+                  setProgramaId(e.target.value ? Number(e.target.value) : null)
+                }
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">Todos os programas</option>
                 {programas.map((p) => (
-                  <option key={p.id} value={p.id}>{p.nome}</option>
+                  <option key={p.id} value={p.id}>
+                    {p.nome}
+                  </option>
                 ))}
               </select>
             </div>
@@ -339,7 +379,9 @@ export default function DashboardPublico() {
                           className="w-full px-3 py-2 text-left hover:bg-gray-100 border-b last:border-b-0"
                         >
                           <div className="font-medium">{p.nome}</div>
-                          <div className="text-xs text-gray-500">{p.cpfCnpj}</div>
+                          <div className="text-xs text-gray-500">
+                            {p.cpfCnpj}
+                          </div>
                         </button>
                       ))}
                     </div>
@@ -373,7 +415,9 @@ export default function DashboardPublico() {
               </span>
             )}
             {produtorId && (
-              <span className="bg-yellow-200 px-2 py-0.5 rounded">{produtorNome}</span>
+              <span className="bg-yellow-200 px-2 py-0.5 rounded">
+                {produtorNome}
+              </span>
             )}
           </div>
         </div>
@@ -435,7 +479,7 @@ export default function DashboardPublico() {
                     }
                   />
                   <Tooltip
-                    formatter={(value: number) => [formatarMoeda(value), "Valor"]}
+                    formatter={(value: any) => [formatarMoeda(value), "Valor"]}
                   />
                   <Line
                     type="monotone"
@@ -468,14 +512,16 @@ export default function DashboardPublico() {
                     cx="50%"
                     cy="50%"
                     outerRadius={80}
-                    label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
+                    label={({ percent }) =>
+                      `${(percent || 0 * 100).toFixed(0)}%`
+                    }
                     labelLine={false}
                   >
                     {dadosPorPrograma.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.fill} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value: number) => formatarMoeda(value)} />
+                  <Tooltip formatter={(value: any) => formatarMoeda(value)} />
                   <Legend wrapperStyle={{ fontSize: 12 }} />
                 </PieChart>
               </ResponsiveContainer>
@@ -493,10 +539,16 @@ export default function DashboardPublico() {
             Valor por Programa
           </h2>
           {dados?.porPrograma && dados.porPrograma.length > 0 ? (
-            <ResponsiveContainer width="100%" height={Math.max(300, dados.porPrograma.length * 50)}>
+            <ResponsiveContainer
+              width="100%"
+              height={Math.max(300, dados.porPrograma.length * 50)}
+            >
               <BarChart
                 data={dados.porPrograma.map((p, i) => ({
-                  nome: p.nome.length > 20 ? p.nome.substring(0, 20) + "..." : p.nome,
+                  nome:
+                    p.nome.length > 20
+                      ? p.nome.substring(0, 20) + "..."
+                      : p.nome,
                   valor: p.valor,
                   fill: COLORS[i % COLORS.length],
                 }))}
@@ -514,8 +566,18 @@ export default function DashboardPublico() {
                     }).format(value)
                   }
                 />
-                <YAxis type="category" dataKey="nome" width={95} tick={{ fontSize: 11 }} />
-                <Tooltip formatter={(value: number) => [formatarMoeda(value), "Valor Total"]} />
+                <YAxis
+                  type="category"
+                  dataKey="nome"
+                  width={95}
+                  tick={{ fontSize: 11 }}
+                />
+                <Tooltip
+                  formatter={(value: any) => [
+                    formatarMoeda(value),
+                    "Valor Total",
+                  ]}
+                />
                 <Bar dataKey="valor" fill="#2563eb" />
               </BarChart>
             </ResponsiveContainer>
@@ -610,8 +672,12 @@ export default function DashboardPublico() {
                       cores[status] || "bg-gray-100 text-gray-800"
                     }`}
                   >
-                    <p className="text-xl sm:text-2xl font-bold">{quantidade}</p>
-                    <p className="text-xs sm:text-sm">{nomes[status] || status}</p>
+                    <p className="text-xl sm:text-2xl font-bold">
+                      {quantidade}
+                    </p>
+                    <p className="text-xs sm:text-sm">
+                      {nomes[status] || status}
+                    </p>
                   </div>
                 );
               })}
@@ -622,7 +688,8 @@ export default function DashboardPublico() {
         {/* Última atualização */}
         {dados?.ultimaAtualizacao && (
           <div className="text-center text-xs sm:text-sm text-gray-500 pb-4">
-            Atualizado em: {new Date(dados.ultimaAtualizacao).toLocaleString("pt-BR")}
+            Atualizado em:{" "}
+            {new Date(dados.ultimaAtualizacao).toLocaleString("pt-BR")}
           </div>
         )}
       </main>

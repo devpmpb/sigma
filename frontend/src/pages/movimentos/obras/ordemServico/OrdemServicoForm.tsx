@@ -180,7 +180,7 @@ const OrdemServicoForm: React.FC<OrdemServicoFormProps> = ({ id, onSave }) => {
       initialValues={initialValues}
       validate={validate}
       onSave={onSave}
-      prepareSubmit={prepareSubmit}
+      //prepareSubmit={prepareSubmit}
       returnUrl="/movimentos/obras/ordens-servico"
     >
       {({ values, errors, touched, handleChange, setValue }) => {
@@ -305,7 +305,7 @@ const OrdemServicoForm: React.FC<OrdemServicoFormProps> = ({ id, onSave }) => {
                       : undefined
                   }
                   required
-                  help={
+                  helpText={
                     tipoSelecionado
                       ? `Quantidade de ${tipoSelecionado.unidade}s solicitadas`
                       : "Selecione um tipo de serviço primeiro"
@@ -392,7 +392,7 @@ const OrdemServicoForm: React.FC<OrdemServicoFormProps> = ({ id, onSave }) => {
                   name="horaInicio"
                   label="Hora de Início (Opcional)"
                   error={touched.horaInicio ? errors.horaInicio : undefined}
-                  help="Preenchido após o início da execução"
+                  helpText="Preenchido após o início da execução"
                 >
                   <input
                     type="time"
@@ -409,7 +409,7 @@ const OrdemServicoForm: React.FC<OrdemServicoFormProps> = ({ id, onSave }) => {
                   name="horaFim"
                   label="Hora de Fim (Opcional)"
                   error={touched.horaFim ? errors.horaFim : undefined}
-                  help="Preenchido após o término da execução"
+                  helpText="Preenchido após o término da execução"
                 >
                   <input
                     type="time"
@@ -430,7 +430,7 @@ const OrdemServicoForm: React.FC<OrdemServicoFormProps> = ({ id, onSave }) => {
                 <FormField
                   name="valorReferencial"
                   label="Valor Referencial (VR)"
-                  help="Valor alterado 1x por ano - Não editável"
+                  helpText="Valor alterado 1x por ano - Não editável"
                 >
                   <input
                     type="number"

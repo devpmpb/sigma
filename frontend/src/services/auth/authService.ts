@@ -1,12 +1,12 @@
 import apiClient from "../apiConfig";
-import { 
-  User, 
-  UsuarioBackend, 
-  LoginRequest, 
-  LoginResponse, 
-  RefreshTokenRequest, 
+import {
+  User,
+  UsuarioBackend,
+  LoginRequest,
+  LoginResponse,
+  //RefreshTokenRequest,
   RefreshTokenResponse,
-  convertBackendUserToFrontend 
+  convertBackendUserToFrontend,
 } from "../../types";
 
 class AuthService {
@@ -18,15 +18,18 @@ class AuthService {
    * Realiza login do usuário
    */
   login = async (credentials: LoginRequest): Promise<LoginResponse> => {
-    const response = await apiClient.post<LoginResponse>("/auth/login", credentials);
-    
+    const response = await apiClient.post<LoginResponse>(
+      "/auth/login",
+      credentials
+    );
+
     // Converter dados do backend para frontend e salvar
     const frontendUser = convertBackendUserToFrontend(response.data.user);
-    
+
     // Salvar tokens e dados do usuário
     this.setTokens(response.data.accessToken, response.data.refreshToken);
     this.setUser(frontendUser);
-    
+
     return response.data;
   };
 
@@ -36,18 +39,21 @@ class AuthService {
   refreshToken = async (): Promise<RefreshTokenResponse | null> => {
     try {
       const refreshToken = this.getRefreshToken();
-      
+
       if (!refreshToken) {
         throw new Error("Refresh token não encontrado");
       }
 
-      const response = await apiClient.post<RefreshTokenResponse>("/auth/refresh", {
-        refreshToken,
-      });
+      const response = await apiClient.post<RefreshTokenResponse>(
+        "/auth/refresh",
+        {
+          refreshToken,
+        }
+      );
 
       // Converter e atualizar tokens e dados do usuário
       const frontendUser = convertBackendUserToFrontend(response.data.user);
-      
+
       this.setTokens(response.data.accessToken, response.data.refreshToken);
       this.setUser(frontendUser);
 
@@ -64,12 +70,14 @@ class AuthService {
    */
   verifyToken = async (): Promise<UsuarioBackend | null> => {
     try {
-      const response = await apiClient.get<{ user: UsuarioBackend }>("/auth/verify");
-      
+      const response = await apiClient.get<{ user: UsuarioBackend }>(
+        "/auth/verify"
+      );
+
       // Converter e atualizar dados do usuário
       const frontendUser = convertBackendUserToFrontend(response.data.user);
       this.setUser(frontendUser);
-      
+
       return response.data.user;
     } catch (error) {
       // Token inválido, tentar renovar
@@ -164,7 +172,8 @@ class AuthService {
     if (user.sector === "admin") return true;
 
     return user.permissions.some(
-      (permission) => permission.module === module && permission.action === action
+      (permission) =>
+        permission.module === module && permission.action === action
     );
   }
 
@@ -190,10 +199,10 @@ class AuthService {
 
     try {
       // Decodificar token JWT (parte do payload)
-      const payload = JSON.parse(atob(token.split('.')[1]));
+      const payload = JSON.parse(atob(token.split(".")[1]));
       const expiration = payload.exp * 1000; // Converter para milliseconds
       const now = Date.now();
-      
+
       return Math.max(0, Math.floor((expiration - now) / 60000)); // Retornar em minutos
     } catch {
       return null;

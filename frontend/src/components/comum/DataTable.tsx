@@ -49,7 +49,7 @@ interface DataTableProps<T> {
   /**
    * Chave única para cada linha (função ou string)
    */
-  rowKey: ((item: T, index: number) => string | number) | string;
+  rowKey?: ((item: T, index: number) => string | number) | string;
 
   /**
    * Se está carregando dados
@@ -78,7 +78,7 @@ interface DataTableProps<T> {
 function DataTable<T>({
   columns,
   data,
-  rowKey,
+  rowKey = "id",
   loading = false,
   emptyText = "Nenhum registro encontrado.",
   onRowClick,
@@ -95,17 +95,27 @@ function DataTable<T>({
     }, obj);
   };
   // Função para obter a chave única de uma linha
-  const getRowKey = (item: T, index: number): string | number => {
+  const getRowKey = (item: any, index: number): string | number => {
+    // Se rowKey for uma função personalizada
     if (typeof rowKey === "function") {
       return rowKey(item, index);
     }
 
-    if (!rowKey || typeof rowKey !== "string") {
-      console.warn("DataTable: rowKey inválido:", rowKey);
+    // Se for uma string (nome da propriedade)
+    const value = item[rowKey];
+
+    if (value === undefined || value === null) {
+      // Aviso apenas em desenvolvimento para alertar sobre IDs ausentes
+      if (process.env.NODE_ENV !== "production") {
+        console.warn(
+          `DataTable: A propriedade de chave "${rowKey}" não foi encontrada no item abaixo. Usando o índice (${index}) como fallback.`,
+          item
+        );
+      }
       return index;
     }
 
-    return getNestedValue(item, rowKey) || index;
+    return value;
   };
 
   // Renderização da tabela

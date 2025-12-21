@@ -3,6 +3,7 @@ import React from "react";
 import { Column } from "../../../../components/comum/DataTable";
 import tipoServicoService, {
   TipoServico,
+  TipoServicoDTO,
 } from "../../../../services/obras/tipoServicoService";
 import { CadastroBase } from "../../../../components/cadastro";
 import TipoServicoForm from "./TipoServicoForm";
@@ -71,16 +72,16 @@ const TiposServico: React.FC = () => {
   ];
 
   return (
-    <CadastroBase<TipoServico>
-      titulo="Tipos de Serviço"
-      subtitulo="Gerenciar tipos de serviço e suas faixas de preço"
+    <CadastroBase<TipoServico, TipoServicoDTO>
+      title="Tipos de Serviço"
       service={tipoServicoService}
       columns={columns}
+      baseUrl="/cadastros/comum/tipoServico"
+      rowKey="id"
+      module="obras"
       FormComponent={TipoServicoForm}
       searchPlaceholder="Buscar tipos de serviço..."
-      nomeEntidade="Tipo de Serviço"
-      showDeleteButton={true}
-      showStatusToggle={false} // Usa o botão de delete que faz soft delete
+      enableStatusToggle={false}
     />
   );
 };
