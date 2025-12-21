@@ -19,8 +19,8 @@ interface UsuarioFormProps {
  * Restrito apenas para administradores
  * Usando FormBase seguindo o padrão do projeto
  */
-const UsuarioForm: React.FC<UsuarioFormProps> = ({ id, onSave }) => {
-  const params = useParams({ strict: false });
+const UsuarioForm: React.FC<UsuarioFormProps> = ({ id }) => {
+  const params = useParams({ strict: false }) as any;
   const usuarioId = id || params.id;
   const isNewUser = !usuarioId || usuarioId === "novo";
 

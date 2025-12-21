@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import arrendamentoService, { 
-  Arrendamento, 
-  StatusArrendamento 
+import arrendamentoService, {
+  //Arrendamento,
+  StatusArrendamento,
 } from "../../../../services/agricultura/arrendamentoService";
 
 interface ArrendamentoStats {
@@ -42,7 +42,7 @@ const ArrendamentoDashboard: React.FC = () => {
       try {
         // Buscar todos os arrendamentos com detalhes
         const arrendamentos = await arrendamentoService.getAll();
-        
+
         // Calcular estatísticas
         const stats: ArrendamentoStats = {
           total: arrendamentos.length,
@@ -134,9 +134,13 @@ const ArrendamentoDashboard: React.FC = () => {
             <div className="text-green-600 text-2xl mr-3">✅</div>
             <div>
               <p className="text-sm font-medium text-green-600">Ativos</p>
-              <p className="text-2xl font-bold text-green-900">{stats.ativos}</p>
+              <p className="text-2xl font-bold text-green-900">
+                {stats.ativos}
+              </p>
               <p className="text-xs text-green-500">
-                {stats.total > 0 ? `${((stats.ativos / stats.total) * 100).toFixed(1)}%` : '0%'}
+                {stats.total > 0
+                  ? `${((stats.ativos / stats.total) * 100).toFixed(1)}%`
+                  : "0%"}
               </p>
             </div>
           </div>
@@ -148,7 +152,9 @@ const ArrendamentoDashboard: React.FC = () => {
             <div className="text-red-600 text-2xl mr-3">⚠️</div>
             <div>
               <p className="text-sm font-medium text-red-600">Vencidos</p>
-              <p className="text-2xl font-bold text-red-900">{stats.vencidos}</p>
+              <p className="text-2xl font-bold text-red-900">
+                {stats.vencidos}
+              </p>
               <p className="text-xs text-red-500">Requerem atenção</p>
             </div>
           </div>
@@ -161,7 +167,9 @@ const ArrendamentoDashboard: React.FC = () => {
             <div>
               <p className="text-sm font-medium text-purple-600">Área Total</p>
               <p className="text-2xl font-bold text-purple-900">
-                {stats.areaTotal.toLocaleString('pt-BR', { maximumFractionDigits: 1 })}
+                {stats.areaTotal.toLocaleString("pt-BR", {
+                  maximumFractionDigits: 1,
+                })}
               </p>
               <p className="text-xs text-purple-500">Hectares</p>
             </div>
@@ -227,7 +235,9 @@ const ArrendamentoDashboard: React.FC = () => {
         {/* Resumo por Tipo de Contrato */}
         <div className="bg-white rounded-lg shadow border">
           <div className="px-4 py-3 border-b border-gray-200">
-            <h3 className="text-lg font-medium text-gray-900">Tipos de Contrato</h3>
+            <h3 className="text-lg font-medium text-gray-900">
+              Tipos de Contrato
+            </h3>
           </div>
           <div className="p-4">
             <div className="space-y-4">
@@ -238,9 +248,18 @@ const ArrendamentoDashboard: React.FC = () => {
                   <span className="text-gray-700">Prazo Determinado</span>
                 </div>
                 <div className="text-right">
-                  <span className="font-semibold">{stats.contratos.temporarios}</span>
+                  <span className="font-semibold">
+                    {stats.contratos.temporarios}
+                  </span>
                   <span className="text-sm text-gray-500 ml-1">
-                    ({stats.total > 0 ? `${((stats.contratos.temporarios / stats.total) * 100).toFixed(1)}%` : '0%'})
+                    (
+                    {stats.total > 0
+                      ? `${(
+                          (stats.contratos.temporarios / stats.total) *
+                          100
+                        ).toFixed(1)}%`
+                      : "0%"}
+                    )
                   </span>
                 </div>
               </div>
@@ -252,9 +271,18 @@ const ArrendamentoDashboard: React.FC = () => {
                   <span className="text-gray-700">Prazo Indeterminado</span>
                 </div>
                 <div className="text-right">
-                  <span className="font-semibold">{stats.contratos.indeterminados}</span>
+                  <span className="font-semibold">
+                    {stats.contratos.indeterminados}
+                  </span>
                   <span className="text-sm text-gray-500 ml-1">
-                    ({stats.total > 0 ? `${((stats.contratos.indeterminados / stats.total) * 100).toFixed(1)}%` : '0%'})
+                    (
+                    {stats.total > 0
+                      ? `${(
+                          (stats.contratos.indeterminados / stats.total) *
+                          100
+                        ).toFixed(1)}%`
+                      : "0%"}
+                    )
                   </span>
                 </div>
               </div>
@@ -263,15 +291,20 @@ const ArrendamentoDashboard: React.FC = () => {
             {/* Gráfico simples com barras */}
             <div className="mt-4 space-y-2">
               <div className="text-xs text-gray-500 mb-1">Distribuição</div>
-              
+
               {/* Barra para temporários */}
               <div className="flex items-center">
                 <div className="w-16 text-xs text-gray-500">Temp.</div>
                 <div className="flex-1 bg-gray-200 rounded-full h-2 mr-2">
-                  <div 
-                    className="bg-blue-500 h-2 rounded-full" 
-                    style={{ 
-                      width: stats.total > 0 ? `${(stats.contratos.temporarios / stats.total) * 100}%` : '0%' 
+                  <div
+                    className="bg-blue-500 h-2 rounded-full"
+                    style={{
+                      width:
+                        stats.total > 0
+                          ? `${
+                              (stats.contratos.temporarios / stats.total) * 100
+                            }%`
+                          : "0%",
                     }}
                   ></div>
                 </div>
@@ -284,10 +317,16 @@ const ArrendamentoDashboard: React.FC = () => {
               <div className="flex items-center">
                 <div className="w-16 text-xs text-gray-500">Indet.</div>
                 <div className="flex-1 bg-gray-200 rounded-full h-2 mr-2">
-                  <div 
-                    className="bg-green-500 h-2 rounded-full" 
-                    style={{ 
-                      width: stats.total > 0 ? `${(stats.contratos.indeterminados / stats.total) * 100}%` : '0%' 
+                  <div
+                    className="bg-green-500 h-2 rounded-full"
+                    style={{
+                      width:
+                        stats.total > 0
+                          ? `${
+                              (stats.contratos.indeterminados / stats.total) *
+                              100
+                            }%`
+                          : "0%",
                     }}
                   ></div>
                 </div>
@@ -307,23 +346,30 @@ const ArrendamentoDashboard: React.FC = () => {
         </div>
         <div className="p-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <button 
-              onClick={() => window.location.href = '/movimentos/arrendamentos/novo'}
+            <button
+              onClick={() =>
+                (window.location.href = "/movimentos/arrendamentos/novo")
+              }
               className="flex items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-colors"
             >
               <div className="text-center">
                 <div className="text-2xl mb-2">➕</div>
-                <p className="text-sm font-medium text-gray-700">Novo Arrendamento</p>
+                <p className="text-sm font-medium text-gray-700">
+                  Novo Arrendamento
+                </p>
               </div>
             </button>
 
-            <button 
+            <button
               onClick={async () => {
                 try {
-                  const vencidos = await arrendamentoService.getArrendamentosVencidos();
+                  const vencidos =
+                    await arrendamentoService.getArrendamentosVencidos();
                   if (vencidos.length > 0) {
                     // Redirecionar para listagem filtrada ou mostrar detalhes
-                    alert(`${vencidos.length} arrendamento(s) vencido(s) encontrado(s)`);
+                    alert(
+                      `${vencidos.length} arrendamento(s) vencido(s) encontrado(s)`
+                    );
                   } else {
                     alert("Nenhum arrendamento vencido");
                   }
@@ -335,12 +381,16 @@ const ArrendamentoDashboard: React.FC = () => {
             >
               <div className="text-center">
                 <div className="text-2xl mb-2">📅</div>
-                <p className="text-sm font-medium text-gray-700">Verificar Vencimentos</p>
+                <p className="text-sm font-medium text-gray-700">
+                  Verificar Vencimentos
+                </p>
               </div>
             </button>
 
-            <button 
-              onClick={() => window.location.href = '/relatorios/arrendamentos'}
+            <button
+              onClick={() =>
+                (window.location.href = "/relatorios/arrendamentos")
+              }
               className="flex items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-green-400 hover:bg-green-50 transition-colors"
             >
               <div className="text-center">

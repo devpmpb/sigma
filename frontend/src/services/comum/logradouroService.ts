@@ -29,6 +29,7 @@ export interface LogradouroDTO {
   tipo: TipoLogradouro;
   descricao: string;
   cep?: string;
+  ativo: boolean;
 }
 
 /**

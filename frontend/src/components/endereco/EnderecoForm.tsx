@@ -86,7 +86,7 @@ export const EnderecoForm: React.FC<EnderecoFormProps> = ({
     setLoadingData(true);
     try {
       const [logradourosData, bairrosData] = await Promise.all([
-        logradouroService.getLogradourosAtivos(),
+        logradouroService.getAll(),
         bairroService.getAll(),
       ]);
 

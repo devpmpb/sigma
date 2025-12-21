@@ -145,7 +145,7 @@ function CadastroBase<T extends Record<string, any>, R>({
   rowKey,
   baseUrl,
   module,
-  FormComponent,
+  //FormComponent,
   showSearch = true,
   searchPlaceholder = "Buscar...",
   actionButtons,
@@ -165,17 +165,24 @@ function CadastroBase<T extends Record<string, any>, R>({
   const [filtroAtivo, setFiltroAtivo] = useState<string | null>(null);
   const [metrics, setMetrics] = useState<Record<string, any>>({});
   const navigate = useNavigate();
-  const params = useParams({ strict: false });
+  //const params = useParams({ strict: false });
 
   // Permission check
   const { hasPermission } = usePermissions();
   const canCreate = hasPermission(module, "create");
   const canEdit = hasPermission(module, "edit");
-  const canDelete = hasPermission(module, "delete");
+  //const canDelete = hasPermission(module, "delete");
 
   // API hook
-  const { data, loading, error, fetchAll, searchByTerm, toggleStatus, pagination } =
-    useApiService<T, R>(service, enablePagination, initialPageSize);
+  const {
+    data,
+    loading,
+    error,
+    fetchAll,
+    searchByTerm,
+    toggleStatus,
+    pagination,
+  } = useApiService<T, R>(service, enablePagination, initialPageSize);
 
   // Load initial data
   useEffect(() => {
@@ -191,7 +198,7 @@ function CadastroBase<T extends Record<string, any>, R>({
   }, [data, showMetrics, calculateMetrics]);
 
   // Check if in form view mode
-  const isFormView = params && params.id !== undefined;
+  //const isFormView = params && params.id !== undefined;
 
   // Function to handle search
   const handleSearch = (termo: string) => {
@@ -225,7 +232,7 @@ function CadastroBase<T extends Record<string, any>, R>({
   };
 
   // Function to delete a record
-  const handleDelete = async (item: T) => {
+  /*const handleDelete = async (item: T) => {
     if (!window.confirm(`Tem certeza que deseja excluir este registro?`)) {
       return;
     }
@@ -240,7 +247,7 @@ function CadastroBase<T extends Record<string, any>, R>({
       console.error("Erro ao excluir registro:", error);
       alert("Erro ao excluir registro. Verifique se não existem dependências.");
     }
-  };
+  };*/
 
   // Function to toggle status
   const handleToggleStatus = async (item: T, event?: React.MouseEvent) => {
@@ -326,7 +333,9 @@ function CadastroBase<T extends Record<string, any>, R>({
                 ativo={item.ativo}
                 textoAtivo={statusColumn.activeText || "Ativo"}
                 textoInativo={statusColumn.inactiveText || "Inativo"}
-                onToggle={canEdit ? (e) => handleToggleStatus(item, e) : undefined}
+                onToggle={
+                  canEdit ? (e) => handleToggleStatus(item, e) : undefined
+                }
                 showToggle={canEdit}
               />
             </div>
@@ -451,7 +460,7 @@ function CadastroBase<T extends Record<string, any>, R>({
           data={data || []}
           columns={finalColumns}
           onRowClick={canEdit ? handleEdit : undefined}
-          emptyMessage="Nenhum registro encontrado"
+          //emptyMessage="Nenhum registro encontrado"
           loading={loading}
         />
 

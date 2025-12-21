@@ -40,8 +40,8 @@ export interface ParametroRegra {
 }
 
 export interface LimiteBeneficio {
-  tipo: TipoLimite;
-  limite: number;
+  tipo?: TipoLimite;
+  limite?: number;
   unidade?: string;
   limitePorPeriodo?: {
     periodo: "anual" | "bienal" | "mensal";
@@ -76,7 +76,7 @@ export interface RegrasNegocioDTO {
   tipoRegra: TipoRegra;
   parametro: ParametroRegra;
   valorBeneficio: number;
-  limiteBeneficio?: LimiteBeneficio;
+  limiteBeneficio?: LimiteBeneficio | null;
 }
 
 export interface TipoRegraOption {
@@ -160,9 +160,12 @@ class RegrasNegocioService extends BaseApiService<
     regraId: number | string,
     produtorData: ProdutorData
   ): Promise<ValidacaoRegra> {
-    const response = await apiClient.post(`${this.baseUrl}/${regraId}/validar`, {
-      produtorData,
-    });
+    const response = await apiClient.post(
+      `${this.baseUrl}/${regraId}/validar`,
+      {
+        produtorData,
+      }
+    );
     return response.data;
   }
 
@@ -214,19 +217,12 @@ class RegrasNegocioService extends BaseApiService<
     ];
   }
 
-  /**
-   * Busca por termo (sobrescreve método da classe base)
-   */
-  async buscarPorTermo(termo: string): Promise<RegrasNegocio[]> {
-    if (!termo.trim()) {
-      return this.getAll();
-    }
-
-    const response = await apiClient.get(`${this.baseUrl}`, {
-      params: { search: termo },
+  buscarPorTermo = async (termo: string): Promise<RegrasNegocio[]> => {
+    const response = await apiClient.get(`${this.baseUrl}/busca`, {
+      params: { termo },
     });
     return response.data;
-  }
+  };
 
   /**
    * Valida dados da regra antes de enviar
@@ -283,29 +279,31 @@ class RegrasNegocioService extends BaseApiService<
   /**
    * Sobrescreve create para incluir validação
    */
-  async create(data: RegrasNegocioDTO): Promise<RegrasNegocio> {
+  create = async (data: RegrasNegocioDTO): Promise<RegrasNegocio> => {
     const errors = this.validateRegraData(data);
     if (errors.length > 0) {
       throw new Error(errors.join(", "));
     }
 
-    return super.create(data);
-  }
+    const response = await apiClient.post(`${this.baseUrl}/`, data);
+    return response.data;
+  };
 
   /**
    * Sobrescreve update para incluir validação
    */
-  async update(
+  update = async (
     id: number | string,
     data: RegrasNegocioDTO
-  ): Promise<RegrasNegocio> {
+  ): Promise<RegrasNegocio> => {
     const errors = this.validateRegraData(data);
     if (errors.length > 0) {
       throw new Error(errors.join(", "));
     }
 
-    return super.update(id, data);
-  }
+    const response = await apiClient.put(`${this.baseUrl}/${id}`, data);
+    return response.data;
+  };
 
   /**
    * Formatar valor de benefício para exibição

@@ -1,6 +1,7 @@
 // frontend/src/services/agricultura/relatorioArrendamentoService.ts
 import BaseApiService from "../baseApiService";
 import apiClient from "../apiConfig";
+import { Arrendamento, ArrendamentoDTO } from "./arrendamentoService";
 
 export interface RelatorioArrendamentoGeral {
   arrendamentos: any[];
@@ -94,7 +95,10 @@ export interface RelatorioVencendo {
   };
 }
 
-class RelatorioArrendamentoService extends BaseApiService {
+class RelatorioArrendamentoService extends BaseApiService<
+  Arrendamento,
+  ArrendamentoDTO
+> {
   constructor() {
     super("/relatorios/arrendamentos", "agricultura");
   }

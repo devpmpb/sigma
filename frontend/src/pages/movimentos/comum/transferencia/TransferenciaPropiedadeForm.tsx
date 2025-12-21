@@ -14,9 +14,7 @@ import propriedadeService, {
 import pessoaService, {
   Pessoa,
 } from "../../../../services/comum/pessoaService";
-import propriedadeCondominoService, {
-  PropriedadeCondominoDTO,
-} from "../../../../services/comum/propriedadeCondominoService";
+import propriedadeCondominoService from "../../../../services/comum/propriedadeCondominoService"; //PropriedadeCondominoDTO,
 
 interface TransferenciaPropiedadeFormProps {
   id?: string | number;
@@ -36,7 +34,7 @@ interface CondominoFormData {
  */
 const TransferenciaPropiedadeForm: React.FC<
   TransferenciaPropiedadeFormProps
-> = ({ id, onSave }) => {
+> = ({ id }) => {
   // Estados
   const [propriedades, setPropriedades] = useState<Propriedade[]>([]);
   const [pessoasFisicas, setPessoasFisicas] = useState<Pessoa[]>([]);
@@ -53,7 +51,7 @@ const TransferenciaPropiedadeForm: React.FC<
     observacoes: "",
   });
 
-  const formDataRef = React.useRef<TransferenciaPropiedadeDTO | null>(null);
+  //const formDataRef = React.useRef<TransferenciaPropiedadeDTO | null>(null);
 
   // Valores iniciais
   const initialValues: TransferenciaPropiedadeDTO = {
@@ -274,7 +272,7 @@ const TransferenciaPropiedadeForm: React.FC<
   };
 
   // ✅ ATUALIZAR função onSave para incluir condôminos
-  const handleSave = async (data: TransferenciaPropiedadeDTO) => {
+  /*const handleSave = async (data: TransferenciaPropiedadeDTO) => {
     try {
       // 1. Realizar a transferência
       const response = await transferenciaPropiedadeService.transferir(data);
@@ -298,7 +296,7 @@ const TransferenciaPropiedadeForm: React.FC<
       console.error("Erro ao salvar transferência:", error);
       throw error;
     }
-  };
+  };*/
 
   return (
     <FormBase<TransferenciaPropriedade, TransferenciaPropiedadeDTO>

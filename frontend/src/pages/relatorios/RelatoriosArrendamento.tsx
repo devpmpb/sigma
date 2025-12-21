@@ -43,6 +43,7 @@ const RelatoriosArrendamento: React.FC = () => {
   const [diasVencimento, setDiasVencimento] = useState<string>("30");
 
   // Buscar lista de propriedades para o filtro
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { data: propriedades } = useQuery({
     queryKey: ["propriedades"],
     queryFn: () => propriedadeService.getAll(),
@@ -151,17 +152,17 @@ const RelatoriosArrendamento: React.FC = () => {
         break;
       case "porPropriedade":
         if (relatorioPorPropriedade) {
-          exportRelatorioPorPropriedadePDF(relatorioPorPropriedade, filtros);
+          exportRelatorioPorPropriedadePDF(relatorioPorPropriedade);
         }
         break;
       case "porArrendatario":
         if (relatorioPorArrendatario) {
-          exportRelatorioPorArrendatarioPDF(relatorioPorArrendatario, filtros);
+          exportRelatorioPorArrendatarioPDF(relatorioPorArrendatario);
         }
         break;
       case "porAtividade":
         if (relatorioPorAtividade) {
-          exportRelatorioPorAtividadePDF(relatorioPorAtividade, filtros);
+          exportRelatorioPorAtividadePDF(relatorioPorAtividade);
         }
         break;
       case "vencendo":

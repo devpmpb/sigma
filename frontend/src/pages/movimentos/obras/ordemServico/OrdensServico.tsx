@@ -13,9 +13,9 @@ import { CadastroBase } from "../../../../components/cadastro";
 const OrdensServico: React.FC = () => {
   // Definição das colunas da tabela
   const columns: Column<OrdemServico>[] = [
-    { 
-      title: "Nº Ordem", 
-      key: "numeroOrdem", 
+    {
+      title: "Nº Ordem",
+      key: "numeroOrdem",
       width: "120px",
       render: (ordem) => (
         <span className="font-mono font-semibold text-blue-700">
@@ -96,8 +96,8 @@ const OrdensServico: React.FC = () => {
         <StatusBadge
           ativo={ordem.status === StatusOrdemServico.CONCLUIDA}
           showToggle={false}
-          customText={ordemServicoService.formatarStatus(ordem.status)}
-          customColor={ordemServicoService.getCorStatus(ordem.status)}
+          //customText={ordemServicoService.formatarStatus(ordem.status)}
+          //customColor={ordemServicoService.getCorStatus(ordem.status)}
         />
       ),
     },
@@ -134,9 +134,15 @@ const OrdensServico: React.FC = () => {
   // Função para calcular métricas
   const calculateMetrics = (items: OrdemServico[]) => {
     const total = items.length;
-    const pendentes = items.filter((s) => s.status === StatusOrdemServico.PENDENTE).length;
-    const emExecucao = items.filter((s) => s.status === StatusOrdemServico.EM_EXECUCAO).length;
-    const concluidas = items.filter((s) => s.status === StatusOrdemServico.CONCLUIDA).length;
+    const pendentes = items.filter(
+      (s) => s.status === StatusOrdemServico.PENDENTE
+    ).length;
+    const emExecucao = items.filter(
+      (s) => s.status === StatusOrdemServico.EM_EXECUCAO
+    ).length;
+    const concluidas = items.filter(
+      (s) => s.status === StatusOrdemServico.CONCLUIDA
+    ).length;
     const valorTotal = items
       .filter((s) => s.status !== StatusOrdemServico.CANCELADA)
       .reduce((acc, curr) => acc + curr.valorCalculado, 0);
@@ -161,7 +167,7 @@ const OrdensServico: React.FC = () => {
       },
       {
         value: StatusOrdemServico.EM_EXECUCAO,
-        label: "Em Execução", 
+        label: "Em Execução",
         color: "blue" as const,
       },
       {
@@ -207,11 +213,11 @@ const OrdensServico: React.FC = () => {
             const stats = await ordemServicoService.getEstatisticas();
             alert(
               `Estatísticas:\n` +
-              `Total: ${stats.total}\n` +
-              `Pendentes: ${stats.pendentes}\n` +
-              `Em Execução: ${stats.emExecucao}\n` +
-              `Concluídas: ${stats.concluidas}\n` +
-              `Valor Total: ${formatarMoeda(stats.valorTotal)}`
+                `Total: ${stats.total}\n` +
+                `Pendentes: ${stats.pendentes}\n` +
+                `Em Execução: ${stats.emExecucao}\n` +
+                `Concluídas: ${stats.concluidas}\n` +
+                `Valor Total: ${formatarMoeda(stats.valorTotal)}`
             );
           } catch (error) {
             alert("Erro ao buscar estatísticas");

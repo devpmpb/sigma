@@ -14,7 +14,7 @@ import { CadastroBase } from "../../../../components/cadastro";
 import RegrasNegocioForm from "./RegrasNegocioForm";
 
 const RegrasNegocioPage: React.FC = () => {
-  const params = useParams({ strict: false });
+  const params = useParams({ strict: false }) as any;
   const navigate = useNavigate();
   const programaId = params.programaId;
   const [programa, setPrograma] = useState<Programa | null>(null);
@@ -64,7 +64,7 @@ const RegrasNegocioPage: React.FC = () => {
             delete: regrasNegocioService.delete.bind(regrasNegocioService),
             getById: regrasNegocioService.getById.bind(regrasNegocioService),
             toggleStatus:
-              regrasNegocioService.toggleStatus?.bind(regrasNegocioService),
+              regrasNegocioService.alterarStatus?.bind(regrasNegocioService),
           };
 
           setFilteredService(serviceFiltered);
@@ -89,7 +89,7 @@ const RegrasNegocioPage: React.FC = () => {
     if (programaId) {
       navigate({ to: `/cadastros/comum/programas/${programaId}` });
     } else {
-      navigate({ to: "/cadastros/comum/programas" });
+      navigate({ to: "/cadastros/comum/programas" as any });
     }
   };
 
@@ -251,7 +251,9 @@ const RegrasNegocioPage: React.FC = () => {
         <ol className="inline-flex items-center space-x-1 md:space-x-3">
           <li className="inline-flex items-center">
             <button
-              onClick={() => navigate({ to: "/cadastros/comum/programas" })}
+              onClick={() =>
+                navigate({ to: "/cadastros/comum/programas" as any })
+              }
               className="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600"
             >
               <svg

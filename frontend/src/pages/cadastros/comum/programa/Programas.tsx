@@ -128,7 +128,7 @@ const Programas: React.FC = () => {
   ];
 
   // Função para calcular métricas (simplificada)
-  const calculateMetrics = (items: Programa[]) => {
+  /*const calculateMetrics = (items: Programa[]) => {
     const total = items.length;
     const ativos = items.filter((p) => p.ativo).length;
     const agricultura = items.filter(
@@ -146,7 +146,7 @@ const Programas: React.FC = () => {
       comRegras,
       semRegras,
     };
-  };
+  };*/
 
   // Botões de ação adicionais
   const actionButtons = (

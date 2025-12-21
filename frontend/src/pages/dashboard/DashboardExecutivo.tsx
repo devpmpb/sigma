@@ -64,12 +64,13 @@ const MESES = [
   "Dez",
 ];
 
-// Formatador de moeda
-const formatarMoeda = (valor: number) => {
+// Formatador de moeda resiliente
+const formatarMoeda = (valor: any) => {
+  const num = Number(valor) || 0;
   return new Intl.NumberFormat("pt-BR", {
     style: "currency",
     currency: "BRL",
-  }).format(valor);
+  }).format(num);
 };
 
 // Componente Card de Estatística
@@ -213,9 +214,7 @@ export default function DashboardExecutivo() {
           <h1 className="text-2xl font-bold text-gray-900">
             Dashboard Executivo
           </h1>
-          <p className="text-gray-500">
-            Visão geral dos benefícios concedidos
-          </p>
+          <p className="text-gray-500">Visão geral dos benefícios concedidos</p>
         </div>
 
         <div className="flex items-center gap-4">
@@ -258,7 +257,7 @@ export default function DashboardExecutivo() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
           titulo="Total Investido"
-          valor={formatarMoeda(dados?.estatisticas.totalInvestido || 0)}
+          valor={formatarMoeda(dados?.estatisticas.totalInvestido)}
           icone={<DollarSign className="h-6 w-6 text-white" />}
           corIcone="bg-green-600"
           subtitulo={`em ${ano}`}
@@ -279,7 +278,7 @@ export default function DashboardExecutivo() {
         />
         <StatCard
           titulo="Média por Produtor"
-          valor={formatarMoeda(dados?.estatisticas.mediaPorProdutor || 0)}
+          valor={formatarMoeda(dados?.estatisticas.mediaPorProdutor)}
           icone={<TrendingUp className="h-6 w-6 text-white" />}
           corIcone="bg-orange-600"
           subtitulo="valor médio recebido"
@@ -307,7 +306,7 @@ export default function DashboardExecutivo() {
                   }
                 />
                 <Tooltip
-                  formatter={(value: number) => [formatarMoeda(value), "Valor"]}
+                  formatter={(value: any) => [formatarMoeda(value), "Valor"]}
                 />
                 <Legend />
                 <Line
@@ -341,8 +340,8 @@ export default function DashboardExecutivo() {
                   cx="50%"
                   cy="50%"
                   outerRadius={100}
-                  label={({ nome, percent }) =>
-                    `${nome} (${(percent * 100).toFixed(0)}%)`
+                  label={({ name, percent }) =>
+                    `${name} (${((percent || 0) * 100).toFixed(0)}%)`
                   }
                   labelLine={false}
                 >
@@ -351,7 +350,7 @@ export default function DashboardExecutivo() {
                   ))}
                 </Pie>
                 <Tooltip
-                  formatter={(value: number) => formatarMoeda(value)}
+                  formatter={(value: any) => [formatarMoeda(value), "Valor"]}
                 />
               </PieChart>
             </ResponsiveContainer>
@@ -393,7 +392,7 @@ export default function DashboardExecutivo() {
               />
               <YAxis type="category" dataKey="nome" width={140} />
               <Tooltip
-                formatter={(value: number, name: string) => [
+                formatter={(value: any, name?: string) => [
                   name === "valor" ? formatarMoeda(value) : value,
                   name === "valor" ? "Valor Total" : "Quantidade",
                 ]}

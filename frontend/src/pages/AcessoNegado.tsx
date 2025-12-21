@@ -26,7 +26,7 @@ const AcessoNegado: React.FC = () => {
           Voltar para o Início
         </button>
         <button
-          onClick={() => navigate({ to: -1 })} // Go back one
+          onClick={() => navigate({ to: -1 as any })} // Go back one
           className="px-6 py-3 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400"
         >
           Voltar para a Página Anterior

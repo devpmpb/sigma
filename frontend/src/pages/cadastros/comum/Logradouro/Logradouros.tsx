@@ -32,7 +32,7 @@ const Logradouros: React.FC = () => {
     {
       title: "CEP",
       key: "cep",
-      render: (logradouro) => formatarCEP(logradouro.cep),
+      render: (logradouro) => formatarCEP(logradouro.cep || ""),
     },
     {
       title: "Status",

@@ -274,6 +274,72 @@ export const solicitacaoBeneficioController = {
     }
   },
 
+  buscarPorTermo: async (req: Request, res: Response) => {
+    try {
+      const { termo } = req.query;
+
+      if (!termo) {
+        return res.status(400).json({ erro: "Termo de busca é obrigatório" });
+      }
+
+      const solicitacao = await prisma.solicitacaoBeneficio.findMany({
+        where: {
+          OR: [
+            {
+              observacoes: {
+                contains: termo as string,
+                mode: "insensitive",
+              },
+            },
+
+            {
+              programa: {
+                nome: {
+                  contains: termo as string,
+                  mode: "insensitive",
+                },
+              },
+            },
+            {
+              pessoa: {
+                nome: {
+                  contains: termo as string,
+                  mode: "insensitive",
+                },
+              },
+            },
+          ],
+        },
+        include: {
+          pessoa: {
+            select: {
+              id: true,
+              nome: true,
+              cpfCnpj: true,
+            },
+          },
+          programa: {
+            select: {
+              id: true,
+              nome: true,
+              tipoPrograma: true,
+              secretaria: true,
+            },
+          },
+        },
+        orderBy: { datasolicitacao: "asc" },
+      });
+
+      return res.status(200).json(solicitacao);
+    } catch (error) {
+      console.log("Chegou no BUSCAR POR TERMO");
+      console.error("Erro ao buscar programas por termo:", error);
+      return res.status(500).json({
+        erro: "Erro ao buscar programas",
+      });
+    }
+  },
+
   // Buscar solicitações por pessoa
   async getByPessoa(req: Request, res: Response) {
     try {
@@ -383,7 +449,13 @@ export const solicitacaoBeneficioController = {
   // NOVO: Calcular benefício para uma solicitação
   async calcularBeneficio(req: Request, res: Response) {
     try {
-      const { pessoaId, programaId, quantidadeSolicitada, dadosAdicionais, modalidade } = req.body;
+      const {
+        pessoaId,
+        programaId,
+        quantidadeSolicitada,
+        dadosAdicionais,
+        modalidade,
+      } = req.body;
 
       if (!pessoaId || !programaId) {
         return res.status(400).json({

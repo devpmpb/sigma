@@ -17,7 +17,7 @@ let isSyncing = false;
 
 // Configuração de retry
 const MAX_RETRIES = 3;
-const RETRY_DELAY = 5000; // 5 segundos
+//const RETRY_DELAY = 5000; // 5 segundos
 
 /**
  * Mapeia tipos de operação para endpoints de API
@@ -56,7 +56,11 @@ async function processOperation(
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "Erro desconhecido";
-    console.error("❌ Erro ao sincronizar operação:", operation.id, errorMessage);
+    console.error(
+      "❌ Erro ao sincronizar operação:",
+      operation.id,
+      errorMessage
+    );
 
     // Verificar se deve tentar novamente
     if (operation.retryCount < MAX_RETRIES) {
@@ -146,14 +150,11 @@ export function startAutoSync(): () => void {
   });
 
   // Sincronização periódica (a cada 5 minutos)
-  const intervalId = setInterval(
-    () => {
-      if (isOnline()) {
-        syncPendingOperations();
-      }
-    },
-    5 * 60 * 1000
-  );
+  const intervalId = setInterval(() => {
+    if (isOnline()) {
+      syncPendingOperations();
+    }
+  }, 5 * 60 * 1000);
 
   // Retorna função de cleanup
   return () => {

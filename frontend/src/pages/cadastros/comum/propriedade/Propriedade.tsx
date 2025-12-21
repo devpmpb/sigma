@@ -25,12 +25,12 @@ const PropriedadePage: React.FC = () => {
             </div>
           )}
           {/* NOVO: Mostrar logradouro e número */}
-          {(propriedade.logradouro || propriedade.numero) && (
+          {(propriedade.endereco || propriedade.numero) && (
             <div className="text-sm text-gray-500">
-              {propriedade.logradouro && propriedade.numero
-                ? `${propriedade.logradouro.tipo} ${propriedade.logradouro.descricao}, ${propriedade.numero}`
-                : propriedade.logradouro
-                ? `${propriedade.logradouro.tipo} ${propriedade.logradouro.descricao}`
+              {propriedade.endereco && propriedade.numero
+                ? `${propriedade.endereco.logradouro?.tipo} ${propriedade.endereco?.logradouro?.descricao}, ${propriedade.numero}`
+                : propriedade.endereco
+                ? `${propriedade.endereco.logradouro?.tipo} ${propriedade.endereco.logradouro?.descricao}`
                 : propriedade.numero}
             </div>
           )}
@@ -113,7 +113,7 @@ const PropriedadePage: React.FC = () => {
             </div>
           );
         }
-        
+
         // Propriedade normal
         return (
           <div className="text-sm">

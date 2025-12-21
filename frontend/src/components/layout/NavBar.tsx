@@ -6,7 +6,7 @@ import {
   X,
   ChevronDown,
   ChevronRight,
-  User,
+  //User,
   Key,
   LogOut,
 } from "lucide-react";
@@ -40,6 +40,7 @@ const Navbar: React.FC = () => {
   } = useMenuItems();
 
   // States for submenus
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [hoveredGroup, setHoveredGroup] = useState<string | null>(null);
 
   // State for mobile menu
@@ -89,7 +90,7 @@ const Navbar: React.FC = () => {
     } catch (error) {
       console.error("Erro ao fazer logout:", error);
       // Em caso de erro, ainda assim redirecionar
-      window.location.href = '/login';
+      window.location.href = "/login";
     }
   };
 
@@ -107,15 +108,17 @@ const Navbar: React.FC = () => {
   // Função auxiliar para verificar se um link está ativo
   const isLinkActive = (path: string) => {
     const currentPath = router.state.location.pathname;
-  
+
     // Tratamento especial para a rota raiz
-    if (path === '/') {
-      return currentPath === '/';
+    if (path === "/") {
+      return currentPath === "/";
     }
-    
+
     // Para outras rotas
-    return currentPath === path || 
-          (path !== '/' && currentPath.startsWith(`${path}/`));;
+    return (
+      currentPath === path ||
+      (path !== "/" && currentPath.startsWith(`${path}/`))
+    );
   };
 
   // Renders a menu group
@@ -134,11 +137,11 @@ const Navbar: React.FC = () => {
           key={item.id}
           to={item.path}
           // Usando a função auxiliar em vez de depender do prop isActive
-          className={
-            `block px-4 py-2 text-sm hover:bg-gray-100 ${
-              isLinkActive(item.path) ? "bg-blue-50 text-blue-600" : "text-gray-700"
-            }`
-          }
+          className={`block px-4 py-2 text-sm hover:bg-gray-100 ${
+            isLinkActive(item.path)
+              ? "bg-blue-50 text-blue-600"
+              : "text-gray-700"
+          }`}
           onClick={closeMenu}
         >
           {item.title}
@@ -187,11 +190,11 @@ const Navbar: React.FC = () => {
                         <Link
                           key={item.id}
                           to={item.path}
-                          className={
-                            `block px-4 py-2 text-sm ${
-                              isLinkActive(item.path) ? "text-blue-600" : "text-gray-700"
-                            }`
-                          }
+                          className={`block px-4 py-2 text-sm ${
+                            isLinkActive(item.path)
+                              ? "text-blue-600"
+                              : "text-gray-700"
+                          }`}
                           onClick={() => setIsMobileMenuOpen(false)}
                         >
                           {item.title}
@@ -240,11 +243,11 @@ const Navbar: React.FC = () => {
                         <Link
                           key={item.id}
                           to={item.path}
-                          className={
-                            `block px-4 py-2 text-sm ${
-                              isLinkActive(item.path) ? "text-blue-600" : "text-gray-700"
-                            }`
-                          }
+                          className={`block px-4 py-2 text-sm ${
+                            isLinkActive(item.path)
+                              ? "text-blue-600"
+                              : "text-gray-700"
+                          }`}
                           onClick={() => setIsMobileMenuOpen(false)}
                         >
                           {item.title}
@@ -362,7 +365,7 @@ const Navbar: React.FC = () => {
           <button
             onClick={toggleUserDropdown}
             className={`flex items-center hover:bg-gray-100 rounded-lg p-2 transition-colors ${
-              isUserDropdownOpen ? 'user-button-active' : ''
+              isUserDropdownOpen ? "user-button-active" : ""
             }`}
           >
             <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium">
@@ -378,13 +381,15 @@ const Navbar: React.FC = () => {
           {isUserDropdownOpen && (
             <div className="user-dropdown absolute right-0 mt-1 bg-white border border-gray-200 rounded shadow-lg w-48 py-1">
               <div className="px-4 py-2 border-b border-gray-100">
-                <p className="text-sm font-medium text-gray-900">{user?.name}</p>
+                <p className="text-sm font-medium text-gray-900">
+                  {user?.name}
+                </p>
                 <p className="text-xs text-gray-500">{user?.email}</p>
                 <p className="text-xs text-gray-500 capitalize">
                   {user?.role === "admin" ? "Administrador" : user?.sector}
                 </p>
               </div>
-              
+
               <div className="py-1">
                 <button
                   onClick={handleChangePassword}
@@ -393,7 +398,7 @@ const Navbar: React.FC = () => {
                   <Key size={16} className="mr-3 text-gray-400" />
                   Alterar Senha
                 </button>
-                
+
                 <button
                   onClick={handleLogout}
                   className="logout-button flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"

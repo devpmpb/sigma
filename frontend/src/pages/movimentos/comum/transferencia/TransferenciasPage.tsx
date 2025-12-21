@@ -61,7 +61,9 @@ const TransferenciasPage: React.FC = () => {
       key: "proprietarioAnterior",
       render: (t) => (
         <div>
-          <div className="font-medium">{t.proprietarioAnterior?.nome || "-"}</div>
+          <div className="font-medium">
+            {t.proprietarioAnterior?.nome || "-"}
+          </div>
           {t.proprietarioAnterior?.cpfCnpj && (
             <div className="text-sm text-gray-500">
               {t.proprietarioAnterior.cpfCnpj}
@@ -89,7 +91,7 @@ const TransferenciasPage: React.FC = () => {
       key: "tipoTransferencia",
       render: (t) => (
         <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-          {t.tipoTransferencia}
+          {t.situacaoPropriedade}
         </span>
       ),
       width: "120px",

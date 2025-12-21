@@ -30,10 +30,9 @@ interface RegrasNegocioFormProps {
  */
 const RegrasNegocioForm: React.FC<RegrasNegocioFormProps> = ({
   id,
-  onSave,
   programaId: propProgramaId,
 }) => {
-  const params = useParams({ strict: false });
+  const params = useParams({ strict: false }) as any;
   const navigate = useNavigate();
   const regraId = id || params.id;
   const programaIdFromUrl = params.programaId;
@@ -115,13 +114,13 @@ const RegrasNegocioForm: React.FC<RegrasNegocioFormProps> = ({
 
           // Atualizar estados com dados carregados
           setParametro({
-            condicao: parametroData?.condicao || CondicaoRegra.MENOR_QUE,
             valor: parametroData?.valor || "",
             valorMinimo: parametroData?.valorMinimo,
             valorMaximo: parametroData?.valorMaximo,
             unidade: parametroData?.unidade || "",
             descricao: parametroData?.descricao || "",
             ...parametroData, // Incluir outros campos customizados
+            condicao: parametroData?.condicao || CondicaoRegra.MENOR_QUE,
           });
 
           if (limiteData) {
@@ -167,7 +166,7 @@ const RegrasNegocioForm: React.FC<RegrasNegocioFormProps> = ({
           const programa = await programaService.getById(finalProgramaId);
           setProgramaInfo({
             nome: programa.nome,
-            leiNumero: programa.leiNumero,
+            leiNumero: programa.leiNumero || undefined,
           });
         } catch (error) {
           console.error("Erro ao carregar programa:", error);
@@ -322,7 +321,7 @@ const RegrasNegocioForm: React.FC<RegrasNegocioFormProps> = ({
         >
           <input
             type="checkbox"
-            checked={parametro.incluiArrendamento || false}
+            checked={(parametro as any).incluiArrendamento || false}
             onChange={(e) =>
               updateParametro("incluiArrendamento", e.target.checked)
             }
@@ -337,7 +336,7 @@ const RegrasNegocioForm: React.FC<RegrasNegocioFormProps> = ({
       return (
         <FormField name="parametro.tipoEquipamento" label="Tipo de Equipamento">
           <select
-            value={parametro.tipoEquipamento || ""}
+            value={(parametro as any).tipoEquipamento || ""}
             onChange={(e) => updateParametro("tipoEquipamento", e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-md"
           >
@@ -354,7 +353,7 @@ const RegrasNegocioForm: React.FC<RegrasNegocioFormProps> = ({
         <>
           <FormField name="parametro.tipoAnimal" label="Tipo de Animal">
             <select
-              value={parametro.tipoAnimal || ""}
+              value={(parametro as any).tipoAnimal || ""}
               onChange={(e) => updateParametro("tipoAnimal", e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md"
             >
@@ -366,7 +365,7 @@ const RegrasNegocioForm: React.FC<RegrasNegocioFormProps> = ({
 
           <FormField name="parametro.modalidade" label="Modalidade">
             <select
-              value={parametro.modalidade || ""}
+              value={(parametro as any).modalidade || ""}
               onChange={(e) => updateParametro("modalidade", e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md"
             >
@@ -400,9 +399,9 @@ const RegrasNegocioForm: React.FC<RegrasNegocioFormProps> = ({
       validate={validate}
       returnUrl={getReturnUrl()}
       onSave={handleSave}
-      transformBeforeSave={buildFinalData}
+      //transformBeforeSave={buildFinalData}
     >
-      {({ values, errors, touched, handleChange, setValue }) => (
+      {({ values, handleChange, setValue }) => (
         <>
           {/* Informações do Programa */}
           {programaInfo && (
@@ -553,7 +552,7 @@ const RegrasNegocioForm: React.FC<RegrasNegocioFormProps> = ({
                     <FormField name="parametro.valor" label="Valor">
                       <input
                         type="text"
-                        value={parametro.valor || ""}
+                        value={String(parametro.valor || "")}
                         onChange={(e) =>
                           updateParametro("valor", e.target.value)
                         }

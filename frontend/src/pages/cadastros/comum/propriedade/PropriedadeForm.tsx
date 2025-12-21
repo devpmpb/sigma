@@ -12,12 +12,12 @@ import propriedadeService, {
 import pessoaService, {
   Pessoa,
 } from "../../../../services/comum/pessoaService";
-import enderecoService, {
-  Endereco,
-} from "../../../../services/comum/enderecoService";
+//import enderecoService, {
+//  Endereco,
+//} from "../../../../services/comum/enderecoService";
 import propriedadeCondominoService from "../../../../services/comum/propriedadeCondominoService";
 import { useParams } from "@tanstack/react-router";
-import { MapPin } from "lucide-react";
+//import { MapPin } from "lucide-react";
 
 interface PropriedadeFormProps {
   id?: string | number;
@@ -37,11 +37,11 @@ interface CondominoFormData {
  * Formulário para cadastro e edição de propriedades
  */
 const PropriedadeForm: React.FC<PropriedadeFormProps> = ({ id, onSave }) => {
-  const params = useParams({ strict: false });
+  const params = useParams({ strict: false }) as any;
   const propriedadeId = id || params.id;
 
   // Estado para endereço da propriedade (apenas visualização)
-  const [enderecoAtual, setEnderecoAtual] = useState<Endereco | null>(null);
+  //const [enderecoAtual, setEnderecoAtual] = useState<Endereco | null>(null);
 
   // Estados para condôminos
   const [condominos, setCondominos] = useState<CondominoFormData[]>([]);
@@ -86,20 +86,20 @@ const PropriedadeForm: React.FC<PropriedadeFormProps> = ({ id, onSave }) => {
     const fetchCondominos = async () => {
       if (propriedadeId && propriedadeId !== "new") {
         try {
-          const condominosAtuais = await propriedadeCondominoService.getCondominos(
-            Number(propriedadeId),
-            true // Apenas ativos
-          );
+          const condominosAtuais =
+            await propriedadeCondominoService.getCondominos(
+              Number(propriedadeId),
+              true // Apenas ativos
+            );
 
-          const condominosFormatados: CondominoFormData[] = condominosAtuais.map(
-            (c) => ({
+          const condominosFormatados: CondominoFormData[] =
+            condominosAtuais.map((c) => ({
               condominoId: c.condominoId,
               percentual: c.percentual ? Number(c.percentual) : undefined,
               observacoes: c.observacoes || "",
               nome: c.condomino?.nome,
               cpfCnpj: c.condomino?.cpfCnpj,
-            })
-          );
+            }));
 
           setCondominos(condominosFormatados);
         } catch (error) {
@@ -170,7 +170,8 @@ const PropriedadeForm: React.FC<PropriedadeFormProps> = ({ id, onSave }) => {
 
     if (propriedadeService.isRural(values.tipoPropriedade)) {
       if (!values.atividadeProdutiva) {
-        errors.atividadeProdutiva = "Atividade produtiva é obrigatória para propriedades rurais";
+        errors.atividadeProdutiva =
+          "Atividade produtiva é obrigatória para propriedades rurais";
       }
     }
 
@@ -186,7 +187,10 @@ const PropriedadeForm: React.FC<PropriedadeFormProps> = ({ id, onSave }) => {
     }
 
     // Validação de condôminos
-    if (values.situacao === SituacaoPropriedade.CONDOMINIO && condominos.length === 0) {
+    if (
+      values.situacao === SituacaoPropriedade.CONDOMINIO &&
+      condominos.length === 0
+    ) {
       errors.condominos =
         "Para situação CONDOMÍNIO, adicione pelo menos um condômino";
     }
@@ -210,14 +214,20 @@ const PropriedadeForm: React.FC<PropriedadeFormProps> = ({ id, onSave }) => {
     ...propriedadeService,
     create: async (data: PropriedadeDTO) => {
       const payload: any = { ...data };
-      if (data.situacao === SituacaoPropriedade.CONDOMINIO && condominos.length > 0) {
+      if (
+        data.situacao === SituacaoPropriedade.CONDOMINIO &&
+        condominos.length > 0
+      ) {
         payload.condominos = condominos;
       }
       return propriedadeService.create(payload);
     },
     update: async (id: string | number, data: PropriedadeDTO) => {
       const payload: any = { ...data };
-      if (data.situacao === SituacaoPropriedade.CONDOMINIO && condominos.length > 0) {
+      if (
+        data.situacao === SituacaoPropriedade.CONDOMINIO &&
+        condominos.length > 0
+      ) {
         payload.condominos = condominos;
       }
       return propriedadeService.update(id, payload);
@@ -227,7 +237,7 @@ const PropriedadeForm: React.FC<PropriedadeFormProps> = ({ id, onSave }) => {
   return (
     <FormBase<Propriedade, PropriedadeDTO>
       title="Propriedade"
-      service={propriedadeServiceWithCondominos}
+      service={propriedadeServiceWithCondominos as any}
       id={propriedadeId}
       initialValues={initialValues}
       validate={validate}
@@ -278,7 +288,11 @@ const PropriedadeForm: React.FC<PropriedadeFormProps> = ({ id, onSave }) => {
                 onChange={(e) => {
                   handleChange(e);
                   // Limpar campos rurais quando mudar para não rural
-                  if (!propriedadeService.isRural(e.target.value as TipoPropriedade)) {
+                  if (
+                    !propriedadeService.isRural(
+                      e.target.value as TipoPropriedade
+                    )
+                  ) {
                     setValue("itr", "");
                     setValue("incra", "");
                     setValue("atividadeProdutiva", undefined);
@@ -444,11 +458,13 @@ const PropriedadeForm: React.FC<PropriedadeFormProps> = ({ id, onSave }) => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="">Selecione a atividade produtiva</option>
-                  {propriedadeService.getAtividadesProdutivas().map((atividade) => (
-                    <option key={atividade.value} value={atividade.value}>
-                      {atividade.label}
-                    </option>
-                  ))}
+                  {propriedadeService
+                    .getAtividadesProdutivas()
+                    .map((atividade) => (
+                      <option key={atividade.value} value={atividade.value}>
+                        {atividade.label}
+                      </option>
+                    ))}
                 </select>
               </FormField>
 
@@ -703,13 +719,20 @@ const PropriedadeForm: React.FC<PropriedadeFormProps> = ({ id, onSave }) => {
                         {condominos.map((condomino) => (
                           <tr key={condomino.condominoId}>
                             <td className="px-4 py-3 text-sm text-gray-900">
-                              <div>{condomino.nome || `ID: ${condomino.condominoId}`}</div>
+                              <div>
+                                {condomino.nome ||
+                                  `ID: ${condomino.condominoId}`}
+                              </div>
                               {condomino.cpfCnpj && (
-                                <div className="text-xs text-gray-500">{condomino.cpfCnpj}</div>
+                                <div className="text-xs text-gray-500">
+                                  {condomino.cpfCnpj}
+                                </div>
                               )}
                             </td>
                             <td className="px-4 py-3 text-sm text-gray-900">
-                              {condomino.percentual ? `${condomino.percentual}%` : "-"}
+                              {condomino.percentual
+                                ? `${condomino.percentual}%`
+                                : "-"}
                             </td>
                             <td className="px-4 py-3 text-sm text-gray-900">
                               {condomino.observacoes || "-"}
@@ -717,7 +740,9 @@ const PropriedadeForm: React.FC<PropriedadeFormProps> = ({ id, onSave }) => {
                             <td className="px-4 py-3 text-right">
                               <button
                                 type="button"
-                                onClick={() => removerCondomino(condomino.condominoId)}
+                                onClick={() =>
+                                  removerCondomino(condomino.condominoId)
+                                }
                                 className="text-red-600 hover:text-red-900 text-sm font-medium"
                               >
                                 Remover

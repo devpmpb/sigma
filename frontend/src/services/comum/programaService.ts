@@ -21,7 +21,7 @@ export interface Programa {
   id: number;
   nome: string;
   descricao: string | null;
-  leiNumero: string | null;
+  leiNumero?: string | null;
   tipoPrograma: TipoPrograma;
   secretaria: TipoPerfil;
   ativo: boolean;
@@ -175,7 +175,7 @@ class ProgramaService extends BaseApiService<Programa, ProgramaDTO> {
     return colorMap[secretaria] || "blue";
   }
 
-  private validateProgramaData(data: ProgramaDTO): string[] {
+  /*private validateProgramaData(data: ProgramaDTO): string[] {
     const errors: string[] = [];
 
     if (!data.nome?.trim()) {
@@ -207,7 +207,7 @@ class ProgramaService extends BaseApiService<Programa, ProgramaDTO> {
     }
 
     return errors;
-  }
+  }*/
 }
 
 export default new ProgramaService();

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { Search, FileText, Filter, TrendingUp, Home, Users, Sprout, Building2, DollarSign, Calendar, AlertTriangle } from "lucide-react";
+//import { Search, FileText, Filter, TrendingUp, Home, Users, Sprout, Building2, DollarSign, Calendar, AlertTriangle } from "lucide-react";
+import { Search, FileText, Filter, Sprout, DollarSign } from "lucide-react";
 import { usePermissions } from "../hooks/usePermissions";
 
 const Relatorios: React.FC = () => {
@@ -24,7 +25,8 @@ const Relatorios: React.FC = () => {
       id: "beneficios",
       titulo: "Relatórios de Benefícios",
       categoria: "comum",
-      descricao: "Relatórios completos sobre programas de benefícios, produtores beneficiados, investimentos e secretarias",
+      descricao:
+        "Relatórios completos sobre programas de benefícios, produtores beneficiados, investimentos e secretarias",
       icone: DollarSign,
       cor: "blue",
       path: "/movimentos/comum/relatorioBeneficios",
@@ -35,7 +37,8 @@ const Relatorios: React.FC = () => {
       id: "arrendamentos",
       titulo: "Relatórios de Arrendamentos",
       categoria: "agricultura",
-      descricao: "Visão geral, por propriedade, por arrendatário, por atividade produtiva e contratos vencendo",
+      descricao:
+        "Visão geral, por propriedade, por arrendatário, por atividade produtiva e contratos vencendo",
       icone: Sprout,
       cor: "green",
       path: "/movimentos/agricultura/relatoriosArrendamento",
@@ -46,7 +49,8 @@ const Relatorios: React.FC = () => {
   // Filtrar relatórios por categoria e busca
   const relatoriosFiltrados = relatorios.filter((rel) => {
     const matchCategoria =
-      categoriaSelecionada === "todos" || rel.categoria === categoriaSelecionada;
+      categoriaSelecionada === "todos" ||
+      rel.categoria === categoriaSelecionada;
     const matchBusca =
       busca === "" ||
       rel.titulo.toLowerCase().includes(busca.toLowerCase()) ||
@@ -178,7 +182,9 @@ const Relatorios: React.FC = () => {
               >
                 <div className="p-6">
                   <div className="flex items-start justify-between mb-4">
-                    <div className={`p-3 ${cores.bg} rounded-lg group-hover:scale-110 transition-transform`}>
+                    <div
+                      className={`p-3 ${cores.bg} rounded-lg group-hover:scale-110 transition-transform`}
+                    >
                       <Icone size={24} className={cores.text} />
                     </div>
                   </div>
@@ -197,8 +203,18 @@ const Relatorios: React.FC = () => {
                     </span>
                     <button className="text-sm text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1">
                       Visualizar
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 5l7 7-7 7"
+                        />
                       </svg>
                     </button>
                   </div>
@@ -218,8 +234,9 @@ const Relatorios: React.FC = () => {
               Sobre os Relatórios
             </h3>
             <p className="text-blue-800 mb-3">
-              Os relatórios disponíveis nesta seção fornecem análises detalhadas e consolidadas
-              dos dados do sistema, permitindo uma visão abrangente das operações municipais.
+              Os relatórios disponíveis nesta seção fornecem análises detalhadas
+              e consolidadas dos dados do sistema, permitindo uma visão
+              abrangente das operações municipais.
             </p>
             <ul className="list-disc list-inside text-sm text-blue-700 space-y-1">
               <li>Todos os relatórios podem ser filtrados por período</li>

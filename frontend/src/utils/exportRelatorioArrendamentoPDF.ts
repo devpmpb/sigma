@@ -156,8 +156,8 @@ export const exportRelatorioGeralPDF = (
 };
 
 export const exportRelatorioPorPropriedadePDF = (
-  data: RelatorioPorPropriedade,
-  filtros: FiltrosRelatorio
+  data: RelatorioPorPropriedade
+  //filtros: FiltrosRelatorio
 ) => {
   const doc = new jsPDF();
   const hoje = new Date().toLocaleDateString("pt-BR");
@@ -195,7 +195,7 @@ export const exportRelatorioPorPropriedadePDF = (
   );
   yPosition += 10;
 
-  data.propriedades.slice(0, 10).forEach((prop, index) => {
+  data.propriedades.slice(0, 10).forEach((prop) => {
     if (yPosition > 250) {
       doc.addPage();
       yPosition = 20;
@@ -261,8 +261,8 @@ export const exportRelatorioPorPropriedadePDF = (
 };
 
 export const exportRelatorioPorArrendatarioPDF = (
-  data: RelatorioPorArrendatario,
-  filtros: FiltrosRelatorio
+  data: RelatorioPorArrendatario
+  //filtros: FiltrosRelatorio
 ) => {
   const doc = new jsPDF();
   const hoje = new Date().toLocaleDateString("pt-BR");
@@ -345,7 +345,7 @@ export const exportRelatorioPorArrendatarioPDF = (
 
 export const exportRelatorioPorAtividadePDF = (
   data: RelatorioPorAtividade,
-  filtros: FiltrosRelatorio
+  //filtros: FiltrosRelatorio
 ) => {
   const doc = new jsPDF();
   const hoje = new Date().toLocaleDateString("pt-BR");

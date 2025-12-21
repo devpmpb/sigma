@@ -64,7 +64,10 @@ export function PWAStatus() {
         )}
 
         {status.isOfflineReady && status.isOnline && (
-          <Check className="h-4 w-4 text-green-600" title="Pronto para offline" />
+          <Check
+            className="h-4 w-4 text-green-600"
+            aria-label="Pronto para offline"
+          />
         )}
       </div>
     </div>
