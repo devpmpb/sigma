@@ -7,6 +7,7 @@ import propriedadeService from "../../services/comum/propriedadeService";
 import programaService from "../../services/comum/programaService";
 import solicitacaoBeneficioService from "../../services/comum/solicitacaoBeneficioService";
 import arrendamentoService from "../../services/agricultura/arrendamentoService";
+import { useAuth } from "../../context/AuthContext";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -16,6 +17,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
   const { sidebarItems } = useMenuItems();
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   // Estado local para forçar uma re-renderização quando a rota muda
   const [currentPath, setCurrentPath] = useState(
@@ -161,7 +163,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
       <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-700">
         <div className="flex items-center">
           <div className="w-8 h-8 rounded-full bg-gray-500 mr-2"></div>
-          <span>Usuário</span>
+          <span>{user?.name || "Usuário"}</span>
         </div>
       </div>
     </div>

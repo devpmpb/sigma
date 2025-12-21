@@ -56,11 +56,16 @@ export const dashboardPublicoController = {
         },
       });
 
+      console.log(solicitacoes.length);
+
       // Filtrar aprovadas/pagas para estatísticas
       const aprovadas = solicitacoes.filter(
-        (s) => s.status === "aprovada" || s.status === "paga"
+        (s) =>
+          s.status === "aprovada" ||
+          s.status === "paga" ||
+          s.status === "aprovado"
       );
-
+      console.log(aprovadas.length);
       // Estatísticas gerais
       const totalInvestido = aprovadas.reduce(
         (sum, s) => sum + (s.valorCalculado ? Number(s.valorCalculado) : 0),
@@ -74,7 +79,10 @@ export const dashboardPublicoController = {
         produtoresAtendidos > 0 ? totalInvestido / produtoresAtendidos : 0;
 
       // Por programa
-      const porPrograma: Record<number, { nome: string; valor: number; quantidade: number }> = {};
+      const porPrograma: Record<
+        number,
+        { nome: string; valor: number; quantidade: number }
+      > = {};
       aprovadas.forEach((s) => {
         if (!porPrograma[s.programaId]) {
           porPrograma[s.programaId] = {
@@ -88,7 +96,10 @@ export const dashboardPublicoController = {
       });
 
       // Por mês
-      const porMes: Record<number, { mes: number; valor: number; quantidade: number }> = {};
+      const porMes: Record<
+        number,
+        { mes: number; valor: number; quantidade: number }
+      > = {};
       for (let i = 1; i <= 12; i++) {
         porMes[i] = { mes: i, valor: 0, quantidade: 0 };
       }
@@ -99,7 +110,10 @@ export const dashboardPublicoController = {
       });
 
       // Top 10 produtores
-      const porProdutor: Record<number, { nome: string; valor: number; quantidade: number }> = {};
+      const porProdutor: Record<
+        number,
+        { nome: string; valor: number; quantidade: number }
+      > = {};
       aprovadas.forEach((s) => {
         if (!porProdutor[s.pessoaId]) {
           porProdutor[s.pessoaId] = {
@@ -148,7 +162,9 @@ export const dashboardPublicoController = {
       });
     } catch (error) {
       console.error("❌ Erro ao buscar resumo público:", error);
-      return res.status(500).json({ erro: "Erro ao buscar dados do dashboard" });
+      return res
+        .status(500)
+        .json({ erro: "Erro ao buscar dados do dashboard" });
     }
   },
 
@@ -159,9 +175,6 @@ export const dashboardPublicoController = {
   listarProgramas: async (_req: Request, res: Response) => {
     try {
       const programas = await prisma.programa.findMany({
-        where: {
-          ativo: true,
-        },
         select: {
           id: true,
           nome: true,
@@ -231,9 +244,11 @@ export const dashboardPublicoController = {
         distinct: ["datasolicitacao"],
       });
 
-      const anos = [...new Set(
-        solicitacoes.map((s) => new Date(s.datasolicitacao).getFullYear())
-      )].sort((a, b) => b - a);
+      const anos = [
+        ...new Set(
+          solicitacoes.map((s) => new Date(s.datasolicitacao).getFullYear())
+        ),
+      ].sort((a, b) => b - a);
 
       // Se não houver dados, retornar pelo menos o ano atual
       if (anos.length === 0) {

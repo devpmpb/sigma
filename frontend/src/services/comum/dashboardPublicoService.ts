@@ -105,7 +105,9 @@ export async function getProgramas(): Promise<ProgramaFiltro[]> {
 /**
  * Busca produtores para filtro (autocomplete)
  */
-export async function buscarProdutores(busca?: string): Promise<ProdutorFiltro[]> {
+export async function buscarProdutores(
+  busca?: string
+): Promise<ProdutorFiltro[]> {
   const params = busca ? { busca } : {};
   const response = await publicClient.get<ProdutorFiltro[]>(
     `${BASE_URL}/produtores`,
