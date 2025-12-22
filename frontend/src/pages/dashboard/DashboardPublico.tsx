@@ -122,7 +122,7 @@ export default function DashboardPublico() {
   const [erro, setErro] = useState<string | null>(null);
 
   // Filtros
-  const [ano, setAno] = useState(new Date().getFullYear());
+  const [ano, setAno] = useState<number | "todos">(new Date().getFullYear());
   const [anos, setAnos] = useState<number[]>([]);
   const [programas, setProgramas] = useState<ProgramaFiltro[]>([]);
   const [programaId, setProgramaId] = useState<number | null>(null);
@@ -313,9 +313,10 @@ export default function DashboardPublico() {
               </label>
               <select
                 value={ano}
-                onChange={(e) => setAno(Number(e.target.value))}
+                onChange={(e) => setAno(e.target.value === "todos" ? "todos" : Number(e.target.value))}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
+                <option value="todos">Todos os anos</option>
                 {anos.map((a) => (
                   <option key={a} value={a}>
                     {a}
@@ -432,7 +433,7 @@ export default function DashboardPublico() {
             valor={formatarMoeda(dados?.estatisticas.totalInvestido || 0)}
             icone={<DollarSign className="h-5 w-5 sm:h-6 sm:w-6 text-white" />}
             corIcone="bg-green-600"
-            subtitulo={`em ${ano}`}
+            subtitulo={ano === "todos" ? "todos os anos" : `em ${ano}`}
           />
           <StatCard
             titulo="Solicitações"

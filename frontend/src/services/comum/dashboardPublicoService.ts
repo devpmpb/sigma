@@ -27,7 +27,7 @@ const publicClient = axios.create({
 
 // Tipos
 export interface DashboardResumoPublico {
-  ano: number;
+  ano: number | "todos";
   filtros: {
     programaId: number | null;
     produtorId: number | null;
@@ -74,13 +74,14 @@ const BASE_URL = "/dashboard-publico";
 
 /**
  * Busca resumo completo com filtros opcionais
+ * @param ano - Ano específico ou "todos" para todos os anos
  */
 export async function getResumoPublico(
-  ano?: number,
+  ano?: number | "todos",
   programaId?: number,
   produtorId?: number
 ): Promise<DashboardResumoPublico> {
-  const params: Record<string, number> = {};
+  const params: Record<string, string | number> = {};
   if (ano) params.ano = ano;
   if (programaId) params.programaId = programaId;
   if (produtorId) params.produtorId = produtorId;
