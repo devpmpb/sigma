@@ -23,7 +23,14 @@ export const dashboardPublicoController = {
       const { ano, programaId, produtorId } = req.query;
 
       // ano = null ou "todos" significa todos os anos
-      const anoFiltro = ano && ano !== "todos" ? Number(ano) : null;
+      // Validação robusta para evitar NaN
+      let anoFiltro: number | null = null;
+      if (ano && ano !== "todos" && ano !== "null" && ano !== "undefined") {
+        const anoNum = Number(ano);
+        if (!isNaN(anoNum) && anoNum > 1900 && anoNum < 2100) {
+          anoFiltro = anoNum;
+        }
+      }
 
       // Where base (para todas as solicitações)
       const whereBase: Prisma.SolicitacaoBeneficioWhereInput = {};
@@ -98,32 +105,20 @@ export const dashboardPublicoController = {
         }),
 
         // 6. Por mês - usando query raw para melhor performance
-        anoFiltro
-          ? prisma.$queryRaw<Array<{ mes: number; valor: number; quantidade: bigint }>>`
-              SELECT
-                EXTRACT(MONTH FROM datasolicitacao)::int as mes,
-                COALESCE(SUM(CAST("valorCalculado" AS DECIMAL)), 0) as valor,
-                COUNT(*)::bigint as quantidade
-              FROM "SolicitacaoBeneficio"
-              WHERE status IN ('aprovada', 'paga', 'aprovado')
-                AND EXTRACT(YEAR FROM datasolicitacao) = ${anoFiltro}
-                ${programaId ? Prisma.sql`AND "programaId" = ${Number(programaId)}` : Prisma.empty}
-                ${produtorId ? Prisma.sql`AND "pessoaId" = ${Number(produtorId)}` : Prisma.empty}
-              GROUP BY EXTRACT(MONTH FROM datasolicitacao)
-              ORDER BY mes
-            `
-          : prisma.$queryRaw<Array<{ mes: number; valor: number; quantidade: bigint }>>`
-              SELECT
-                EXTRACT(MONTH FROM datasolicitacao)::int as mes,
-                COALESCE(SUM(CAST("valorCalculado" AS DECIMAL)), 0) as valor,
-                COUNT(*)::bigint as quantidade
-              FROM "SolicitacaoBeneficio"
-              WHERE status IN ('aprovada', 'paga', 'aprovado')
-                ${programaId ? Prisma.sql`AND "programaId" = ${Number(programaId)}` : Prisma.empty}
-                ${produtorId ? Prisma.sql`AND "pessoaId" = ${Number(produtorId)}` : Prisma.empty}
-              GROUP BY EXTRACT(MONTH FROM datasolicitacao)
-              ORDER BY mes
-            `,
+        prisma.$queryRaw<Array<{ mes: number; valor: string; quantidade: bigint }>>`
+          SELECT
+            EXTRACT(MONTH FROM datasolicitacao)::int as mes,
+            COALESCE(SUM("valorCalculado"), 0)::text as valor,
+            COUNT(*) as quantidade
+          FROM "SolicitacaoBeneficio"
+          WHERE status IN ('aprovada', 'paga', 'aprovado')
+            AND datasolicitacao IS NOT NULL
+            ${anoFiltro ? Prisma.sql`AND EXTRACT(YEAR FROM datasolicitacao) = ${anoFiltro}` : Prisma.empty}
+            ${programaId ? Prisma.sql`AND "programaId" = ${Number(programaId)}` : Prisma.empty}
+            ${produtorId ? Prisma.sql`AND "pessoaId" = ${Number(produtorId)}` : Prisma.empty}
+          GROUP BY EXTRACT(MONTH FROM datasolicitacao)
+          ORDER BY mes
+        `,
       ]);
 
       // Buscar nomes dos programas
@@ -181,7 +176,7 @@ export const dashboardPublicoController = {
       porMesRaw.forEach((m) => {
         porMesMap[m.mes] = {
           mes: m.mes,
-          valor: Number(m.valor),
+          valor: parseFloat(m.valor) || 0,
           quantidade: Number(m.quantidade),
         };
       });
@@ -282,10 +277,11 @@ export const dashboardPublicoController = {
       const anosRaw = await prisma.$queryRaw<Array<{ ano: number }>>`
         SELECT DISTINCT EXTRACT(YEAR FROM datasolicitacao)::int as ano
         FROM "SolicitacaoBeneficio"
+        WHERE datasolicitacao IS NOT NULL
         ORDER BY ano DESC
       `;
 
-      const anos = anosRaw.map((a) => a.ano);
+      const anos = anosRaw.map((a) => Number(a.ano));
 
       // Se não houver dados, retornar pelo menos o ano atual
       if (anos.length === 0) {
