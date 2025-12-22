@@ -3,10 +3,10 @@ import VeiculoForm from "../../../pages/cadastros/comum/veiculo/VeiculoForm";
 
 const Bairro = lazy(() => import("../../../pages/cadastros/comum/Bairro"));
 const Logradouro = lazy(
-  () => import("../../../pages/cadastros/comum/logradouro/Logradouros")
+  () => import("../../../pages/cadastros/comum/Logradouro/Logradouros")
 );
 const LogradouroForm = lazy(
-  () => import("../../../pages/cadastros/comum/logradouro/LogradouroForm")
+  () => import("../../../pages/cadastros/comum/Logradouro/LogradouroForm")
 );
 const Pessoa = lazy(
   () => import("../../../pages/cadastros/comum/pessoa/Pessoas")
