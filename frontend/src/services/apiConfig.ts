@@ -2,16 +2,18 @@ import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
 
 // Detectar baseURL dinamicamente para suporte a rede local (PWA)
 const getBaseUrl = (): string => {
-  // Em produção ou desenvolvimento, usar o hostname atual
+  // Em produção, usar a mesma origem (Caddy faz proxy para /api)
+  // Em desenvolvimento, usar localhost com porta do backend
   const hostname = window.location.hostname;
-  const backendPort = 3001;
+  const protocol = window.location.protocol;
 
-  // Se estiver acessando por IP ou domínio diferente de localhost
+  // Se estiver em produção (domínio ou IP externo), usar mesma origem
   if (hostname !== 'localhost' && hostname !== '127.0.0.1') {
-    return `http://${hostname}:${backendPort}/api`;
+    return `${protocol}//${hostname}/api`;
   }
 
-  return `http://localhost:${backendPort}/api`;
+  // Desenvolvimento local
+  return `http://localhost:3001/api`;
 };
 
 // Configuração padrão do axios
