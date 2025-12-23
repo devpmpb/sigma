@@ -427,7 +427,7 @@ export default function DashboardPublico() {
       {/* Conteúdo principal */}
       <main className="container mx-auto px-4 py-6 space-y-6">
         {/* Cards de estatísticas */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
           <StatCard
             titulo="Total Investido"
             valor={formatarMoeda(dados?.estatisticas.totalInvestido || 0)}
