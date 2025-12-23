@@ -21,7 +21,9 @@ function parseAnoFiltro(ano: unknown): number | null {
 }
 
 // Helper para criar filtro de data
-function criarFiltroData(anoFiltro: number | null): Prisma.SolicitacaoBeneficioWhereInput {
+function criarFiltroData(
+  anoFiltro: number | null
+): Prisma.SolicitacaoBeneficioWhereInput {
   if (!anoFiltro) return {};
   return {
     datasolicitacao: {
@@ -74,17 +76,18 @@ export const dashboardController = {
         const anoAnterior = anoFiltro - 1;
         const filtroDataAnterior = criarFiltroData(anoAnterior);
 
-        const solicitacoesAnoAnterior = await prisma.solicitacaoBeneficio.findMany({
-          where: {
-            ...filtroDataAnterior,
-            status: {
-              in: ["aprovada", "paga"],
+        const solicitacoesAnoAnterior =
+          await prisma.solicitacaoBeneficio.findMany({
+            where: {
+              ...filtroDataAnterior,
+              status: {
+                in: ["aprovada", "paga"],
+              },
             },
-          },
-          select: {
-            valorCalculado: true,
-          },
-        });
+            select: {
+              valorCalculado: true,
+            },
+          });
 
         const totalAnoAnterior = solicitacoesAnoAnterior.reduce(
           (sum, s) => sum + (s.valorCalculado ? Number(s.valorCalculado) : 0),
@@ -114,7 +117,9 @@ export const dashboardController = {
       });
     } catch (error) {
       console.error("❌ Erro ao buscar estatísticas gerais:", error);
-      return res.status(500).json({ erro: "Erro ao buscar estatísticas gerais" });
+      return res
+        .status(500)
+        .json({ erro: "Erro ao buscar estatísticas gerais" });
     }
   },
 
@@ -188,7 +193,9 @@ export const dashboardController = {
           porPrograma[s.programaId].totalPago += s._count.id;
         }
         if (s.status === "aprovada" || s.status === "paga") {
-          porPrograma[s.programaId].valorTotal += Number(s._sum.valorCalculado || 0);
+          porPrograma[s.programaId].valorTotal += Number(
+            s._sum.valorCalculado || 0
+          );
         }
       });
 
@@ -202,7 +209,9 @@ export const dashboardController = {
       });
     } catch (error) {
       console.error("❌ Erro ao buscar estatísticas por programa:", error);
-      return res.status(500).json({ erro: "Erro ao buscar estatísticas por programa" });
+      return res
+        .status(500)
+        .json({ erro: "Erro ao buscar estatísticas por programa" });
     }
   },
 
@@ -234,7 +243,12 @@ export const dashboardController = {
       // Agrupar por mês
       const porMes: Record<
         string,
-        { ano: number; mes: number; totalSolicitacoes: number; valorTotal: number }
+        {
+          ano: number;
+          mes: number;
+          totalSolicitacoes: number;
+          valorTotal: number;
+        }
       > = {};
 
       // Se tem ano específico, inicializar todos os meses do ano
@@ -280,7 +294,9 @@ export const dashboardController = {
       });
     } catch (error) {
       console.error("❌ Erro ao buscar estatísticas por período:", error);
-      return res.status(500).json({ erro: "Erro ao buscar estatísticas por período" });
+      return res
+        .status(500)
+        .json({ erro: "Erro ao buscar estatísticas por período" });
     }
   },
 
@@ -379,7 +395,10 @@ export const dashboardController = {
 
       // Filtrar aprovadas/pagas para estatísticas
       const aprovadas = solicitacoes.filter(
-        (s) => s.status === "aprovada" || s.status === "paga"
+        (s) =>
+          s.status === "aprovada" ||
+          s.status === "paga" ||
+          s.status === "aprovado"
       );
 
       // Estatísticas gerais
@@ -395,7 +414,10 @@ export const dashboardController = {
         produtoresAtendidos > 0 ? totalInvestido / produtoresAtendidos : 0;
 
       // Por programa
-      const porPrograma: Record<number, { nome: string; valor: number; quantidade: number }> = {};
+      const porPrograma: Record<
+        number,
+        { nome: string; valor: number; quantidade: number }
+      > = {};
       aprovadas.forEach((s) => {
         if (!porPrograma[s.programaId]) {
           porPrograma[s.programaId] = {
@@ -409,7 +431,10 @@ export const dashboardController = {
       });
 
       // Por mês
-      const porMes: Record<number, { mes: number; valor: number; quantidade: number }> = {};
+      const porMes: Record<
+        number,
+        { mes: number; valor: number; quantidade: number }
+      > = {};
       for (let i = 1; i <= 12; i++) {
         porMes[i] = { mes: i, valor: 0, quantidade: 0 };
       }
@@ -420,7 +445,10 @@ export const dashboardController = {
       });
 
       // Top 5 produtores
-      const porProdutor: Record<number, { nome: string; valor: number; quantidade: number }> = {};
+      const porProdutor: Record<
+        number,
+        { nome: string; valor: number; quantidade: number }
+      > = {};
       aprovadas.forEach((s) => {
         if (!porProdutor[s.pessoaId]) {
           porProdutor[s.pessoaId] = {

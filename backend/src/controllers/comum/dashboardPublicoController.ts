@@ -105,7 +105,9 @@ export const dashboardPublicoController = {
         }),
 
         // 6. Por mês - usando query raw para melhor performance
-        prisma.$queryRaw<Array<{ mes: number; valor: string; quantidade: bigint }>>`
+        prisma.$queryRaw<
+          Array<{ mes: number; valor: string; quantidade: bigint }>
+        >`
           SELECT
             EXTRACT(MONTH FROM datasolicitacao)::int as mes,
             COALESCE(SUM("valorCalculado"), 0)::text as valor,
@@ -123,26 +125,32 @@ export const dashboardPublicoController = {
 
       // Buscar nomes dos programas
       const programaIds = porProgramaRaw.map((p) => p.programaId);
-      const programas = programaIds.length > 0
-        ? await prisma.programa.findMany({
-            where: { id: { in: programaIds } },
-            select: { id: true, nome: true },
-          })
-        : [];
-      const programaMap = Object.fromEntries(programas.map((p) => [p.id, p.nome]));
+      const programas =
+        programaIds.length > 0
+          ? await prisma.programa.findMany({
+              where: { id: { in: programaIds } },
+              select: { id: true, nome: true },
+            })
+          : [];
+      const programaMap = Object.fromEntries(
+        programas.map((p) => [p.id, p.nome])
+      );
 
       // Buscar nomes dos produtores
       const pessoaIds = topProdutoresRaw.map((p) => p.pessoaId);
-      const pessoas = pessoaIds.length > 0
-        ? await prisma.pessoa.findMany({
-            where: { id: { in: pessoaIds } },
-            select: { id: true, nome: true },
-          })
-        : [];
+      const pessoas =
+        pessoaIds.length > 0
+          ? await prisma.pessoa.findMany({
+              where: { id: { in: pessoaIds } },
+              select: { id: true, nome: true },
+            })
+          : [];
       const pessoaMap = Object.fromEntries(pessoas.map((p) => [p.id, p.nome]));
 
       // Montar resposta
-      const totalInvestido = Number(estatisticasAgregadas._sum.valorCalculado || 0);
+      const totalInvestido = Number(
+        estatisticasAgregadas._sum.valorCalculado || 0
+      );
       const produtoresAtendidos = produtoresUnicos.length;
 
       // Por status como objeto
@@ -169,7 +177,10 @@ export const dashboardPublicoController = {
       }));
 
       // Por mês - preencher meses vazios com 0
-      const porMesMap: Record<number, { mes: number; valor: number; quantidade: number }> = {};
+      const porMesMap: Record<
+        number,
+        { mes: number; valor: number; quantidade: number }
+      > = {};
       for (let i = 1; i <= 12; i++) {
         porMesMap[i] = { mes: i, valor: 0, quantidade: 0 };
       }
@@ -191,7 +202,8 @@ export const dashboardPublicoController = {
           totalInvestido,
           totalSolicitacoes: estatisticasAgregadas._count.id,
           produtoresAtendidos,
-          mediaPorProdutor: produtoresAtendidos > 0 ? totalInvestido / produtoresAtendidos : 0,
+          mediaPorProdutor:
+            produtoresAtendidos > 0 ? totalInvestido / produtoresAtendidos : 0,
         },
         porPrograma,
         porMes: Object.values(porMesMap),
@@ -201,7 +213,9 @@ export const dashboardPublicoController = {
       });
     } catch (error) {
       console.error("Erro ao buscar resumo público:", error);
-      return res.status(500).json({ erro: "Erro ao buscar dados do dashboard" });
+      return res
+        .status(500)
+        .json({ erro: "Erro ao buscar dados do dashboard" });
     }
   },
 
