@@ -1,10 +1,35 @@
 /**
  * Controller para Dashboard Executivo
  * Endpoints otimizados para visualização rápida do prefeito/secretário
+ * Suporta filtro por ano ou "todos" para ver todos os anos
  */
 
 import { Request, Response } from "express";
 import prisma from "../../utils/prisma";
+import { Prisma } from "@prisma/client";
+
+// Helper para validar e parsear o ano
+function parseAnoFiltro(ano: unknown): number | null {
+  if (!ano || ano === "todos" || ano === "null" || ano === "undefined") {
+    return null;
+  }
+  const anoNum = Number(ano);
+  if (!isNaN(anoNum) && anoNum > 1900 && anoNum < 2100) {
+    return anoNum;
+  }
+  return null;
+}
+
+// Helper para criar filtro de data
+function criarFiltroData(anoFiltro: number | null): Prisma.SolicitacaoBeneficioWhereInput {
+  if (!anoFiltro) return {};
+  return {
+    datasolicitacao: {
+      gte: new Date(anoFiltro, 0, 1),
+      lte: new Date(anoFiltro, 11, 31, 23, 59, 59),
+    },
+  };
+}
 
 export const dashboardController = {
   /**
@@ -13,18 +38,14 @@ export const dashboardController = {
   estatisticasGerais: async (req: Request, res: Response) => {
     try {
       const { ano } = req.query;
-      const anoFiltro = ano ? Number(ano) : new Date().getFullYear();
+      const anoFiltro = parseAnoFiltro(ano);
 
-      const dataInicio = new Date(anoFiltro, 0, 1);
-      const dataFim = new Date(anoFiltro, 11, 31, 23, 59, 59);
+      const filtroData = criarFiltroData(anoFiltro);
 
       // Buscar solicitações do período
       const solicitacoes = await prisma.solicitacaoBeneficio.findMany({
         where: {
-          datasolicitacao: {
-            gte: dataInicio,
-            lte: dataFim,
-          },
+          ...filtroData,
           status: {
             in: ["aprovada", "paga"],
           },
@@ -47,47 +68,48 @@ export const dashboardController = {
       const mediaPorProdutor =
         produtoresAtendidos > 0 ? totalInvestido / produtoresAtendidos : 0;
 
-      // Comparativo com ano anterior
-      const anoAnterior = anoFiltro - 1;
-      const dataInicioAnterior = new Date(anoAnterior, 0, 1);
-      const dataFimAnterior = new Date(anoAnterior, 11, 31, 23, 59, 59);
+      // Comparativo com ano anterior (só faz sentido se tiver ano específico)
+      let comparativoAnoAnterior = null;
+      if (anoFiltro) {
+        const anoAnterior = anoFiltro - 1;
+        const filtroDataAnterior = criarFiltroData(anoAnterior);
 
-      const solicitacoesAnoAnterior = await prisma.solicitacaoBeneficio.findMany({
-        where: {
-          datasolicitacao: {
-            gte: dataInicioAnterior,
-            lte: dataFimAnterior,
+        const solicitacoesAnoAnterior = await prisma.solicitacaoBeneficio.findMany({
+          where: {
+            ...filtroDataAnterior,
+            status: {
+              in: ["aprovada", "paga"],
+            },
           },
-          status: {
-            in: ["aprovada", "paga"],
+          select: {
+            valorCalculado: true,
           },
-        },
-        select: {
-          valorCalculado: true,
-        },
-      });
+        });
 
-      const totalAnoAnterior = solicitacoesAnoAnterior.reduce(
-        (sum, s) => sum + (s.valorCalculado ? Number(s.valorCalculado) : 0),
-        0
-      );
+        const totalAnoAnterior = solicitacoesAnoAnterior.reduce(
+          (sum, s) => sum + (s.valorCalculado ? Number(s.valorCalculado) : 0),
+          0
+        );
 
-      const variacaoPercentual =
-        totalAnoAnterior > 0
-          ? ((totalInvestido - totalAnoAnterior) / totalAnoAnterior) * 100
-          : 0;
+        const variacaoPercentual =
+          totalAnoAnterior > 0
+            ? ((totalInvestido - totalAnoAnterior) / totalAnoAnterior) * 100
+            : 0;
+
+        comparativoAnoAnterior = {
+          ano: anoAnterior,
+          totalInvestido: totalAnoAnterior,
+          variacaoPercentual: Math.round(variacaoPercentual * 100) / 100,
+        };
+      }
 
       return res.status(200).json({
-        ano: anoFiltro,
+        ano: anoFiltro || "todos",
         totalInvestido,
         totalSolicitacoes: solicitacoes.length,
         produtoresAtendidos,
         mediaPorProdutor,
-        comparativoAnoAnterior: {
-          ano: anoAnterior,
-          totalInvestido: totalAnoAnterior,
-          variacaoPercentual: Math.round(variacaoPercentual * 100) / 100,
-        },
+        comparativoAnoAnterior,
         ultimaAtualizacao: new Date().toISOString(),
       });
     } catch (error) {
@@ -102,18 +124,13 @@ export const dashboardController = {
   porPrograma: async (req: Request, res: Response) => {
     try {
       const { ano } = req.query;
-      const anoFiltro = ano ? Number(ano) : new Date().getFullYear();
-
-      const dataInicio = new Date(anoFiltro, 0, 1);
-      const dataFim = new Date(anoFiltro, 11, 31, 23, 59, 59);
+      const anoFiltro = parseAnoFiltro(ano);
+      const filtroData = criarFiltroData(anoFiltro);
 
       const solicitacoes = await prisma.solicitacaoBeneficio.groupBy({
         by: ["programaId", "status"],
         where: {
-          datasolicitacao: {
-            gte: dataInicio,
-            lte: dataFim,
-          },
+          ...filtroData,
         },
         _count: {
           id: true,
@@ -180,7 +197,7 @@ export const dashboardController = {
       );
 
       return res.status(200).json({
-        ano: anoFiltro,
+        ano: anoFiltro || "todos",
         programas: resultado,
       });
     } catch (error) {
@@ -195,17 +212,12 @@ export const dashboardController = {
   porPeriodo: async (req: Request, res: Response) => {
     try {
       const { ano } = req.query;
-      const anoFiltro = ano ? Number(ano) : new Date().getFullYear();
-
-      const dataInicio = new Date(anoFiltro, 0, 1);
-      const dataFim = new Date(anoFiltro, 11, 31, 23, 59, 59);
+      const anoFiltro = parseAnoFiltro(ano);
+      const filtroData = criarFiltroData(anoFiltro);
 
       const solicitacoes = await prisma.solicitacaoBeneficio.findMany({
         where: {
-          datasolicitacao: {
-            gte: dataInicio,
-            lte: dataFim,
-          },
+          ...filtroData,
           status: {
             in: ["aprovada", "paga"],
           },
@@ -225,32 +237,45 @@ export const dashboardController = {
         { ano: number; mes: number; totalSolicitacoes: number; valorTotal: number }
       > = {};
 
-      // Inicializar todos os meses do ano
-      for (let mes = 0; mes < 12; mes++) {
-        const chave = `${anoFiltro}-${String(mes + 1).padStart(2, "0")}`;
-        porMes[chave] = {
-          ano: anoFiltro,
-          mes: mes + 1,
-          totalSolicitacoes: 0,
-          valorTotal: 0,
-        };
+      // Se tem ano específico, inicializar todos os meses do ano
+      if (anoFiltro) {
+        for (let mes = 0; mes < 12; mes++) {
+          const chave = `${anoFiltro}-${String(mes + 1).padStart(2, "0")}`;
+          porMes[chave] = {
+            ano: anoFiltro,
+            mes: mes + 1,
+            totalSolicitacoes: 0,
+            valorTotal: 0,
+          };
+        }
       }
 
       // Preencher com dados reais
       solicitacoes.forEach((s) => {
         const data = new Date(s.datasolicitacao);
-        const chave = `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, "0")}`;
+        const anoData = data.getFullYear();
+        const mesData = data.getMonth() + 1;
+        const chave = `${anoData}-${String(mesData).padStart(2, "0")}`;
 
-        if (porMes[chave]) {
-          porMes[chave].totalSolicitacoes++;
-          porMes[chave].valorTotal += Number(s.valorCalculado || 0);
+        if (!porMes[chave]) {
+          porMes[chave] = {
+            ano: anoData,
+            mes: mesData,
+            totalSolicitacoes: 0,
+            valorTotal: 0,
+          };
         }
+        porMes[chave].totalSolicitacoes++;
+        porMes[chave].valorTotal += Number(s.valorCalculado || 0);
       });
 
-      const resultado = Object.values(porMes);
+      const resultado = Object.values(porMes).sort((a, b) => {
+        if (a.ano !== b.ano) return a.ano - b.ano;
+        return a.mes - b.mes;
+      });
 
       return res.status(200).json({
-        ano: anoFiltro,
+        ano: anoFiltro || "todos",
         meses: resultado,
       });
     } catch (error) {
@@ -265,19 +290,14 @@ export const dashboardController = {
   topProdutores: async (req: Request, res: Response) => {
     try {
       const { ano, limite } = req.query;
-      const anoFiltro = ano ? Number(ano) : new Date().getFullYear();
+      const anoFiltro = parseAnoFiltro(ano);
       const limiteResultados = limite ? Number(limite) : 10;
-
-      const dataInicio = new Date(anoFiltro, 0, 1);
-      const dataFim = new Date(anoFiltro, 11, 31, 23, 59, 59);
+      const filtroData = criarFiltroData(anoFiltro);
 
       const solicitacoes = await prisma.solicitacaoBeneficio.groupBy({
         by: ["pessoaId"],
         where: {
-          datasolicitacao: {
-            gte: dataInicio,
-            lte: dataFim,
-          },
+          ...filtroData,
           status: {
             in: ["aprovada", "paga"],
           },
@@ -318,7 +338,7 @@ export const dashboardController = {
       }));
 
       return res.status(200).json({
-        ano: anoFiltro,
+        ano: anoFiltro || "todos",
         produtores: resultado,
       });
     } catch (error) {
@@ -333,18 +353,13 @@ export const dashboardController = {
   resumoCompleto: async (req: Request, res: Response) => {
     try {
       const { ano } = req.query;
-      const anoFiltro = ano ? Number(ano) : new Date().getFullYear();
+      const anoFiltro = parseAnoFiltro(ano);
+      const filtroData = criarFiltroData(anoFiltro);
 
-      const dataInicio = new Date(anoFiltro, 0, 1);
-      const dataFim = new Date(anoFiltro, 11, 31, 23, 59, 59);
-
-      // Buscar todas as solicitações do ano
+      // Buscar todas as solicitações do período
       const solicitacoes = await prisma.solicitacaoBeneficio.findMany({
         where: {
-          datasolicitacao: {
-            gte: dataInicio,
-            lte: dataFim,
-          },
+          ...filtroData,
         },
         include: {
           programa: {
@@ -433,7 +448,7 @@ export const dashboardController = {
       );
 
       return res.status(200).json({
-        ano: anoFiltro,
+        ano: anoFiltro || "todos",
         estatisticas: {
           totalInvestido,
           totalSolicitacoes: aprovadas.length,
@@ -451,6 +466,32 @@ export const dashboardController = {
     } catch (error) {
       console.error("❌ Erro ao buscar resumo completo:", error);
       return res.status(500).json({ erro: "Erro ao buscar resumo completo" });
+    }
+  },
+
+  /**
+   * Anos disponíveis para filtro
+   * GET /api/dashboard/anos
+   */
+  listarAnos: async (_req: Request, res: Response) => {
+    try {
+      const anosRaw = await prisma.$queryRaw<Array<{ ano: number }>>`
+        SELECT DISTINCT EXTRACT(YEAR FROM datasolicitacao)::int as ano
+        FROM "SolicitacaoBeneficio"
+        WHERE datasolicitacao IS NOT NULL
+        ORDER BY ano DESC
+      `;
+
+      const anos = anosRaw.map((a) => Number(a.ano));
+
+      if (anos.length === 0) {
+        anos.push(new Date().getFullYear());
+      }
+
+      return res.status(200).json(anos);
+    } catch (error) {
+      console.error("❌ Erro ao listar anos:", error);
+      return res.status(500).json({ erro: "Erro ao listar anos" });
     }
   },
 };

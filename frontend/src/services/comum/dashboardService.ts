@@ -45,7 +45,7 @@ export interface DashboardTopProdutores {
 }
 
 export interface DashboardResumoCompleto {
-  ano: number;
+  ano: number | "todos";
   estatisticas: {
     totalInvestido: number;
     totalSolicitacoes: number;
@@ -222,9 +222,10 @@ export async function getTopProdutores(
 /**
  * Busca resumo completo (todos os dados em uma chamada)
  * Ideal para carregamento inicial do dashboard
+ * @param ano - Número do ano ou "todos" para todos os anos
  */
 export async function getResumoCompleto(
-  ano?: number
+  ano?: number | "todos"
 ): Promise<DashboardResumoCompleto | null> {
   try {
     const params = ano ? { ano } : {};
@@ -240,6 +241,20 @@ export async function getResumoCompleto(
   }
 }
 
+/**
+ * Busca anos disponíveis para filtro
+ */
+export async function getAnos(): Promise<number[]> {
+  try {
+    const response = await apiClient.get<number[]>(`${BASE_URL}/anos`);
+    return response.data;
+  } catch (error) {
+    console.error("❌ Erro ao buscar anos:", error);
+    // Fallback: retorna ano atual
+    return [new Date().getFullYear()];
+  }
+}
+
 // Export default object para compatibilidade
 const dashboardService = {
   getEstatisticasGerais,
@@ -247,6 +262,7 @@ const dashboardService = {
   getPorPeriodo,
   getTopProdutores,
   getResumoCompleto,
+  getAnos,
 };
 
 export default dashboardService;

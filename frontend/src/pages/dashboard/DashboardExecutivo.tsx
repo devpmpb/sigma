@@ -128,11 +128,18 @@ export default function DashboardExecutivo() {
   const [dados, setDados] = useState<DashboardResumoCompleto | null>(null);
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
-  const [ano, setAno] = useState(new Date().getFullYear());
+  const [ano, setAno] = useState<number | "todos">(new Date().getFullYear());
+  const [anosDisponiveis, setAnosDisponiveis] = useState<number[]>([]);
   const [offline, setOffline] = useState(!isOnline());
 
-  // Anos disponíveis para seleção
-  const anosDisponiveis = Array.from({ length: 5 }, (_, i) => ano - i + 1);
+  // Carregar anos disponíveis
+  useEffect(() => {
+    const carregarAnos = async () => {
+      const anos = await dashboardService.getAnos();
+      setAnosDisponiveis(anos);
+    };
+    carregarAnos();
+  }, []);
 
   // Carregar dados
   const carregarDados = async () => {
@@ -231,9 +238,13 @@ export default function DashboardExecutivo() {
             <Calendar className="h-5 w-5 text-gray-400" />
             <select
               value={ano}
-              onChange={(e) => setAno(Number(e.target.value))}
+              onChange={(e) => {
+                const value = e.target.value;
+                setAno(value === "todos" ? "todos" : Number(value));
+              }}
               className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
+              <option value="todos">Todos os anos</option>
               {anosDisponiveis.map((a) => (
                 <option key={a} value={a}>
                   {a}
@@ -260,7 +271,7 @@ export default function DashboardExecutivo() {
           valor={formatarMoeda(dados?.estatisticas.totalInvestido)}
           icone={<DollarSign className="h-6 w-6 text-white" />}
           corIcone="bg-green-600"
-          subtitulo={`em ${ano}`}
+          subtitulo={ano === "todos" ? "todos os anos" : `em ${ano}`}
         />
         <StatCard
           titulo="Solicitações Aprovadas"

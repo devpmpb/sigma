@@ -26,4 +26,7 @@ router.get("/top-produtores", dashboardController.topProdutores);
 // GET /api/dashboard/resumo-completo (todos os dados em uma chamada)
 router.get("/resumo-completo", dashboardController.resumoCompleto);
 
+// GET /api/dashboard/anos - Anos disponíveis para filtro
+router.get("/anos", dashboardController.listarAnos);
+
 export default router;
