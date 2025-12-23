@@ -8,13 +8,15 @@ import axios from "axios";
 // Cliente axios separado (sem token de autenticação)
 const getBaseUrl = (): string => {
   const hostname = window.location.hostname;
-  const backendPort = 3001;
+  const protocol = window.location.protocol;
 
+  // Se estiver em produção (domínio ou IP externo), usar mesma origem
   if (hostname !== "localhost" && hostname !== "127.0.0.1") {
-    return `http://${hostname}:${backendPort}/api`;
+    return `${protocol}//${hostname}/api`;
   }
 
-  return `http://localhost:${backendPort}/api`;
+  // Desenvolvimento local
+  return `http://localhost:3001/api`;
 };
 
 const publicClient = axios.create({

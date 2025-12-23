@@ -2,9 +2,10 @@
 
 ## Servidor
 - **IP interno**: 192.168.0.201
-- **Domínio**: sigma.patobragado.pr.gov.br (após DNS configurado)
+- **IP público**: 191.7.167.225
+- **Domínio**: https://sigma.patobragado.pr.gov.br
 - **Sistema**: Debian
-- **Serviços**: Caddy (web server), PM2 (Node.js), PostgreSQL
+- **Serviços**: Caddy (web server + SSL), PM2 (Node.js), PostgreSQL
 
 ## Após fazer alterações no código
 
@@ -15,7 +16,7 @@ Execute esses comandos no servidor:
 cd /var/www/sigma
 git pull origin main
 
-# 2. Build do Backend
+# 2. Build do Backend (se alterou backend)
 cd backend
 npm ci
 npx prisma generate
@@ -23,13 +24,16 @@ npx prisma migrate deploy
 npm run build
 pm2 restart sigma-backend
 
-# 3. Build do Frontend
+# 3. Build do Frontend (se alterou frontend)
 cd ../frontend
 npm ci
 npm run build
 ```
 
-O Caddy serve os arquivos do frontend automaticamente, não precisa reiniciar.
+**Importante:**
+- Alterou **backend**? → Precisa `pm2 restart sigma-backend`
+- Alterou **frontend**? → Só `npm run build` (Caddy serve automaticamente)
+- Alterou **Caddyfile**? → `systemctl restart caddy`
 
 ## Comandos úteis - PM2 (Backend)
 
@@ -39,6 +43,9 @@ pm2 status
 
 # Ver logs do backend
 pm2 logs sigma-backend
+
+# Ver logs em tempo real
+pm2 logs sigma-backend --lines 100
 
 # Reiniciar backend
 pm2 restart sigma-backend
@@ -69,25 +76,27 @@ Arquivo: `/etc/caddy/Caddyfile`
 
 ```
 :80 {
-    root * /var/www/sigma/frontend/dist
-    file_server
-
     handle /api/* {
-        reverse_proxy localhost:3333
+        reverse_proxy localhost:3001
     }
 
-    try_files {path} /index.html
+    handle {
+        root * /var/www/sigma/frontend/dist
+        try_files {path} /index.html
+        file_server
+    }
 }
 
 sigma.patobragado.pr.gov.br {
-    root * /var/www/sigma/frontend/dist
-    file_server
-
     handle /api/* {
-        reverse_proxy localhost:3333
+        reverse_proxy localhost:3001
     }
 
-    try_files {path} /index.html
+    handle {
+        root * /var/www/sigma/frontend/dist
+        try_files {path} /index.html
+        file_server
+    }
 }
 ```
 
@@ -137,17 +146,19 @@ nano /etc/caddy/Caddyfile
 systemctl restart caddy
 ```
 
+### 6. Configurar DNS do servidor
+```bash
+nano /etc/resolv.conf
+# Adicionar: nameserver 192.168.0.252
+```
+
 ## DNS e SSL
 
-Para habilitar HTTPS com certificado automático:
+O certificado SSL é obtido automaticamente pelo Caddy via Let's Encrypt.
 
-1. **Administrador do DNS** deve criar registro A:
-   - `sigma.patobragado.pr.gov.br` → IP público do servidor
+**Requisitos:**
+- Registro A no DNS: `sigma.patobragado.pr.gov.br` → IP público
+- Portas 80 e 443 liberadas no firewall
+- Servidor com acesso à internet (DNS 192.168.0.252)
 
-2. **Firewall** deve liberar portas:
-   - 80 (HTTP - necessário para validação do certificado)
-   - 443 (HTTPS)
-
-3. O Caddy obtém e renova o certificado SSL automaticamente via Let's Encrypt.
-
-Após DNS configurado, remover o bloco `:80` do Caddyfile e deixar só o domínio.
+O Caddy renova o certificado automaticamente antes de expirar.
