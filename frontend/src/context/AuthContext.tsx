@@ -59,21 +59,34 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         const hasToken = authService.isAuthenticated();
 
         if (savedUser && hasToken) {
-          // Verificar se o token ainda é válido
-          const validatedUser = await authService.verifyToken();
+          // Verificar se o token está expirado localmente
+          const tokenTimeRemaining = authService.getTokenTimeRemaining();
 
-          if (validatedUser) {
-            setUser(mapBackendUserToFrontendUser(validatedUser));
+          if (tokenTimeRemaining !== null && tokenTimeRemaining > 0) {
+            // Token ainda válido localmente, usar dados salvos
+            setUser(savedUser);
           } else {
-            // Token inválido, limpar dados
-            authService.clearAuthData();
-            setUser(null);
+            // Token expirado, tentar renovar
+            const refreshResult = await authService.refreshToken();
+
+            if (refreshResult) {
+              setUser(mapBackendUserToFrontendUser(refreshResult.user));
+            } else {
+              // Não conseguiu renovar, limpar dados
+              authService.clearAuthData();
+              setUser(null);
+            }
           }
         }
       } catch (error) {
         console.error("Erro ao verificar autenticação:", error);
-        authService.clearAuthData();
-        setUser(null);
+        // Não limpar dados automaticamente, manter usuário logado se possível
+        const savedUser = authService.getUser();
+        if (savedUser) {
+          setUser(savedUser);
+        } else {
+          setUser(null);
+        }
       } finally {
         setIsLoading(false);
       }

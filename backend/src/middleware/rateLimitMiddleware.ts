@@ -139,3 +139,13 @@ export const createResourceRateLimiter = createRateLimiter({
   max: 10, // 10 criações por minuto
   message: "Muitas tentativas de criação. Aguarde um momento.",
 });
+
+/**
+ * Rate limiter para refresh token (mais permissivo que login)
+ * Permite mais requisições pois refresh é automático
+ */
+export const refreshTokenRateLimiter = createRateLimiter({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 60, // 60 refreshes por 15 min (4 por minuto)
+  message: "Muitas tentativas de renovação de sessão. Faça login novamente.",
+});

@@ -38,23 +38,19 @@ export const authenticateToken = async (
       process.env.JWT_SECRET!
     ) as { userId: number };
 
-    // Verificar se a sessão ainda é válida
-    const sessao = await prisma.usuarioSessao.findFirst({
+    // Buscar usuário pelo userId do token (não pelo token em si)
+    // Isso evita problemas quando o token é renovado via refresh
+    const usuario = await prisma.usuario.findUnique({
       where: {
-        token,
-        revokedAt: null,
-        expiresAt: { gt: new Date() },
+        id: decoded.userId,
+        ativo: true,
       },
       include: {
-        usuario: {
+        perfil: {
           include: {
-            perfil: {
+            permissoes: {
               include: {
-                permissoes: {
-                  include: {
-                    permissao: true,
-                  },
-                },
+                permissao: true,
               },
             },
           },
@@ -62,13 +58,26 @@ export const authenticateToken = async (
       },
     });
 
-    if (!sessao || !sessao.usuario.ativo) {
-      return res.status(401).json({ error: "Sessão inválida ou expirada" });
+    if (!usuario) {
+      return res.status(401).json({ error: "Usuário não encontrado ou inativo" });
+    }
+
+    // Verificar se existe pelo menos uma sessão ativa para este usuário
+    const sessaoAtiva = await prisma.usuarioSessao.findFirst({
+      where: {
+        usuarioId: decoded.userId,
+        revokedAt: null,
+        expiresAt: { gt: new Date() },
+      },
+    });
+
+    if (!sessaoAtiva) {
+      return res.status(401).json({ error: "Sessão expirada. Faça login novamente." });
     }
 
     // Adicionar dados do usuário à requisição
-    req.userId = sessao.usuario.id;
-    req.userPermissions = sessao.usuario.perfil.permissoes.map((p) => ({
+    req.userId = usuario.id;
+    req.userPermissions = usuario.perfil.permissoes.map((p) => ({
       modulo: p.permissao.modulo,
       acao: p.permissao.acao,
     }));
@@ -158,22 +167,18 @@ export const optionalAuth = async (
           process.env.JWT_SECRET!
         ) as { userId: number };
 
-        const sessao = await prisma.usuarioSessao.findFirst({
+        // Buscar usuário pelo userId do token
+        const usuario = await prisma.usuario.findUnique({
           where: {
-            token,
-            revokedAt: null,
-            expiresAt: { gt: new Date() },
+            id: decoded.userId,
+            ativo: true,
           },
           include: {
-            usuario: {
+            perfil: {
               include: {
-                perfil: {
+                permissoes: {
                   include: {
-                    permissoes: {
-                      include: {
-                        permissao: true,
-                      },
-                    },
+                    permissao: true,
                   },
                 },
               },
@@ -181,9 +186,9 @@ export const optionalAuth = async (
           },
         });
 
-        if (sessao && sessao.usuario.ativo) {
-          req.userId = sessao.usuario.id;
-          req.userPermissions = sessao.usuario.perfil.permissoes.map((p) => ({
+        if (usuario) {
+          req.userId = usuario.id;
+          req.userPermissions = usuario.perfil.permissoes.map((p) => ({
             modulo: p.permissao.modulo,
             acao: p.permissao.acao,
           }));
