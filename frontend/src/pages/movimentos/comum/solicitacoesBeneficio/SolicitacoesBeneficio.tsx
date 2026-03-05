@@ -221,6 +221,8 @@ const SolicitacoesBeneficio: React.FC = () => {
       // Paginação
       enablePagination={true}
       initialPageSize={50}
+      // Scroll horizontal para monitores pequenos
+      tableMinWidth="1000px"
     />
   );
 };

@@ -70,6 +70,12 @@ interface DataTableProps<T> {
    * Classes CSS adicionais para o componente
    */
   className?: string;
+
+  /**
+   * Largura mínima da tabela (ex: "1200px")
+   * Força scroll horizontal quando a tela é menor
+   */
+  minWidth?: string;
 }
 
 /**
@@ -83,6 +89,7 @@ function DataTable<T>({
   emptyText = "Nenhum registro encontrado.",
   onRowClick,
   className = "",
+  minWidth,
 }: DataTableProps<T>) {
   // Função para obter o valor de uma propriedade aninhada
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -121,7 +128,10 @@ function DataTable<T>({
   // Renderização da tabela
   return (
     <div className={`overflow-x-auto ${className}`}>
-      <table className="min-w-full divide-y divide-gray-200">
+      <table
+        className="min-w-full divide-y divide-gray-200"
+        style={minWidth ? { minWidth } : undefined}
+      >
         <thead className="bg-gray-50">
           <tr>
             {columns.map((column, index) => (

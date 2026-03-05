@@ -352,7 +352,7 @@ const TransferenciaPropiedadeForm: React.FC<
                     <option key={propriedade.id} value={propriedade.id}>
                       {propriedade.nome} - {propriedade.tipoPropriedade}
                       {propriedade.areaTotal &&
-                        ` (${propriedade.areaTotal} alq)`}
+                        ` (${propriedade.areaTotal} ha)`}
                     </option>
                   ))}
                 </select>
@@ -371,7 +371,7 @@ const TransferenciaPropiedadeForm: React.FC<
                     </div>
                     <div>
                       <span className="font-medium text-blue-800">Área:</span>{" "}
-                      {propriedadeSelecionada.areaTotal} alqueires
+                      {propriedadeSelecionada.areaTotal} hectares
                     </div>
                     {propriedadeSelecionada.matricula && (
                       <div>

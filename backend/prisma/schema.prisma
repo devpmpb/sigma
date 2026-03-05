@@ -175,7 +175,7 @@ model Propriedade {
   tipoPropriedade         TipoPropriedade            @default(RURAL)
   numero                  String?
   areaTotal               Decimal                    @db.Decimal(10, 2)
-  unidadeArea             String                     @default("alqueires")
+  unidadeArea             String                     @default("hectares")
   itr                     String?
   incra                   String?
   atividadeProdutiva      AtividadeProdutiva?

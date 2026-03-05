@@ -356,7 +356,7 @@ export const arrendamentoController = {
       // Verificar se a área arrendada não excede a área total da propriedade
       if (Number(dados.areaArrendada) > Number(propriedade.areaTotal)) {
         return res.status(400).json({
-          erro: `Área arrendada não pode exceder a área total da propriedade (${propriedade.areaTotal} alqueires)`,
+          erro: `Área arrendada não pode exceder a área total da propriedade (${propriedade.areaTotal} hectares)`,
         });
       }
 
@@ -388,7 +388,7 @@ export const arrendamentoController = {
         Number(propriedade.areaTotal)
       ) {
         return res.status(400).json({
-          erro: `Área disponível insuficiente. Já existe ${areaJaArrendada} alqueires arrendados na propriedade`,
+          erro: `Área disponível insuficiente. Já existe ${areaJaArrendada} hectares arrendados na propriedade`,
         });
       }
 

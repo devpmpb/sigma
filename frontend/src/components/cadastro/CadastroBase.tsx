@@ -131,6 +131,12 @@ interface CadastroBaseProps<T, R> {
    * Tamanho inicial da página
    */
   initialPageSize?: number;
+
+  /**
+   * Largura mínima da tabela (ex: "1200px")
+   * Força scroll horizontal quando a tela é menor
+   */
+  tableMinWidth?: string;
 }
 
 /**
@@ -160,6 +166,7 @@ function CadastroBase<T extends Record<string, any>, R>({
   statusConfig,
   enablePagination = false,
   initialPageSize = 50,
+  tableMinWidth,
 }: CadastroBaseProps<T, R>) {
   const [termoBusca, setTermoBusca] = useState("");
   const [filtroAtivo, setFiltroAtivo] = useState<string | null>(null);
@@ -462,6 +469,7 @@ function CadastroBase<T extends Record<string, any>, R>({
           onRowClick={canEdit ? handleEdit : undefined}
           //emptyMessage="Nenhum registro encontrado"
           loading={loading}
+          minWidth={tableMinWidth}
         />
 
         {/* Paginação */}

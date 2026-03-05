@@ -38,7 +38,7 @@ export interface Propriedade {
 
   // Área total com unidade
   areaTotal: string; // Decimal vem como string do backend
-  unidadeArea: string; // "alqueires" ou "metros_quadrados"
+  unidadeArea: string; // "hectares" ou "metros_quadrados"
 
   // Campos específicos para propriedades rurais
   itr?: string;
@@ -201,7 +201,7 @@ class PropriedadeService extends BaseApiService<Propriedade, PropriedadeDTO> {
    */
   getUnidadeArea = (tipoPropriedade: TipoPropriedade): string => {
     return tipoPropriedade === TipoPropriedade.RURAL
-      ? "alqueires"
+      ? "hectares"
       : "metros_quadrados";
   };
 
@@ -209,7 +209,7 @@ class PropriedadeService extends BaseApiService<Propriedade, PropriedadeDTO> {
    * NOVA: Obtém o sufixo da unidade para exibição
    */
   getSufixoUnidade = (tipoPropriedade: TipoPropriedade): string => {
-    return tipoPropriedade === TipoPropriedade.RURAL ? "alq" : "m²";
+    return tipoPropriedade === TipoPropriedade.RURAL ? "ha" : "m²";
   };
 
   /**

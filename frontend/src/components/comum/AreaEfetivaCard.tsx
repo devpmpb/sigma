@@ -195,7 +195,7 @@ const AreaEfetivaCard: React.FC<AreaEfetivaCardProps> = ({
               />
             ) : (
               <span className="font-medium">
-                {Number(areaEfetiva?.areaPropria || 0).toFixed(2)} alq
+                {Number(areaEfetiva?.areaPropria || 0).toFixed(2)} ha
               </span>
             )}
           </div>
@@ -219,7 +219,7 @@ const AreaEfetivaCard: React.FC<AreaEfetivaCardProps> = ({
             ) : (
               <span className="font-medium text-green-600">
                 +{Number(areaEfetiva?.areaArrendadaRecebida || 0).toFixed(2)}{" "}
-                alq
+                ha
               </span>
             )}
           </div>
@@ -242,7 +242,7 @@ const AreaEfetivaCard: React.FC<AreaEfetivaCardProps> = ({
               />
             ) : (
               <span className="font-medium text-red-600">
-                -{Number(areaEfetiva?.areaArrendadaCedida || 0).toFixed(2)} alq
+                -{Number(areaEfetiva?.areaArrendadaCedida || 0).toFixed(2)} ha
               </span>
             )}
           </div>
@@ -257,7 +257,7 @@ const AreaEfetivaCard: React.FC<AreaEfetivaCardProps> = ({
               {editMode
                 ? areaCalculada.toFixed(2)
                 : Number(areaEfetiva?.areaEfetiva || 0).toFixed(2)}{" "}
-              alq
+              ha
             </span>
           </div>
 

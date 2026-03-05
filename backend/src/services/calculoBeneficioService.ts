@@ -230,15 +230,15 @@ export async function calcularBeneficio(
           enquadramento: enquadramento,
           calculoDetalhes: {
             areaEfetiva: areaEmAlqueires,
-            unidadeArea: "alqueires",
+            unidadeArea: "hectares",
             regraAtendida: regra.tipoRegra,
-            condicao: `${areaMinima || 0} ≤ área ≤ ${areaMaxima || "∞"} alqueires`,
+            condicao: `${areaMinima || 0} ≤ área ≤ ${areaMaxima || "∞"} hectares`,
             valorBase,
             quantidadeSolicitada,
             percentualAplicado,
             limiteAplicado: limite,
             observacoes: [
-              `Área efetiva: ${areaEmAlqueires.toFixed(2)} alqueires`,
+              `Área efetiva: ${areaEmAlqueires.toFixed(2)} hectares`,
               `Enquadramento: ${enquadramento}`,
               `Valor base: R$ ${valorBase.toFixed(2)} por unidade`,
               quantidadeSolicitada ? `Quantidade: ${quantidadeSolicitada}` : "",

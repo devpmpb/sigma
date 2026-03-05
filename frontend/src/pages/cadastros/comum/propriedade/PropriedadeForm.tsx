@@ -390,10 +390,14 @@ const PropriedadeForm: React.FC<PropriedadeFormProps> = ({ id, onSave }) => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Número/Identificação */}
+            {/* Número/Identificação - Label dinâmico baseado no tipo */}
             <FormField
               name="numero"
-              label="Número/Identificação (Lote/Chácara)"
+              label={
+                propriedadeService.isRural(values.tipoPropriedade)
+                  ? "Lote Rural (conforme matrícula)"
+                  : "Número/Identificação"
+              }
               error={errors.numero}
               touched={touched.numero}
             >
@@ -404,7 +408,11 @@ const PropriedadeForm: React.FC<PropriedadeFormProps> = ({ id, onSave }) => {
                 value={values.numero || ""}
                 onChange={handleChange}
                 onBlur={() => setFieldTouched("numero")}
-                placeholder="Ex: 123, Lote 5, Chácara 10"
+                placeholder={
+                  propriedadeService.isRural(values.tipoPropriedade)
+                    ? "Ex: 45-B, Lote 123"
+                    : "Ex: 123, Lote 5, Chácara 10"
+                }
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </FormField>

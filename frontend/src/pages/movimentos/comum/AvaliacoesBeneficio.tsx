@@ -142,29 +142,29 @@ const AvaliacoesBeneficio: React.FC = () => {
             
             <div className="space-y-3">
               {[
-                { 
-                  id: "#2024001", 
-                  produtor: "João Silva", 
-                  programa: "Grão de Aveia", 
-                  area: "4.5 alq", 
+                {
+                  id: "#2024001",
+                  produtor: "João Silva",
+                  programa: "Grão de Aveia",
+                  area: "4.5 ha",
                   valorSolicitado: "R$ 360,00",
                   prioridade: "Alta",
                   dias: "3 dias"
                 },
-                { 
-                  id: "#2024002", 
-                  produtor: "Maria Santos", 
-                  programa: "Adubo Orgânico", 
-                  area: "8.2 alq", 
+                {
+                  id: "#2024002",
+                  produtor: "Maria Santos",
+                  programa: "Adubo Orgânico",
+                  area: "8.2 ha",
                   valorSolicitado: "R$ 500,00",
                   prioridade: "Média",
                   dias: "5 dias"
                 },
-                { 
-                  id: "#2024003", 
-                  produtor: "Pedro Oliveira", 
-                  programa: "Grão de Aveia", 
-                  area: "2.8 alq", 
+                {
+                  id: "#2024003",
+                  produtor: "Pedro Oliveira",
+                  programa: "Grão de Aveia",
+                  area: "2.8 ha",
                   valorSolicitado: "R$ 224,00",
                   prioridade: "Baixa",
                   dias: "1 dia"

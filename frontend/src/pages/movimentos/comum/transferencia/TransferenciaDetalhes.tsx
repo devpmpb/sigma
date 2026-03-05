@@ -108,7 +108,7 @@ const TransferenciaDetalhes: React.FC<TransferenciaDetalhesProps> = ({
               <p className="text-sm text-blue-700 font-medium">Área:</p>
               <p className="text-gray-900">
                 {transferencia.propriedade.areaTotal}{" "}
-                {transferencia.propriedade.unidadeArea || "alqueires"}
+                {transferencia.propriedade.unidadeArea || "hectares"}
               </p>
             </div>
           )}

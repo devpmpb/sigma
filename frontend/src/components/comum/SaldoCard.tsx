@@ -279,7 +279,7 @@ const SaldoCard: React.FC<SaldoCardProps> = ({
                     <span className="text-gray-600">Área arrendada:</span>
                     <span className="font-medium">
                       {prop.areaArrendada.toFixed(2)} de{" "}
-                      {prop.areaTotalPropriedade.toFixed(2)} alq (
+                      {prop.areaTotalPropriedade.toFixed(2)} ha (
                       {prop.percentualPropriedade.toFixed(1)}%)
                     </span>
                   </div>

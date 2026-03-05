@@ -114,7 +114,7 @@ export const propriedadeController = {
         areaTotal: Number(proprietyData.areaTotal),
         unidadeArea:
           proprietyData.tipoPropriedade === TipoPropriedade.RURAL
-            ? "alqueires"
+            ? "hectares"
             : "metros_quadrados",
         itr:
           proprietyData.tipoPropriedade === TipoPropriedade.RURAL
@@ -228,7 +228,7 @@ export const propriedadeController = {
         areaTotal: Number(proprietyData.areaTotal),
         unidadeArea:
           proprietyData.tipoPropriedade === TipoPropriedade.RURAL
-            ? "alqueires"
+            ? "hectares"
             : "metros_quadrados",
         itr:
           proprietyData.tipoPropriedade === TipoPropriedade.RURAL

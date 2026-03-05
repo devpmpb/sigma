@@ -63,7 +63,8 @@
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.3.3",
-    "vite": "^7.2.7"
+    "vite": "^7.2.7",
+    "xlsx": "^0.18.5"
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts "

@@ -239,9 +239,9 @@ function validateProducerAgainstRule(regra: any, produtorData: any) {
           }
         }
         
-        motivo = atende 
-          ? `Área efetiva de ${areaEfetiva} alqueires atende ao critério`
-          : `Área efetiva de ${areaEfetiva} alqueires não atende ao critério`;
+        motivo = atende
+          ? `Área efetiva de ${areaEfetiva} hectares atende ao critério`
+          : `Área efetiva de ${areaEfetiva} hectares não atende ao critério`;
         break;
         
       case TipoRegra.RENDA_FAMILIAR:
@@ -293,8 +293,8 @@ function getRuleTemplate(tipo: TipoRegra) {
       parametro: {
         condicao: "menor_que",
         valor: 6,
-        unidade: "alqueires",
-        descricao: "Área efetiva em alqueires"
+        unidade: "hectares",
+        descricao: "Área efetiva em hectares"
       },
       limiteBeneficio: {
         tipo: "quantidade",

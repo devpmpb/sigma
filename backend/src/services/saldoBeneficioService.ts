@@ -251,7 +251,7 @@ async function calcularLimitePorArea(
     area = Number(areaEfetivaRecord.areaEfetiva);
   }
 
-  detalhes.push(`Área efetiva: ${area.toFixed(2)} alqueires`);
+  detalhes.push(`Área efetiva: ${area.toFixed(2)} hectares`);
 
   // Se tem multiplicador por área
   if (limite?.multiplicador_area || limite?.quantidade_maxima_por_alqueire) {
