@@ -27,7 +27,8 @@
       "Read(//c/Users/marcelo/Downloads/**)",
       "Bash(python3 -c \":*)",
       "Bash(node -e \":*)",
-      "Bash(ls /c/Fontes/sigma/backend/scripts/criar-programa*.ts)"
+      "Bash(ls /c/Fontes/sigma/backend/scripts/criar-programa*.ts)",
+      "Bash(npx tsx -e \":*)"
     ],
     "deny": [],
     "ask": []
