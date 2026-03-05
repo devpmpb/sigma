@@ -23,7 +23,11 @@
       "Bash(npx tsx:*)",
       "Bash(for script in migrar-aveia-2023.ts migrar-cama-aviario-2023.ts migrar-semen-bovino-2023.ts migrar-semen-suino-2023.ts migrar-ultrasson-2023.ts migrar-adubacao-pastagem-2023.ts migrar-apicultura-2023.ts migrar-pesca-profissional-2023.ts migrar-piscicultura-2023.ts)",
       "Bash(do echo \"===== $script =====\")",
-      "Bash(done)"
+      "Bash(done)",
+      "Read(//c/Users/marcelo/Downloads/**)",
+      "Bash(python3 -c \":*)",
+      "Bash(node -e \":*)",
+      "Bash(ls /c/Fontes/sigma/backend/scripts/criar-programa*.ts)"
     ],
     "deny": [],
     "ask": []
