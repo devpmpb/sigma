@@ -33,13 +33,13 @@ export async function calcularBeneficio(
   dadosAdicionais?: any,
   modalidade?: string // Nova opção para filtrar por modalidade
 ): Promise<ResultadoCalculo> {
-  console.log("🧮 CALCULO - Iniciando com:", {
+  /*console.log("🧮 CALCULO - Iniciando com:", {
     pessoaId,
     programaId,
     quantidadeSolicitada,
     dadosAdicionais,
     modalidade,
-  });
+  });*/
 
   const avisos: string[] = [];
   const anoAtual = new Date().getFullYear();
