@@ -199,6 +199,15 @@ const SolicitacoesBeneficio: React.FC = () => {
     </>
   );
 
+  const STATUS_SOMENTE_LEITURA = new Set(["aprovada", "aprovado", "rejeitada", "rejeitado", "cancelada", "cancelado", "concluido", "concluida"]);
+
+  const getEditUrl = (item: SolicitacaoBeneficio) => {
+    if (STATUS_SOMENTE_LEITURA.has(item.status)) {
+      return `/movimentos/comum/solicitacoesBeneficios/view/${item.id}`;
+    }
+    return `/movimentos/comum/solicitacoesBeneficios/${item.id}`;
+  };
+
   return (
     <CadastroBase<SolicitacaoBeneficio, SolicitacaoBeneficioDTO>
       title="Solicitações de Benefício"
@@ -208,6 +217,7 @@ const SolicitacoesBeneficio: React.FC = () => {
       baseUrl="/movimentos/comum/solicitacoesBeneficios"
       module="comum"
       FormComponent={SolicitacaoBeneficioForm}
+      getEditUrl={getEditUrl}
       searchPlaceholder="Buscar por pessoa, programa ou observações..."
       actionButtons={actionButtons}
       // Configurações específicas de movimento

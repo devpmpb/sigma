@@ -137,6 +137,11 @@ interface CadastroBaseProps<T, R> {
    * Força scroll horizontal quando a tela é menor
    */
   tableMinWidth?: string;
+
+  /**
+   * Customiza a URL de edição por item (ex: redirecionar encerrados para /view/:id)
+   */
+  getEditUrl?: (item: T) => string;
 }
 
 /**
@@ -167,6 +172,7 @@ function CadastroBase<T extends Record<string, any>, R>({
   enablePagination = false,
   initialPageSize = 50,
   tableMinWidth,
+  getEditUrl,
 }: CadastroBaseProps<T, R>) {
   const [termoBusca, setTermoBusca] = useState("");
   const [filtroAtivo, setFiltroAtivo] = useState<string | null>(null);
@@ -234,6 +240,10 @@ function CadastroBase<T extends Record<string, any>, R>({
 
   // Function to edit a record
   const handleEdit = (item: T) => {
+    if (getEditUrl) {
+      navigate({ to: getEditUrl(item) });
+      return;
+    }
     const id = typeof rowKey === "function" ? rowKey(item, 0) : item[rowKey];
     navigate({ to: `${baseUrl}/${id}` });
   };
