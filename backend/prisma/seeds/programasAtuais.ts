@@ -1126,6 +1126,102 @@ const PROGRAMAS: ProgramaCompleto[] = [
       },
     ],
   },
+
+  // ============================================================================
+  // 20. DESCOMPACTAÇÃO DE SOLOS (PÉ DE PATO) - Lei abril/2003
+  // Revoga Lei 446/1999
+  // ============================================================================
+  {
+    nome: "Descompactação de Solos (Pé de Pato)",
+    descricao:
+      "Programa de Descompactação de Solos - serviços de trator traçado com subsolador para romper camada de compactação do solo, aumentando infiltração e evitando erosões",
+    leiNumero: "2003 (revoga 446/1999)",
+    tipoPrograma: TipoPrograma.SERVICO,
+    secretaria: TipoPerfil.AGRICULTURA,
+    periodicidade: Periodicidade.ANUAL,
+    unidadeLimite: "horas",
+    limiteMaximoFamilia: 4,
+    regras: [
+      {
+        tipoRegra: "hora_maquina",
+        parametro: {
+          modalidade: "TRATOR_SUBSOLADOR",
+          descricao: "Até 4 horas de trator traçado com subsolador por família/ano",
+          equipamento: "Trator traçado com subsolador",
+          requisitos: [
+            "Conservação de solo adequada",
+            "Tríplice lavagem embalagens agrotóxicos + local apropriado",
+            "NF venda produtos agropecuários (origem Pato Bragado)",
+            "Cadastro atualizado na Secretaria de Agricultura",
+            "Adimplente com tributos municipais",
+            "Vacinação rebanho bovino contra febre aftosa em dia",
+          ],
+          penalidade: "Perda do direito a incentivos por 2 anos + possível ressarcimento",
+        },
+        valorBeneficio: 0,
+        limiteBeneficio: {
+          quantidade_maxima: 4,
+          unidade: "horas",
+          periodicidade: "ANUAL",
+        },
+      },
+    ],
+  },
+
+  // ============================================================================
+  // 21. ATENDIMENTO VETERINÁRIO - Lei 1414/2014 (altera Lei 1182/2011)
+  // Acrescenta Art. 2º-A à Lei 1182
+  // ============================================================================
+  {
+    nome: "Atendimento Veterinário",
+    descricao:
+      "Assistência veterinária aos produtores do Programa de Fomento à Bovinocultura de Leite - município subsidia 70% do valor do procedimento",
+    leiNumero: "1414/2014 (altera 1182/2011)",
+    tipoPrograma: TipoPrograma.SUBSIDIO,
+    secretaria: TipoPerfil.AGRICULTURA,
+    periodicidade: Periodicidade.ANUAL,
+    unidadeLimite: "procedimentos",
+    regras: [
+      // Atendimento por servidores municipais
+      {
+        tipoRegra: "atendimento_veterinario",
+        parametro: {
+          modalidade: "SERVIDOR_MUNICIPAL",
+          descricao: "Assistência veterinária por servidores municipais",
+          custo_produtor: 0,
+          requisitos: [
+            "Participante do Programa de Fomento à Bovinocultura de Leite",
+            "Disponibilidade de servidores",
+          ],
+        },
+        valorBeneficio: 0,
+        limiteBeneficio: {
+          unidade: "procedimentos",
+          percentual: 100,
+        },
+      },
+      // Atendimento por empresa contratada (70% subsídio)
+      {
+        tipoRegra: "atendimento_veterinario",
+        parametro: {
+          modalidade: "EMPRESA_CONTRATADA",
+          descricao: "Assistência veterinária por empresa contratada - 70% subsidiado",
+          percentual_municipio: 70,
+          percentual_produtor: 30,
+          requisitos: [
+            "Participante do Programa de Fomento à Bovinocultura de Leite",
+            "Disponibilidade orçamentária e financeira",
+          ],
+        },
+        valorBeneficio: 0,
+        limiteBeneficio: {
+          unidade: "procedimentos",
+          percentual: 70,
+          custo_produtor_percentual: 30,
+        },
+      },
+    ],
+  },
 ];
 
 // ============================================================================

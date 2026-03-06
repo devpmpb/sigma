@@ -1,31 +1,31 @@
 # Alterações - 06/03/2026
 
-## Tela de Visualização de Solicitações Encerradas
+## Migração de Dados 2023 - Pé de Pato, Atendimento Veterinário, Açudes
 
-Solicitações com status encerrado (aprovado, cancelado, concluido, rejeitado) agora abrem
-uma tela de visualização somente leitura, em vez do formulário de edição.
+### Programas criados no banco
 
-### Arquivos criados
+- **ID 82** - Descompactação de Solos (Pé de Pato) - Lei 2003
+- **ID 83** - Atendimento Veterinário - Lei 1414/2014
 
-- `frontend/src/pages/movimentos/comum/solicitacoesBeneficio/SolicitacaoBeneficioView.tsx`
-  - Tela de visualização somente leitura
-  - Banner colorido de status com ícone (verde = aprovado/concluido, vermelho = rejeitado, cinza = cancelado)
-  - Valor do benefício em destaque no banner
-  - Cards separados: Beneficiário, Programa, Dados da Solicitação, Detalhes do Cálculo
-  - Botão voltar para a lista
-  - Datas de criação/atualização no rodapé
+### Scripts criados
+
+- `backend/scripts/criar-programas-faltantes.ts` - Cria programas 82 e 83 com regras de negócio
+- `backend/scripts/migracao-2023/migrar-pe-de-pato-2023.ts` - Migração Pé de Pato (112 produtores, 391h)
+- `backend/scripts/migracao-2023/migrar-atendimento-veterinario-2023.ts` - Migração Veterinário (560 registros, 27 abas)
+- `backend/scripts/migracao-2023/migrar-acudes-2023.ts` - Migração Açudes (8 registros)
+- `backend/scripts/migracao-2023/corrigir-pe-de-pato-nao-encontrados.ts` - Correção de nomes com grafia diferente (30 produtores)
+- `backend/scripts/migracao-2023/corrigir-atendimento-vet-nao-encontrados.ts` - Correção de nomes veterinário (~48 registros)
+- `backend/scripts/migracao-2023/PENDENTES-CADASTRO.md` - Lista de pessoas não encontradas no banco
 
 ### Arquivos modificados
 
-- `frontend/src/config/menus/comum/routes.tsx`
-  - Adicionada rota `/movimentos/comum/solicitacoesBeneficios/view/:id`
-  - Rota de view registrada antes de `/:id` para garantir precedência no roteador
+- `backend/prisma/seeds/programasAtuais.ts`
+  - Adicionados programas #20 (Pé de Pato) e #21 (Atendimento Veterinário) no array PROGRAMAS
 
-- `frontend/src/components/cadastro/CadastroBase.tsx`
-  - Adicionada prop opcional `getEditUrl?: (item: T) => string`
-  - Quando fornecida, sobrescreve a URL de navegação padrão ao clicar em uma linha
+### Resultados da migração
 
-- `frontend/src/pages/movimentos/comum/solicitacoesBeneficio/SolicitacoesBeneficio.tsx`
-  - Adicionada função `getEditUrl` que redireciona para `/view/:id` quando o status
-    é aprovado, aprovada, cancelado, cancelada, concluido, concluida, rejeitado ou rejeitada
-  - Status pendente e em_analise continuam abrindo o formulário de edição normalmente
+| Planilha | Total | Migrados | Pendentes |
+|----------|-------|----------|-----------|
+| Pé de Pato 2023 | 112 produtores | 110 | 5 pessoas não cadastradas |
+| Atendimento Veterinário 2023 | 560 registros | ~528 | 16 pessoas não cadastradas |
+| Açudes 2023 | 8 registros | 8 | - |
