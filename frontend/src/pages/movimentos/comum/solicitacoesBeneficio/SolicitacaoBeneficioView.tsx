@@ -101,7 +101,7 @@ const SolicitacaoBeneficioView: React.FC = () => {
       <div className="max-w-3xl mx-auto mt-10 p-6 bg-red-50 rounded-lg border border-red-200 text-red-700">
         <p>{erro ?? "Solicitação não encontrada."}</p>
         <button
-          onClick={() => navigate({ to: "/movimentos/comum/solicitacoesBeneficios" })}
+          onClick={() => navigate({ to: "/movimentos/comum/solicitacoesBeneficios" as any })}
           className="mt-4 text-sm underline"
         >
           Voltar para a lista
@@ -119,7 +119,7 @@ const SolicitacaoBeneficioView: React.FC = () => {
       {/* Cabeçalho */}
       <div className="flex items-center gap-3">
         <button
-          onClick={() => navigate({ to: "/movimentos/comum/solicitacoesBeneficios" })}
+          onClick={() => navigate({ to: "/movimentos/comum/solicitacoesBeneficios" as any })}
           className="p-2 rounded-full hover:bg-gray-100 transition-colors"
           title="Voltar"
         >
