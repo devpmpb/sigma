@@ -3,8 +3,7 @@
  * Visualização para prefeito/secretário dos benefícios concedidos
  */
 
-import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect, useCallback } from "react";
 import {
   BarChart,
   Bar,
@@ -128,23 +127,35 @@ function StatCard({
 export default function DashboardExecutivo() {
   const [ano, setAno] = useState<number | "todos">("todos");
   const [offline, setOffline] = useState(!isOnline());
+  const [dados, setDados] = useState<DashboardResumoCompleto | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState<string | null>(null);
+  const [anosDisponiveis, setAnosDisponiveis] = useState<number[]>([]);
+
+  // Função para carregar dados
+  const carregarDados = useCallback(async () => {
+    try {
+      setLoading(true);
+      setErro(null);
+      const resultado = await dashboardService.getResumoCompleto(ano);
+      setDados(resultado);
+    } catch (error) {
+      console.error("Erro ao carregar dashboard:", error);
+      setErro("Erro ao carregar dados do dashboard");
+    } finally {
+      setLoading(false);
+    }
+  }, [ano]);
 
   // Carregar anos disponíveis
-  const { data: anosDisponiveis = [] } = useQuery({
-    queryKey: ["dashboard-anos"],
-    queryFn: () => dashboardService.getAnos(),
-    staleTime: 5 * 60 * 1000,
-  });
+  useEffect(() => {
+    dashboardService.getAnos().then(setAnosDisponiveis).catch(console.error);
+  }, []);
 
-  // Carregar dados do dashboard
-  const { data: dados, isLoading: loading, error: erroQuery, refetch } = useQuery({
-    queryKey: ["dashboard-resumo", ano],
-    queryFn: () => dashboardService.getResumoCompleto(ano),
-    staleTime: 2 * 60 * 1000,
-  });
-
-  const erro = erroQuery ? "Erro ao carregar dados do dashboard" : null;
-  const carregarDados = () => refetch();
+  // Carregar dados quando ano mudar
+  useEffect(() => {
+    carregarDados();
+  }, [carregarDados]);
 
   // Monitorar status de conexão
   useEffect(() => {
