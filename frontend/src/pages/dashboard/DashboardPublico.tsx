@@ -122,7 +122,7 @@ export default function DashboardPublico() {
   const [erro, setErro] = useState<string | null>(null);
 
   // Filtros
-  const [ano, setAno] = useState<number | "todos">(new Date().getFullYear());
+  const [ano, setAno] = useState<number | "todos">("todos");
   const [anos, setAnos] = useState<number[]>([]);
   const [programas, setProgramas] = useState<ProgramaFiltro[]>([]);
   const [programaId, setProgramaId] = useState<number | null>(null);

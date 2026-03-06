@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   BarChart,
   Bar,
@@ -125,42 +126,25 @@ function StatCard({
 }
 
 export default function DashboardExecutivo() {
-  const [dados, setDados] = useState<DashboardResumoCompleto | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [erro, setErro] = useState<string | null>(null);
-  const [ano, setAno] = useState<number | "todos">(new Date().getFullYear());
-  const [anosDisponiveis, setAnosDisponiveis] = useState<number[]>([]);
+  const [ano, setAno] = useState<number | "todos">("todos");
   const [offline, setOffline] = useState(!isOnline());
 
   // Carregar anos disponíveis
-  useEffect(() => {
-    const carregarAnos = async () => {
-      const anos = await dashboardService.getAnos();
-      setAnosDisponiveis(anos);
-    };
-    carregarAnos();
-  }, []);
+  const { data: anosDisponiveis = [] } = useQuery({
+    queryKey: ["dashboard-anos"],
+    queryFn: () => dashboardService.getAnos(),
+    staleTime: 5 * 60 * 1000,
+  });
 
-  // Carregar dados
-  const carregarDados = async () => {
-    setLoading(true);
-    setErro(null);
-    setOffline(!isOnline());
+  // Carregar dados do dashboard
+  const { data: dados, isLoading: loading, error: erroQuery, refetch } = useQuery({
+    queryKey: ["dashboard-resumo", ano],
+    queryFn: () => dashboardService.getResumoCompleto(ano),
+    staleTime: 2 * 60 * 1000,
+  });
 
-    try {
-      const resumo = await dashboardService.getResumoCompleto(ano);
-      setDados(resumo);
-    } catch (error) {
-      console.error("Erro ao carregar dashboard:", error);
-      setErro("Erro ao carregar dados do dashboard");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    carregarDados();
-  }, [ano]);
+  const erro = erroQuery ? "Erro ao carregar dados do dashboard" : null;
+  const carregarDados = () => refetch();
 
   // Monitorar status de conexão
   useEffect(() => {
@@ -255,7 +239,7 @@ export default function DashboardExecutivo() {
 
           {/* Botão atualizar */}
           <button
-            onClick={carregarDados}
+            onClick={() => carregarDados()}
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
           >
             <RefreshCw className="h-4 w-4" />
