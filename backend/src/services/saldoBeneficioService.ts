@@ -348,7 +348,7 @@ export async function calcularSaldoDisponivel(
         gte: periodo.inicio,
         lte: periodo.fim,
       },
-      status: { in: ["aprovada", "paga", "pendente", "em_analise"] },
+      status: { in: ["aprovada", "paga", "aprovado", "concluido", "pendente", "em_analise"] },
     },
     orderBy: { datasolicitacao: "desc" },
   });

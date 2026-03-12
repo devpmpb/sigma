@@ -1,5 +1,5 @@
 import React from "react";
-import { formatarData } from "../../../../utils/formatters";
+import { formatarData, formatarMoeda } from "../../../../utils/formatters";
 import { Column } from "../../../../components/comum/DataTable";
 import solicitacaoBeneficioService, {
   SolicitacaoBeneficio,
@@ -64,20 +64,34 @@ const SolicitacoesBeneficio: React.FC = () => {
       ),
     },
     {
+      title: "Valor",
+      key: "valorCalculado",
+      render: (solicitacao) => {
+        if (solicitacao.valorCalculado != null && solicitacao.valorCalculado > 0) {
+          return (
+            <span className="font-medium text-green-700">
+              {formatarMoeda(solicitacao.valorCalculado)}
+            </span>
+          );
+        }
+        return <span className="text-gray-400">—</span>;
+      },
+    },
+    {
       title: "Status",
       key: "status",
       render: (solicitacao) => {
-        const cor = solicitacaoBeneficioService.getStatusColor(solicitacao.status);
-        const corClasses = {
+        const corMap: Record<string, string> = {
           green: "bg-green-100 text-green-800",
           red: "bg-red-100 text-red-800",
           yellow: "bg-yellow-100 text-yellow-800",
           blue: "bg-blue-100 text-blue-800",
           gray: "bg-gray-100 text-gray-800",
         };
+        const cor = solicitacaoBeneficioService.getStatusColor(solicitacao.status);
 
         return (
-          <span className={`px-2 py-1 rounded-full text-xs font-medium ${corClasses[cor]}`}>
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${corMap[cor]}`}>
             {solicitacaoBeneficioService.formatarStatus(solicitacao.status)}
           </span>
         );
@@ -98,9 +112,9 @@ const SolicitacoesBeneficio: React.FC = () => {
         items.filter(s => s.status === StatusSolicitacao.EM_ANALISE)
     },
     {
-      label: "Aprovadas",
-      filter: (items: SolicitacaoBeneficio[]) => 
-        items.filter(s => s.status === StatusSolicitacao.APROVADA)
+      label: "Aprovadas/Concluídas",
+      filter: (items: SolicitacaoBeneficio[]) =>
+        items.filter(s => ["aprovada", "aprovado", "concluido", "paga"].includes(s.status))
     },
     {
       label: "Agricultura",
@@ -118,7 +132,7 @@ const SolicitacoesBeneficio: React.FC = () => {
   const calculateMetrics = (items: SolicitacaoBeneficio[]) => {
     const total = items.length;
     const pendentes = items.filter(s => s.status === StatusSolicitacao.PENDENTE).length;
-    const aprovadas = items.filter(s => s.status === StatusSolicitacao.APROVADA).length;
+    const aprovadas = items.filter(s => ["aprovada", "aprovado", "concluido", "paga"].includes(s.status)).length;
     const agricultura = items.filter(s => s.programa.secretaria === TipoPerfil.AGRICULTURA).length;
     const obras = items.filter(s => s.programa.secretaria === TipoPerfil.OBRAS).length;
 

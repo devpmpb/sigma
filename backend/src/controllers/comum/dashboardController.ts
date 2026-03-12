@@ -8,6 +8,9 @@ import { Request, Response } from "express";
 import prisma from "../../utils/prisma";
 import { Prisma } from "@prisma/client";
 
+// Status considerados como "concluídos/aprovados" para estatísticas de valores
+const STATUS_CONTABILIZADOS = ["aprovada", "paga", "aprovado", "concluido"];
+
 // Helper para validar e parsear o ano
 function parseAnoFiltro(ano: unknown): number | null {
   if (!ano || ano === "todos" || ano === "null" || ano === "undefined") {
@@ -49,7 +52,7 @@ export const dashboardController = {
         where: {
           ...filtroData,
           status: {
-            in: ["aprovada", "paga"],
+            in: STATUS_CONTABILIZADOS,
           },
         },
         select: {
@@ -81,7 +84,7 @@ export const dashboardController = {
             where: {
               ...filtroDataAnterior,
               status: {
-                in: ["aprovada", "paga"],
+                in: STATUS_CONTABILIZADOS,
               },
             },
             select: {
@@ -192,7 +195,7 @@ export const dashboardController = {
         if (s.status === "paga") {
           porPrograma[s.programaId].totalPago += s._count.id;
         }
-        if (s.status === "aprovada" || s.status === "paga") {
+        if (STATUS_CONTABILIZADOS.includes(s.status)) {
           porPrograma[s.programaId].valorTotal += Number(
             s._sum.valorCalculado || 0
           );
@@ -228,7 +231,7 @@ export const dashboardController = {
         where: {
           ...filtroData,
           status: {
-            in: ["aprovada", "paga"],
+            in: STATUS_CONTABILIZADOS,
           },
         },
         select: {
@@ -315,7 +318,7 @@ export const dashboardController = {
         where: {
           ...filtroData,
           status: {
-            in: ["aprovada", "paga"],
+            in: STATUS_CONTABILIZADOS,
           },
         },
         _count: {
@@ -394,11 +397,8 @@ export const dashboardController = {
       });
 
       // Filtrar aprovadas/pagas para estatísticas
-      const aprovadas = solicitacoes.filter(
-        (s) =>
-          s.status === "aprovada" ||
-          s.status === "paga" ||
-          s.status === "aprovado"
+      const aprovadas = solicitacoes.filter((s) =>
+        STATUS_CONTABILIZADOS.includes(s.status)
       );
 
       // Estatísticas gerais

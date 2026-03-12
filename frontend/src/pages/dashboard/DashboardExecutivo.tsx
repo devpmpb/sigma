@@ -273,7 +273,7 @@ export default function DashboardExecutivo() {
           valor={dados?.estatisticas.totalSolicitacoes || 0}
           icone={<FileText className="h-6 w-6 text-white" />}
           corIcone="bg-blue-600"
-          subtitulo="aprovadas + pagas"
+          subtitulo="aprovadas + concluídas"
         />
         <StatCard
           titulo="Produtores Atendidos"
@@ -479,6 +479,7 @@ export default function DashboardExecutivo() {
                 aprovada: "bg-green-100 text-green-800",
                 rejeitada: "bg-red-100 text-red-800",
                 paga: "bg-purple-100 text-purple-800",
+                concluido: "bg-teal-100 text-teal-800",
                 cancelada: "bg-gray-100 text-gray-800",
               };
 
@@ -488,6 +489,7 @@ export default function DashboardExecutivo() {
                 aprovada: "Aprovadas",
                 rejeitada: "Rejeitadas",
                 paga: "Pagas",
+                concluido: "Concluídas",
                 cancelada: "Canceladas",
               };
 

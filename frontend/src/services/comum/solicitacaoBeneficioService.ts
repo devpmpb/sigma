@@ -18,6 +18,8 @@ export interface SolicitacaoBeneficio {
   datasolicitacao: string;
   status: StatusSolicitacao;
   observacoes?: string;
+  modalidade?: string;
+  enquadramento?: string;
   createdAt: string;
   updatedAt: string;
 
@@ -25,16 +27,7 @@ export interface SolicitacaoBeneficio {
   regraAplicadaId?: number;
   valorCalculado?: number;
   quantidadeSolicitada?: number;
-  calculoDetalhes?: {
-    areaEfetiva?: number;
-    regraAtendida?: string;
-    condicao?: string;
-    valorBase?: number;
-    quantidadeSolicitada?: number;
-    percentualAplicado?: number;
-    limiteAplicado?: any;
-    observacoes?: string[];
-  };
+  calculoDetalhes?: Record<string, any>;
 
   // Relacionamentos
   pessoa: {
@@ -257,24 +250,34 @@ class SolicitacaoBeneficioService extends BaseApiService<
       [StatusSolicitacao.APROVADA]: "Aprovada",
       [StatusSolicitacao.REJEITADA]: "Rejeitada",
       [StatusSolicitacao.CANCELADA]: "Cancelada",
+      aprovado: "Aprovado",
+      concluido: "Concluído",
+      concluida: "Concluída",
+      paga: "Paga",
+      cancelado: "Cancelado",
     };
 
-    return statusMap[status as StatusSolicitacao] || status;
+    return statusMap[status as keyof typeof statusMap] || status;
   }
 
   /**
    * Retorna cor do status para badges
    */
   getStatusColor(status: string): "green" | "red" | "yellow" | "blue" | "gray" {
-    const colorMap = {
-      [StatusSolicitacao.PENDENTE]: "yellow" as const,
-      [StatusSolicitacao.EM_ANALISE]: "blue" as const,
-      [StatusSolicitacao.APROVADA]: "green" as const,
-      [StatusSolicitacao.REJEITADA]: "red" as const,
-      [StatusSolicitacao.CANCELADA]: "gray" as const,
+    const colorMap: Record<string, "green" | "red" | "yellow" | "blue" | "gray"> = {
+      [StatusSolicitacao.PENDENTE]: "yellow",
+      [StatusSolicitacao.EM_ANALISE]: "blue",
+      [StatusSolicitacao.APROVADA]: "green",
+      [StatusSolicitacao.REJEITADA]: "red",
+      [StatusSolicitacao.CANCELADA]: "gray",
+      aprovado: "green",
+      concluido: "green",
+      concluida: "green",
+      paga: "green",
+      cancelado: "gray",
     };
 
-    return colorMap[status as StatusSolicitacao] || "gray";
+    return colorMap[status] || "gray";
   }
 
   // ==================== NOVOS MÉTODOS ====================

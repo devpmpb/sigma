@@ -652,7 +652,7 @@ export async function verificarLimitesPeriodo(
     where: {
       pessoaId,
       programaId,
-      status: { in: ["aprovada", "paga"] },
+      status: { in: ["aprovada", "paga", "aprovado", "concluido"] },
       datasolicitacao: { gte: dataInicio },
     },
   });

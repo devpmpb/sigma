@@ -32,7 +32,10 @@
       "Bash(npx tsc --noEmit)",
       "Bash(echo \"EXIT: $?\")",
       "Bash(find /c/Fontes/sigma/backend/scripts -name \"*.js\" -delete)",
-      "Bash(find /c/Fontes/sigma/backend/scripts -name \"*.js.map\" -delete)"
+      "Bash(find /c/Fontes/sigma/backend/scripts -name \"*.js.map\" -delete)",
+      "Bash(node -e \"require\\(''xlsx''\\); console.log\\(''xlsx OK''\\)\")",
+      "Bash(npx tsc --noEmit --pretty)",
+      "Bash(echo \"EXIT_CODE=$?\")"
     ],
     "deny": [],
     "ask": []

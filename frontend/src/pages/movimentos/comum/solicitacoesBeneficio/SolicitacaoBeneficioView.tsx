@@ -112,7 +112,79 @@ const SolicitacaoBeneficioView: React.FC = () => {
 
   const style = getStyle(solicitacao.status);
   const statusLabel = solicitacaoBeneficioService.formatarStatus(solicitacao.status);
-  const detalhes = solicitacao.calculoDetalhes as any;
+  const detalhes = solicitacao.calculoDetalhes as Record<string, any> | null;
+
+  // Labels legíveis para campos dinâmicos do calculoDetalhes
+  const LABELS_DETALHES: Record<string, string> = {
+    regraAtendida: "Regra",
+    areaEfetiva: "Área Efetiva",
+    condicao: "Condição",
+    valorBase: "Valor Base",
+    percentualAplicado: "Percentual",
+    migradoDe: "Origem",
+    arquivo: "Arquivo",
+    veterinario: "Veterinário",
+    procedimento: "Procedimento",
+    valorTotal: "Valor Total",
+    valorSubsidio: "Valor Subsídio",
+    percentual: "Percentual Subsídio",
+    numeroAutorizacao: "N° Autorização",
+    autorizacao: "N° Autorização",
+    numeroOriginal: "N° Original",
+    aba: "Período",
+    mes: "Mês",
+    linha: "Localidade",
+    quant_kg: "Quantidade (kg)",
+    servico: "Serviço",
+    totalHoras: "Total Horas",
+    produtorPagou: "Valor Pago Produtor",
+    valorVR: "Valor VR",
+    m3Pedras: "Pedras (m³)",
+    vaca: "Vaca",
+    touro: "Touro",
+    linhaOriginal: "Linha Planilha",
+  };
+
+  // Campos que não devem ser mostrados (metadados internos)
+  const CAMPOS_OCULTOS = ["observacoes", "limiteAplicado"];
+
+  // Formata valor de detalhe para exibição
+  const formatarDetalhe = (chave: string, valor: any): string => {
+    if (valor == null || valor === "") return "";
+    if (["valorBase", "valorTotal", "valorSubsidio", "produtorPagou", "valorVR"].includes(chave)) {
+      return formatarMoeda(Number(valor));
+    }
+    if (chave === "percentual" || chave === "percentualAplicado") {
+      return `${valor}%`;
+    }
+    if (chave === "areaEfetiva") {
+      return `${valor} ha`;
+    }
+    return String(valor);
+  };
+
+  // Gera label legível a partir da chave
+  const labelDetalhe = (chave: string): string => {
+    if (LABELS_DETALHES[chave]) return LABELS_DETALHES[chave];
+    // Transforma snake_case/camelCase em texto legível
+    return chave
+      .replace(/_/g, " ")
+      .replace(/([a-z])([A-Z])/g, "$1 $2")
+      .replace(/^./, (c) => c.toUpperCase());
+  };
+
+  // Mapeia modalidade para texto legível
+  const formatarModalidade = (mod?: string) => {
+    if (!mod) return null;
+    const map: Record<string, string> = {
+      SUBSIDIO: "Subsídio",
+      SERVICO: "Serviço",
+      APLICACAO_SUBSIDIADA: "Aplicação Subsidiada",
+      RETIRADA_SEMEN: "Retirada de Sêmen",
+      REEMBOLSO: "Reembolso",
+    };
+    return map[mod] || mod;
+  };
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
@@ -205,6 +277,12 @@ const SolicitacaoBeneficioView: React.FC = () => {
                 </span>
               }
             />
+            {solicitacao.modalidade && (
+              <InfoRow label="Modalidade" value={formatarModalidade(solicitacao.modalidade)} />
+            )}
+            {solicitacao.enquadramento && (
+              <InfoRow label="Enquadramento" value={solicitacao.enquadramento} />
+            )}
             {solicitacao.quantidadeSolicitada != null && (
               <InfoRow
                 label="Quantidade"
@@ -238,30 +316,24 @@ const SolicitacaoBeneficioView: React.FC = () => {
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
             <div className="flex items-center gap-2 px-4 py-3 bg-gray-50 border-b border-gray-200">
               <Info className="w-4 h-4 text-gray-500" />
-              <h2 className="text-sm font-semibold text-gray-700">Detalhes do Cálculo</h2>
+              <h2 className="text-sm font-semibold text-gray-700">Detalhes</h2>
             </div>
             <dl className="px-4 divide-y divide-gray-100">
-              {detalhes.regraAtendida && (
-                <InfoRow label="Regra" value={detalhes.regraAtendida} />
-              )}
-              {detalhes.areaEfetiva != null && (
-                <InfoRow label="Área Efetiva" value={`${detalhes.areaEfetiva} ha`} />
-              )}
-              {detalhes.condicao && (
-                <InfoRow label="Condição" value={detalhes.condicao} />
-              )}
-              {detalhes.valorBase != null && (
-                <InfoRow label="Valor Base" value={formatarMoeda(detalhes.valorBase)} />
-              )}
-              {detalhes.percentualAplicado != null && (
-                <InfoRow label="Percentual" value={`${detalhes.percentualAplicado}%`} />
-              )}
-              {detalhes.migradoDe && (
-                <InfoRow label="Origem" value={detalhes.migradoDe} />
-              )}
-              {detalhes.arquivo && (
-                <InfoRow label="Arquivo" value={detalhes.arquivo} />
-              )}
+              {Object.entries(detalhes)
+                .filter(([chave, valor]) => {
+                  if (CAMPOS_OCULTOS.includes(chave)) return false;
+                  if (valor == null || valor === "") return false;
+                  // observacoes array é tratado separadamente
+                  if (chave === "observacoes" && Array.isArray(valor)) return false;
+                  return true;
+                })
+                .map(([chave, valor]) => (
+                  <InfoRow
+                    key={chave}
+                    label={labelDetalhe(chave)}
+                    value={formatarDetalhe(chave, valor)}
+                  />
+                ))}
               {detalhes.observacoes && Array.isArray(detalhes.observacoes) && detalhes.observacoes.length > 0 && (
                 <InfoRow
                   label="Notas"

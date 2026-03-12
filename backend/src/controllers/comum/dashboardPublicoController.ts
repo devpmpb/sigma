@@ -10,7 +10,7 @@ import prisma from "../../utils/prisma";
 import { Prisma } from "@prisma/client";
 
 // Status considerados como "aprovados" para estatísticas de valores
-const STATUS_APROVADOS = ["aprovada", "paga", "aprovado"];
+const STATUS_APROVADOS = ["aprovada", "paga", "aprovado", "concluido"];
 
 export const dashboardPublicoController = {
   /**
@@ -113,7 +113,7 @@ export const dashboardPublicoController = {
             COALESCE(SUM("valorCalculado"), 0)::text as valor,
             COUNT(*) as quantidade
           FROM "SolicitacaoBeneficio"
-          WHERE status IN ('aprovada', 'paga', 'aprovado')
+          WHERE status IN ('aprovada', 'paga', 'aprovado', 'concluido')
             AND datasolicitacao IS NOT NULL
             ${anoFiltro ? Prisma.sql`AND EXTRACT(YEAR FROM datasolicitacao) = ${anoFiltro}` : Prisma.empty}
             ${programaId ? Prisma.sql`AND "programaId" = ${Number(programaId)}` : Prisma.empty}
